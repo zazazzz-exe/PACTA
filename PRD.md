@@ -1001,6 +1001,30 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 - Surface contract errors by code (map `Error` enum numbers → friendly messages, e.g. `10 → "The agreement deadline hasn't passed yet."`).
 - Countdown to `deadline` on Active agreements so the Emergency Refund availability is obvious.
 
+### 9.6 Security UX (wallet-as-login, hardened)
+
+Pacta stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
+
+- **Network guard.** On connect, read the wallet's network (best effort). If it is not the Stellar test network, show a persistent warning banner so the user does not sign against the wrong network. If the network cannot be determined, do not block.
+- **Confirm before signing.** Every fund-moving action (post bond, deposit, release, complete, emergency refund, cancel) opens a plain-language confirmation dialog stating the amount, the counterparty, and the effect before the wallet signature is requested. Nothing is signed blindly. Copy follows §12/DESIGN voice (sentence case, no jargon, names the effect the user controls).
+- **Inactivity auto-lock.** After 15 minutes of no interaction the wallet is disconnected automatically (relevant on shared or mobile devices), with a dismissible notice explaining why. Any interaction resets the timer.
+- **Trust cues retained.** Persistent `testnet` badge, contract ID linked to Stellar Expert, and tx hashes linked on success.
+
+These are functional-UX additions; the contract interface in §8.5 and the flows in §9.1–9.4 are unchanged.
+
+### 9.7 Responsive layout (website + mobile)
+
+The app is **mobile-first** (primary users are OFWs on phones) and also a comfortable desktop website. One implementation, fluid across breakpoints:
+
+- **Shell.** Header, content, and footer share a centered container that grows to a wide max width on desktop; screen padding stays comfortable from 360px up.
+- **Landing.** Single column on mobile; two-column hero (copy beside the proof panel) on desktop. "How it works" stacks on mobile, three across on wider screens.
+- **Dashboard.** Agreement cards are a one-column list on mobile, two columns at the small breakpoint, three at large.
+- **Agreement detail.** Single stacked column on mobile (amount, parties, milestones, deadline, actions, proof). On desktop it splits into a main column plus a sticky aside holding the actions and the proof panel.
+- **Create / trader profile.** Stay in a comfortably narrow centered column on all sizes (forms and profiles read better narrow).
+- **Quality floor (DESIGN §10).** Tap targets stay at least 44px, every interactive element shows a visible focus ring, motion respects `prefers-reduced-motion`, and amounts use tabular mono with thousands separators.
+
+> Visual tokens, components, and exact styling live in **DESIGN.md** (which supersedes §12). This section captures only the behavioral/layout contract.
+
 ---
 
 ## 10. Repository structure

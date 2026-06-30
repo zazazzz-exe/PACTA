@@ -34,6 +34,18 @@ export async function connectWallet(): Promise<string> {
   });
 }
 
+// Best-effort read of the wallet's current network passphrase. Returns null if
+// the connected wallet/module does not expose it, so callers can treat unknown
+// as "do not block" rather than failing closed.
+export async function getWalletNetworkPassphrase(): Promise<string | null> {
+  try {
+    const n = (await kit.getNetwork()) as { networkPassphrase?: string } | undefined;
+    return n?.networkPassphrase ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // Adapter consumed by the generated bindings' `signTransaction` option.
 export async function signTransaction(
   xdr: string,

@@ -15,6 +15,10 @@ export const READ_SOURCE = 'GCO474RPUM4AOF5T4JA55YIFJKP5B3743F6AXD5M65WBB4SNLFTL
 export const TOKEN_SYMBOL = 'XLM';
 export const TOKEN_DECIMALS = 7;
 
+// Display-only anchor so non-crypto users see a familiar peso estimate next to
+// XLM (DESIGN §6.4). Approximate, static; not used in any contract call.
+export const PHP_PER_XLM = 22;
+
 export const STELLAR_EXPERT = 'https://stellar.expert/explorer/testnet';
 export const contractExplorerUrl = () => `${STELLAR_EXPERT}/contract/${CONTRACT_ID}`;
 export const txExplorerUrl = (hash: string) => `${STELLAR_EXPERT}/tx/${hash}`;

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ChevronLeft, Clock, Loader2, RotateCcw, ShieldX } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useAgreement } from '../hooks/useAgreements';
 import {
@@ -11,14 +12,34 @@ import {
   cancel,
   type WriteResult,
 } from '../lib/contract';
-import { formatAmount, shortAddr, fromTimestamp } from '../lib/format';
+import {
+  formatAmount,
+  formatXlmFull,
+  shortAddr,
+  shortHash,
+  fromTimestamp,
+  countdown,
+} from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
-import { txExplorerUrl } from '../lib/config';
+import { CONTRACT_ID, contractExplorerUrl, txExplorerUrl } from '../lib/config';
 import { StatusPill } from '../components/StatusPill';
 import { MilestoneBar } from '../components/MilestoneBar';
-import { Countdown } from '../components/Countdown';
 import { ReputationBadge } from '../components/ReputationBadge';
+import { Avatar } from '../components/Avatar';
+import { Button } from '../components/Button';
+import { ProofPanel } from '../components/ProofPanel';
+import { AmountDisplay } from '../components/AmountDisplay';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+
+interface Pending {
+  key: string;
+  title: string;
+  description: ReactNode;
+  confirmLabel: string;
+  variant: 'primary' | 'danger';
+  fn: () => Promise<WriteResult<unknown>>;
+}
 
 export function AgreementDetail({ id }: { id: bigint }) {
   const { address } = useWallet();
@@ -27,6 +48,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const [actionErr, setActionErr] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  const [pending, setPending] = useState<Pending | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 1000);
@@ -41,8 +63,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
       const { hash } = await fn();
       setTxHash(hash ?? null);
       await refresh();
-      // RPC can lag a few seconds; refetch once more.
-      setTimeout(refresh, 4500);
+      setTimeout(refresh, 4500); // RPC can lag a few seconds
     } catch (e) {
       setActionErr(friendlyError(e));
     } finally {
@@ -50,16 +71,34 @@ export function AgreementDetail({ id }: { id: bigint }) {
     }
   }
 
+  // Open the plain-language confirm step; the signature only happens on confirm.
+  function ask(p: Pending) {
+    setPending(p);
+  }
+  async function onConfirm() {
+    if (!pending) return;
+    await run(pending.key, pending.fn);
+    setPending(null);
+  }
+
+  const agrId = `agr-${id.toString().padStart(3, '0')}`;
+
   if (loading && !a) {
-    return <div className="card h-64 animate-pulse bg-surface/60" />;
+    return (
+      <div className="mx-auto max-w-app flex items-center justify-center py-20 text-slate">
+        <Loader2 className="animate-spin" size={20} aria-hidden />
+      </div>
+    );
   }
   if (error || !a) {
     return (
-      <div className="card p-8 text-center">
-        <p className="text-danger">{error ?? 'Agreement not found.'}</p>
-        <button className="btn-ghost mt-4" onClick={() => navigate('/dashboard')}>
-          Back to dashboard
-        </button>
+      <div className="mx-auto max-w-app">
+        <div className="bg-paper border border-hairline rounded-card shadow-card p-6 text-center">
+          <p className="text-refund text-[14px]">{error ?? 'Agreement not found.'}</p>
+          <Button variant="secondary" className="mt-4" onClick={() => navigate('/dashboard')}>
+            Back to dashboard
+          </Button>
+        </div>
       </div>
     );
   }
@@ -68,197 +107,315 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const isTrader = address === a.trader;
   const allReleased = a.released_milestones >= a.milestones;
   const deadlinePassed = now >= Number(a.deadline);
+  const unreleased = a.capital - a.released_amount;
+  const nextTranche =
+    a.released_milestones + 1 >= a.milestones ? unreleased : a.capital / BigInt(a.milestones);
+  const traderShort = shortAddr(a.trader, 4, 4);
+  const signNote = <span className="block mt-2 text-[12px] text-fog">You will sign a transaction on testnet.</span>;
+
+  const headline = (() => {
+    switch (a.status) {
+      case Status.Active:
+        return { amount: unreleased, label: 'Protected in escrow', bond: a.bond, proof: unreleased + a.bond };
+      case Status.Pending:
+        return { amount: a.capital, label: 'Capital in escrow once funded', bond: a.bond, proof: (a.capital_deposited ? a.capital : 0n) + (a.bond_posted ? a.bond : 0n) };
+      case Status.Completed:
+        return { amount: a.capital, label: 'Capital released to trader', bond: undefined, proof: a.capital };
+      case Status.Refunded:
+        return { amount: unreleased + a.bond, label: 'Refunded to investor', bond: undefined, proof: unreleased + a.bond };
+      default:
+        return { amount: a.capital, label: 'Agreement cancelled', bond: undefined, proof: 0n };
+    }
+  })();
+
+  const counterparty = isTrader ? a.investor : a.trader;
+  const counterRole = isTrader ? 'Investor' : 'Trader';
+  const closed =
+    a.status === Status.Completed || a.status === Status.Refunded || a.status === Status.Cancelled;
+
+  const hasAction =
+    (isTrader && a.status === Status.Pending && !a.bond_posted) ||
+    (isInvestor && a.status === Status.Pending) ||
+    (isInvestor && a.status === Status.Active);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <button className="text-sm text-ink-muted hover:text-ink" onClick={() => navigate('/dashboard')}>
-        ← Back to dashboard
-      </button>
-
-      <div className="card p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="label">Agreement</span>
-              <span className="mono text-lg text-ink">#{a.id.toString()}</span>
-            </div>
-            <p className="mt-1 text-sm text-ink-muted">
-              {isInvestor ? 'You are the investor.' : isTrader ? 'You are the trader.' : 'You are a viewer.'}
-            </p>
-          </div>
-          <StatusPill status={a.status} />
-        </div>
-
-        <div className="mt-6 grid grid-cols-2 gap-5 sm:grid-cols-4">
-          <Stat label="Capital" value={formatAmount(a.capital)} />
-          <Stat label="Bond" value={formatAmount(a.bond)} />
-          <Stat label="Released" value={formatAmount(a.released_amount)} />
-          <Stat label="Profit share" value={`${a.profit_share_bps / 100}%`} />
-        </div>
-
-        <div className="mt-6">
-          <MilestoneBar released={a.released_milestones} total={a.milestones} />
-        </div>
-
-        {a.status === Status.Active && (
-          <div className="mt-5 flex items-center justify-between rounded-xl border border-hairline bg-base/40 px-4 py-3">
-            <span className="text-sm text-ink-muted">Deadline</span>
-            <div className="text-right">
-              <Countdown deadlineSec={Number(a.deadline)} className="text-sm" />
-              <div className="mono text-[11px] text-ink-faint">
-                {fromTimestamp(a.deadline).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        )}
+    <div className="mx-auto max-w-4xl">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => navigate('/dashboard')}
+          aria-label="Back to dashboard"
+          className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <ChevronLeft size={20} aria-hidden />
+        </button>
+        <span className="mono text-[13px] text-slate flex-1">{agrId}</span>
+        <StatusPill status={a.status} />
       </div>
 
-      {/* Parties */}
-      <div className="card p-6">
-        <div className="grid gap-5 sm:grid-cols-2">
-          <Party label="Investor" addr={a.investor} you={address} />
-          <div>
-            <Party label="Trader" addr={a.trader} you={address} />
-            <div className="mt-2">
+      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        {/* Main column */}
+        <div className="space-y-5">
+          <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
+            <AmountDisplay amount={headline.amount} label={headline.label} bond={headline.bond} />
+          </div>
+
+          <button
+            onClick={() => navigate(`/trader/${a.trader}`)}
+            className="w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition hover:border-hairline-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <div className="flex items-center gap-3">
+              <Avatar addr={counterparty} />
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] text-fog">{counterRole}</p>
+                <p className="mono text-sm text-ink truncate">{shortAddr(counterparty, 6, 6)}</p>
+              </div>
               <ReputationBadge trader={a.trader} publicKey={address ?? undefined} />
             </div>
+          </button>
+
+          <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
+            <MilestoneBar
+              released={a.released_milestones}
+              total={a.milestones}
+              releasedAmount={a.released_amount}
+            />
           </div>
-        </div>
-      </div>
 
-      {/* Actions */}
-      <div className="card p-6">
-        <div className="label mb-3">Actions</div>
-
-        {txHash && (
-          <div className="mb-4 rounded-xl border border-accent/30 bg-accent-soft p-3 text-sm text-accent">
-            Transaction confirmed.{' '}
-            <a className="mono underline" href={txExplorerUrl(txHash)} target="_blank" rel="noreferrer">
-              {shortAddr(txHash, 6, 6)} ↗
-            </a>
-          </div>
-        )}
-        {actionErr && (
-          <div className="mb-4 rounded-xl border border-danger/30 bg-danger-soft p-3 text-sm text-danger">
-            {actionErr}
-          </div>
-        )}
-
-        <div className="flex flex-wrap gap-3">
-          {/* Trader + Pending + not bonded -> Post Bond */}
-          {isTrader && a.status === Status.Pending && !a.bond_posted && (
-            <button
-              className="btn-primary"
-              disabled={!!busy}
-              onClick={() => run('bond', () => postBond(address!, a.id))}
+          {a.status === Status.Active && (
+            <div
+              className={`rounded-control p-4 flex items-center gap-2.5 text-[13px] ${
+                deadlinePassed ? 'bg-refund-tint text-refund-deep' : 'bg-deadline-tint text-deadline-deep'
+              }`}
             >
-              {busy === 'bond' ? 'Signing...' : `Post bond (${formatAmount(a.bond)})`}
-            </button>
-          )}
-
-          {/* Investor + Pending + not deposited -> Deposit Capital */}
-          {isInvestor && a.status === Status.Pending && !a.capital_deposited && (
-            <button
-              className="btn-primary"
-              disabled={!!busy}
-              onClick={() => run('deposit', () => depositCapital(address!, a.id))}
-            >
-              {busy === 'deposit' ? 'Signing...' : `Deposit capital (${formatAmount(a.capital)})`}
-            </button>
-          )}
-
-          {/* Investor + Active + milestones remaining -> Release Milestone */}
-          {isInvestor && a.status === Status.Active && !allReleased && (
-            <button
-              className="btn-primary"
-              disabled={!!busy}
-              onClick={() => run('release', () => releaseMilestone(address!, a.id))}
-            >
-              {busy === 'release' ? 'Signing...' : 'Release next milestone'}
-            </button>
-          )}
-
-          {/* Investor + Active + all released -> Complete */}
-          {isInvestor && a.status === Status.Active && allReleased && (
-            <button
-              className="btn-primary"
-              disabled={!!busy}
-              onClick={() => run('complete', () => complete(address!, a.id))}
-            >
-              {busy === 'complete' ? 'Signing...' : 'Complete (return bond to trader)'}
-            </button>
-          )}
-
-          {/* Investor + Active + deadline passed -> Emergency Refund */}
-          {isInvestor && a.status === Status.Active && (
-            <button
-              className="btn-warn"
-              disabled={!!busy || !deadlinePassed}
-              title={deadlinePassed ? '' : 'Available once the deadline passes'}
-              onClick={() => run('refund', () => emergencyRefund(address!, a.id))}
-            >
-              {busy === 'refund'
-                ? 'Signing...'
-                : deadlinePassed
-                  ? 'Emergency refund'
-                  : 'Emergency refund (locked)'}
-            </button>
-          )}
-
-          {/* Investor + Pending -> Cancel */}
-          {isInvestor && a.status === Status.Pending && (
-            <button
-              className="btn-danger"
-              disabled={!!busy}
-              onClick={() => run('cancel', () => cancel(address!, a.id))}
-            >
-              {busy === 'cancel' ? 'Signing...' : 'Cancel agreement'}
-            </button>
+              <Clock size={16} aria-hidden />
+              {deadlinePassed ? (
+                <span>Refund available. The deadline has passed.</span>
+              ) : (
+                <span>
+                  Deadline in <span className="mono">{countdown(Number(a.deadline), now)}</span>
+                  <span className="text-deadline/70"> · {fromTimestamp(a.deadline).toLocaleString()}</span>
+                </span>
+              )}
+            </div>
           )}
         </div>
 
-        {a.status === Status.Active && isInvestor && (
-          <p className="mt-4 text-xs text-ink-faint">
-            Your capital is locked in the contract. Release it step by step as trust builds. If the
-            deadline passes, reclaim the unreleased capital plus the trader bond.
-          </p>
-        )}
-        {!isInvestor && !isTrader && (
-          <p className="text-sm text-ink-muted">
-            You are viewing this agreement. Only the investor and trader can act on it.
-          </p>
-        )}
-        {(a.status === Status.Completed ||
-          a.status === Status.Refunded ||
-          a.status === Status.Cancelled) && (
-          <p className="text-sm text-ink-muted">This agreement is closed. No further actions.</p>
-        )}
-      </div>
-    </div>
-  );
-}
+        {/* Aside: actions + proof */}
+        <aside className="space-y-4 lg:sticky lg:top-20">
+          {txHash && (
+            <div className="rounded-control bg-accent-tint text-accent-deep p-3 text-[13px] flex items-center gap-2">
+              <span>Done.</span>
+              <a
+                className="mono underline hover:text-accent focus:outline-none"
+                href={txExplorerUrl(txHash)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                tx {shortHash(txHash)}
+              </a>
+            </div>
+          )}
+          {actionErr && <p className="text-refund text-[13px]">{actionErr}</p>}
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="label">{label}</div>
-      <div className="mono mt-0.5 text-base text-ink">{value}</div>
-    </div>
-  );
-}
+          {hasAction && (
+            <div className="space-y-3">
+              {/* Trader + Pending + not bonded -> Post bond */}
+              {isTrader && a.status === Status.Pending && !a.bond_posted && (
+                <Button
+                  className="w-full"
+                  disabled={!!busy}
+                  onClick={() =>
+                    ask({
+                      key: 'bond',
+                      title: 'Post security bond',
+                      description: (
+                        <>
+                          Post a bond of <span className="mono text-ink">{formatAmount(a.bond)}</span>. It
+                          is held by the contract as protection and returned to you when the agreement
+                          completes.
+                          {signNote}
+                        </>
+                      ),
+                      confirmLabel: 'Post bond',
+                      variant: 'primary',
+                      fn: () => postBond(address!, a.id),
+                    })
+                  }
+                >
+                  Post bond ({formatAmount(a.bond)})
+                </Button>
+              )}
 
-function Party({ label, addr, you }: { label: string; addr: string; you: string | null }) {
-  return (
-    <div>
-      <div className="label">{label}</div>
-      <div className="mono mt-1 flex items-center gap-2 text-sm text-ink">
-        {shortAddr(addr, 6, 6)}
-        {you === addr && (
-          <span className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-semibold uppercase text-accent">
-            you
-          </span>
-        )}
+              {/* Investor + Pending + not deposited -> Deposit capital */}
+              {isInvestor && a.status === Status.Pending && !a.capital_deposited && (
+                <Button
+                  className="w-full"
+                  disabled={!!busy}
+                  onClick={() =>
+                    ask({
+                      key: 'deposit',
+                      title: 'Deposit capital',
+                      description: (
+                        <>
+                          Deposit <span className="mono text-ink">{formatAmount(a.capital)}</span> into the
+                          escrow contract. It is released to the trader milestone by milestone.
+                          {signNote}
+                        </>
+                      ),
+                      confirmLabel: 'Deposit',
+                      variant: 'primary',
+                      fn: () => depositCapital(address!, a.id),
+                    })
+                  }
+                >
+                  Deposit capital ({formatAmount(a.capital)})
+                </Button>
+              )}
+
+              {/* Investor + Active + milestones remaining -> Release */}
+              {isInvestor && a.status === Status.Active && !allReleased && (
+                <Button
+                  className="w-full"
+                  disabled={!!busy}
+                  onClick={() =>
+                    ask({
+                      key: 'release',
+                      title: 'Release next milestone',
+                      description: (
+                        <>
+                          Release the next milestone to the trader. About{' '}
+                          <span className="mono text-ink">{formatAmount(nextTranche)}</span> goes to{' '}
+                          <span className="mono text-ink">{traderShort}</span>.{signNote}
+                        </>
+                      ),
+                      confirmLabel: 'Release',
+                      variant: 'primary',
+                      fn: () => releaseMilestone(address!, a.id),
+                    })
+                  }
+                >
+                  Release next milestone
+                </Button>
+              )}
+
+              {/* Investor + Active + all released -> Complete */}
+              {isInvestor && a.status === Status.Active && allReleased && (
+                <Button
+                  className="w-full"
+                  disabled={!!busy}
+                  onClick={() =>
+                    ask({
+                      key: 'complete',
+                      title: 'Complete agreement',
+                      description: (
+                        <>
+                          Complete this agreement. The <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
+                          bond is returned to the trader.{signNote}
+                        </>
+                      ),
+                      confirmLabel: 'Complete',
+                      variant: 'primary',
+                      fn: () => complete(address!, a.id),
+                    })
+                  }
+                >
+                  Complete and return bond
+                </Button>
+              )}
+
+              {/* Investor + Active -> Emergency refund (locked until deadline) */}
+              {isInvestor && a.status === Status.Active && (
+                <div>
+                  <Button
+                    variant="danger"
+                    className="w-full"
+                    disabled={!!busy || !deadlinePassed}
+                    onClick={() =>
+                      ask({
+                        key: 'refund',
+                        title: 'Emergency refund',
+                        description: (
+                          <>
+                            Reclaim <span className="mono text-ink">{formatAmount(unreleased)}</span> of
+                            unreleased capital plus the <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
+                            bond, totalling <span className="mono text-ink">{formatAmount(unreleased + a.bond)}</span>,
+                            back to you. The trader forfeits the bond.{signNote}
+                          </>
+                        ),
+                        confirmLabel: 'Refund to me',
+                        variant: 'danger',
+                        fn: () => emergencyRefund(address!, a.id),
+                      })
+                    }
+                  >
+                    <RotateCcw size={18} aria-hidden /> Emergency refund
+                  </Button>
+                  {!deadlinePassed && (
+                    <p className="mt-1.5 text-[13px] text-slate text-center">
+                      Refund unlocks when the deadline passes.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Investor + Pending -> Cancel */}
+              {isInvestor && a.status === Status.Pending && (
+                <Button
+                  variant="danger"
+                  className="w-full"
+                  disabled={!!busy}
+                  onClick={() =>
+                    ask({
+                      key: 'cancel',
+                      title: 'Cancel agreement',
+                      description: (
+                        <>
+                          Cancel this agreement. Any deposited capital and posted bond are returned to
+                          their owners.{signNote}
+                        </>
+                      ),
+                      confirmLabel: 'Cancel agreement',
+                      variant: 'danger',
+                      fn: () => cancel(address!, a.id),
+                    })
+                  }
+                >
+                  <ShieldX size={18} aria-hidden /> Cancel agreement
+                </Button>
+              )}
+            </div>
+          )}
+
+          {closed && (
+            <p className="text-[13px] text-slate">This agreement is closed. No further actions.</p>
+          )}
+          {!isInvestor && !isTrader && !closed && (
+            <p className="text-[13px] text-slate">
+              You are viewing this agreement. Only the investor and trader can act on it.
+            </p>
+          )}
+
+          <ProofPanel
+            id={agrId}
+            protectedAmount={formatXlmFull(headline.proof)}
+            txHash={txHash ? shortHash(txHash) : undefined}
+            contractShort={shortAddr(CONTRACT_ID, 6, 6)}
+            explorerUrl={contractExplorerUrl()}
+          />
+        </aside>
       </div>
+
+      <ConfirmDialog
+        open={!!pending}
+        title={pending?.title ?? ''}
+        description={pending?.description}
+        confirmLabel={pending?.confirmLabel ?? 'Confirm'}
+        variant={pending?.variant ?? 'primary'}
+        busy={!!busy}
+        onConfirm={onConfirm}
+        onCancel={() => !busy && setPending(null)}
+      />
     </div>
   );
 }

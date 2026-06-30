@@ -1,4 +1,4 @@
-import { TOKEN_DECIMALS, TOKEN_SYMBOL } from './config';
+import { TOKEN_DECIMALS, TOKEN_SYMBOL, PHP_PER_XLM } from './config';
 
 const SCALE = 10 ** TOKEN_DECIMALS; // 1e7
 
@@ -8,20 +8,44 @@ export const toBaseUnits = (human: number): bigint =>
 
 export const fromBaseUnits = (base: bigint): number => Number(base) / SCALE;
 
-// Human-readable amount with the token symbol, e.g. "100.00 XLM".
+// Human-facing amount: rounded for display, thousands separators, trailing
+// zeros trimmed (DESIGN §10). e.g. 75 XLM, 1,250.5 XLM.
 export function formatAmount(base: bigint, withSymbol = true): string {
   const v = fromBaseUnits(base);
   const s = v.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 7,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
   });
   return withSymbol ? `${s} ${TOKEN_SYMBOL}` : s;
+}
+
+// Full 7-decimal precision, for the instrument-grade proof panel only.
+export function formatXlmFull(base: bigint): string {
+  return fromBaseUnits(base).toFixed(TOKEN_DECIMALS);
+}
+
+// Local-currency anchor, e.g. "≈ ₱4,200" (DESIGN §6.4). Display only.
+export function formatPhp(base: bigint): string {
+  const php = Math.round(fromBaseUnits(base) * PHP_PER_XLM);
+  return `≈ ₱${php.toLocaleString()}`;
 }
 
 // Truncate a Stellar address for display: GABC...WXYZ
 export function shortAddr(addr: string, lead = 4, tail = 4): string {
   if (!addr || addr.length <= lead + tail + 1) return addr;
   return `${addr.slice(0, lead)}...${addr.slice(-tail)}`;
+}
+
+// Truncate a tx hash for the proof panel: 9f3a…b1c4
+export function shortHash(hash: string, lead = 4, tail = 4): string {
+  if (!hash || hash.length <= lead + tail + 1) return hash;
+  return `${hash.slice(0, lead)}…${hash.slice(-tail)}`;
+}
+
+// Two-letter initials from an address for the avatar.
+export function initials(addr: string): string {
+  if (!addr) return '??';
+  return (addr.slice(1, 2) + addr.slice(-1)).toUpperCase();
 }
 
 // u64 ledger timestamp (seconds) -> Date

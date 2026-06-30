@@ -3,51 +3,43 @@ import { formatAmount, shortAddr } from '../lib/format';
 import { navigate } from '../lib/router';
 import { StatusPill } from './StatusPill';
 import { MilestoneBar } from './MilestoneBar';
-import { Countdown } from './Countdown';
+import { Avatar } from './Avatar';
 
 export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) {
-  const role =
-    you === a.investor ? 'You are the investor' : you === a.trader ? 'You are the trader' : null;
+  const counterparty = you === a.trader ? a.investor : a.trader;
+  const role = you === a.investor ? 'Trader' : you === a.trader ? 'Investor' : 'Trader';
+  const protectedAmount = a.capital - a.released_amount;
 
   return (
     <button
       onClick={() => navigate(`/agreement/${a.id}`)}
-      className="card group w-full p-5 text-left transition-transform hover:-translate-y-0.5 hover:border-accent/30"
+      className="w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition duration-200 hover:-translate-y-0.5 hover:border-hairline-strong hover:shadow-pop focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="label">Agreement</span>
-            <span className="mono text-sm text-ink">#{a.id.toString()}</span>
-          </div>
-          {role && <span className="mt-1 block text-xs text-accent">{role}</span>}
+      <div className="flex items-center gap-3">
+        <Avatar addr={counterparty} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] text-fog">{role}</p>
+          <p className="mono text-sm text-ink truncate">{shortAddr(counterparty, 6, 6)}</p>
         </div>
         <StatusPill status={a.status} />
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-4">
-        <div>
-          <div className="label">Capital</div>
-          <div className="mono text-lg text-ink">{formatAmount(a.capital)}</div>
-        </div>
-        <div>
-          <div className="label">Bond</div>
-          <div className="mono text-lg text-ink">{formatAmount(a.bond)}</div>
-        </div>
+      <div className="mt-4 flex items-baseline gap-2">
+        <span className="mono text-[22px] font-medium text-ink">{formatAmount(protectedAmount)}</span>
+        <span className="text-[13px] text-slate">protected</span>
       </div>
 
       <div className="mt-4">
-        <MilestoneBar released={a.released_milestones} total={a.milestones} />
+        <MilestoneBar
+          released={a.released_milestones}
+          total={a.milestones}
+          releasedAmount={a.released_amount}
+        />
       </div>
 
-      <div className="mt-4 flex items-center justify-between border-t border-hairline pt-3">
-        <div className="text-xs text-ink-muted">
-          Trader <span className="mono text-ink">{shortAddr(a.trader)}</span>
-        </div>
-        {a.status === Status.Active && (
-          <Countdown deadlineSec={Number(a.deadline)} className="text-xs" />
-        )}
-      </div>
+      {a.status !== Status.Active && (
+        <p className="mono text-[11px] text-fog mt-3">agr-{a.id.toString().padStart(3, '0')}</p>
+      )}
     </button>
   );
 }

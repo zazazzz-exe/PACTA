@@ -2,51 +2,155 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  html {
-    color-scheme: dark;
-  }
-  body {
-    @apply bg-base text-ink font-sans antialiased;
-    background-image:
-      radial-gradient(60rem 40rem at 75% -10%, rgba(31, 217, 182, 0.06), transparent 60%),
-      radial-gradient(50rem 40rem at 5% 0%, rgba(80, 120, 200, 0.05), transparent 55%);
-    background-attachment: fixed;
-  }
-  /* Hairline focus ring tuned for the accent */
-  *:focus-visible {
-    @apply outline-none ring-2 ring-accent-ring ring-offset-2 ring-offset-base;
-  }
+:root {
+  /* surfaces */
+  --color-canvas: #F4F2EC;
+  --color-paper: #FFFFFF;
+  --color-mist: #F8F6F1;
+  --color-hairline: #E6E2D8;
+  --color-hairline-strong: #D8D3C6;
+
+  /* ink + text */
+  --color-ink: #1A201D;
+  --color-slate: #586059;
+  --color-fog: #8C918A;
+
+  /* accent — emerald (primary + "protected") */
+  --color-accent: #0B7A63;
+  --color-accent-deep: #0A5A49;
+  --color-accent-tint: #E2F2EC;
+
+  /* state — deadline (amber) */
+  --color-deadline: #C77D11;
+  --color-deadline-deep: #8A560A;
+  --color-deadline-tint: #FAEED6;
+
+  /* state — refund / destructive (clay) */
+  --color-refund: #B43A2C;
+  --color-refund-deep: #8C2C21;
+  --color-refund-tint: #F8E8E4;
+
+  /* proof panel — the one dark surface */
+  --color-carbon: #0B0F0E;
+  --color-onyx: #121916;
+  --color-grid: #233029;
+  --color-panel-ink: #E7ECE9;
+  --color-panel-muted: #7C8B85;
+  --color-signal: #34E3B0;
+  --color-signal-amber: #F2B442;
+  --color-signal-red: #FB6A57;
+
+  /* radius */
+  --radius-card: 16px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+
+  /* elevation (soft, warm-tinted) */
+  --shadow-card: 0 1px 2px rgba(26,32,29,0.04), 0 6px 16px rgba(26,32,29,0.05);
+  --shadow-pop: 0 8px 28px rgba(26,32,29,0.12);
+
+  /* type */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@layer components {
-  .card {
-    @apply rounded-2xl border border-hairline bg-surface shadow-raised;
+html, body { background: var(--color-canvas); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+
+/* tabular, aligned numbers everywhere money/data appears */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* Entrance motion — subtle fade + rise, used on page mount only (DESIGN §8). */
+@keyframes fade-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise {
+  animation: fade-rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* No flash of hidden content for reduced-motion users: skip the animation entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise { animation: none !important; }
+}
+
+/* ---- Ambient motion (futuristic) ---- */
+
+/* Drifting aurora blobs behind content. */
+@keyframes drift-a {
+  0%   { transform: translate(-8%, -6%) scale(1); }
+  50%  { transform: translate(10%, 8%) scale(1.25); }
+  100% { transform: translate(-8%, -6%) scale(1); }
+}
+@keyframes drift-b {
+  0%   { transform: translate(6%, 10%) scale(1.15); }
+  50%  { transform: translate(-10%, -4%) scale(0.95); }
+  100% { transform: translate(6%, 10%) scale(1.15); }
+}
+@keyframes drift-c {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-12%, 10%) scale(1.2); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(56px);
+  will-change: transform;
+}
+.blob-a { animation: drift-a 18s ease-in-out infinite; }
+.blob-b { animation: drift-b 24s ease-in-out infinite; }
+.blob-c { animation: drift-c 30s ease-in-out infinite; }
+
+/* Floating particles drifting up the screen (the "moving objects"). */
+@keyframes float-up {
+  0%   { transform: translateY(15vh); opacity: 0; }
+  12%  { opacity: 0.8; }
+  88%  { opacity: 0.8; }
+  100% { transform: translateY(-115vh); opacity: 0; }
+}
+.particle {
+  position: absolute;
+  bottom: -6vh;
+  border-radius: 9999px;
+  background: var(--color-accent);
+  will-change: transform, opacity;
+  animation: float-up linear infinite;
+}
+
+/* Proof panel: live-instrument effects. */
+@keyframes grid-pan { from { background-position: 0 0; } to { background-position: 24px 24px; } }
+@keyframes sheen-sweep { 0% { transform: translateY(-140%); } 100% { transform: translateY(360%); } }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.proof-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--color-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.35;
+  animation: grid-pan 5s linear infinite;
+  -webkit-mask-image: radial-gradient(circle at 25% 15%, black, transparent 78%);
+  mask-image: radial-gradient(circle at 25% 15%, black, transparent 78%);
+}
+.proof-sheen {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(to bottom, transparent, rgba(52, 227, 176, 0.12), transparent);
+  animation: sheen-sweep 4.5s ease-in-out infinite;
+}
+.pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .blob-a, .blob-b, .blob-c, .proof-grid, .proof-sheen, .pulse-dot, .particle {
+    animation: none !important;
   }
-  .mono {
-    @apply font-mono tabular-nums;
-  }
-  .label {
-    @apply text-xs font-medium uppercase tracking-wider text-ink-faint;
-  }
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
-           transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40;
-  }
-  .btn-primary {
-    @apply btn bg-accent text-base hover:bg-accent/90;
-  }
-  .btn-ghost {
-    @apply btn border border-hairline bg-transparent text-ink hover:bg-white/5;
-  }
-  .btn-warn {
-    @apply btn bg-warn text-base hover:bg-warn/90;
-  }
-  .btn-danger {
-    @apply btn border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20;
-  }
-  .field {
-    @apply w-full rounded-xl border border-hairline bg-base/60 px-3.5 py-2.5 text-sm text-ink
-           placeholder:text-ink-faint focus:border-accent/50;
-  }
+  .proof-sheen, .particle { display: none; }
 }

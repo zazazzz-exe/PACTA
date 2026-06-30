@@ -1,17 +1,19 @@
 import { useState } from 'react';
+import { ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { createAgreement } from '../lib/contract';
-import { toBaseUnits } from '../lib/format';
+import { toBaseUnits, shortAddr } from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { TOKEN_SYMBOL } from '../lib/config';
+import { Button } from '../components/Button';
 
 export function CreateAgreement() {
   const { address, connect } = useWallet();
   const [trader, setTrader] = useState('');
   const [capital, setCapital] = useState('100');
   const [bond, setBond] = useState('20');
-  const [milestones, setMilestones] = useState('4');
+  const [milestones, setMilestones] = useState(4);
   const [share, setShare] = useState('20');
   const [duration, setDuration] = useState('60');
   const [busy, setBusy] = useState(false);
@@ -19,23 +21,23 @@ export function CreateAgreement() {
 
   if (!address) {
     return (
-      <div className="card p-10 text-center">
-        <p className="text-ink-muted">Connect your wallet to create an agreement.</p>
-        <button className="btn-primary mt-4" onClick={connect}>
-          Connect Wallet
-        </button>
+      <div className="mx-auto max-w-app">
+        <div className="bg-paper border border-hairline rounded-card shadow-card p-8 text-center">
+          <p className="text-[14px] text-slate">Connect your wallet to create an agreement.</p>
+          <Button className="mt-4" onClick={connect}>
+            Connect wallet
+          </Button>
+        </div>
       </div>
     );
   }
 
   function validate(): string | null {
-    if (!/^G[A-Z2-7]{55}$/.test(trader)) return 'Enter a valid trader address (starts with G).';
+    if (!/^G[A-Z2-7]{55}$/.test(trader)) return "That trader address isn't valid. Check it and try again.";
     if (trader === address) return 'The trader cannot be the same as the investor.';
-    const cap = Number(capital);
-    if (!(cap > 0)) return 'Capital must be greater than zero.';
+    if (!(Number(capital) > 0)) return 'Capital must be greater than zero.';
     if (Number(bond) < 0) return 'Bond cannot be negative.';
-    const ms = Number(milestones);
-    if (!Number.isInteger(ms) || ms < 1) return 'There must be at least one milestone.';
+    if (!Number.isInteger(milestones) || milestones < 1) return 'There must be at least one milestone.';
     const sh = Number(share);
     if (sh < 0 || sh > 100) return 'Profit share must be between 0 and 100 percent.';
     if (Number(duration) < 0) return 'Duration cannot be negative.';
@@ -57,7 +59,7 @@ export function CreateAgreement() {
         trader,
         capital: toBaseUnits(Number(capital)),
         bond: toBaseUnits(Number(bond)),
-        milestones: Number(milestones),
+        milestones,
         profit_share_bps: Math.round(Number(share) * 100),
         duration: BigInt(Math.round(Number(duration))),
       });
@@ -69,119 +71,126 @@ export function CreateAgreement() {
     }
   }
 
+  const traderLabel = /^G[A-Z2-7]{55}$/.test(trader) ? shortAddr(trader, 4, 4) : 'The trader';
+
   return (
-    <div className="mx-auto max-w-xl">
-      <button className="mb-4 text-sm text-ink-muted hover:text-ink" onClick={() => navigate('/dashboard')}>
-        ← Back to dashboard
-      </button>
-      <div className="card p-6">
-        <h1 className="text-xl font-bold tracking-tight text-ink">New agreement</h1>
-        <p className="mt-1 text-sm text-ink-muted">
-          You are the investor. Funds move only after both sides fund the escrow.
+    <div className="mx-auto max-w-app">
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          onClick={() => navigate('/dashboard')}
+          aria-label="Back to dashboard"
+          className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <ChevronLeft size={20} aria-hidden />
+        </button>
+        <h1 className="text-[22px] font-medium tracking-tight text-ink">New agreement</h1>
+      </div>
+
+      <form className="space-y-4" onSubmit={onSubmit}>
+        <Field label="Trader address">
+          <Input mono placeholder="G..." value={trader} onChange={(v) => setTrader(v.trim())} spellCheck={false} />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label={`Capital (${TOKEN_SYMBOL})`}>
+            <Input mono type="number" min="0" step="any" value={capital} onChange={setCapital} />
+          </Field>
+          <Field label={`Security bond (${TOKEN_SYMBOL})`}>
+            <Input mono type="number" min="0" step="any" value={bond} onChange={setBond} />
+          </Field>
+        </div>
+
+        <Field label="Milestones">
+          <Stepper value={milestones} min={1} onChange={setMilestones} />
+        </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Profit share (%)">
+            <Input mono type="number" min="0" max="100" step="any" value={share} onChange={setShare} />
+          </Field>
+          <Field label="Duration (seconds)">
+            <Input mono type="number" min="0" step="1" value={duration} onChange={setDuration} />
+          </Field>
+        </div>
+        <p className="text-[12px] text-fog -mt-1">
+          Duration is in seconds and starts when the escrow becomes active. Use 60 for the live demo.
         </p>
 
-        <form className="mt-6 space-y-5" onSubmit={onSubmit}>
-          <Field label="Trader address" hint="The trader you are entrusting funds to.">
-            <input
-              className="field mono"
-              placeholder="G..."
-              value={trader}
-              onChange={(e) => setTrader(e.target.value.trim())}
-              spellCheck={false}
-            />
-          </Field>
+        {/* Plain-language summary */}
+        <div className="bg-mist rounded-control p-4 text-[14px] leading-relaxed text-slate">
+          You lock <span className="mono text-ink">{capital || 0} XLM</span>. {traderLabel} posts a{' '}
+          <span className="mono text-ink">{bond || 0} XLM</span> bond. Release in{' '}
+          <span className="mono text-ink">{milestones}</span> {milestones === 1 ? 'step' : 'steps'}.
+          Refund if the deadline passes.
+        </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Field label={`Capital (${TOKEN_SYMBOL})`}>
-              <input
-                className="field mono"
-                type="number"
-                min="0"
-                step="any"
-                value={capital}
-                onChange={(e) => setCapital(e.target.value)}
-              />
-            </Field>
-            <Field label={`Security bond (${TOKEN_SYMBOL})`}>
-              <input
-                className="field mono"
-                type="number"
-                min="0"
-                step="any"
-                value={bond}
-                onChange={(e) => setBond(e.target.value)}
-              />
-            </Field>
-          </div>
+        {err && <p className="text-refund text-[13px]">{err}</p>}
 
-          <div className="grid grid-cols-3 gap-4">
-            <Field label="Milestones">
-              <input
-                className="field mono"
-                type="number"
-                min="1"
-                step="1"
-                value={milestones}
-                onChange={(e) => setMilestones(e.target.value)}
-              />
-            </Field>
-            <Field label="Profit share %">
-              <input
-                className="field mono"
-                type="number"
-                min="0"
-                max="100"
-                step="any"
-                value={share}
-                onChange={(e) => setShare(e.target.value)}
-              />
-            </Field>
-            <Field label="Duration (s)" hint="">
-              <input
-                className="field mono"
-                type="number"
-                min="0"
-                step="1"
-                value={duration}
-                onChange={(e) => setDuration(e.target.value)}
-              />
-            </Field>
-          </div>
-
-          <p className="text-xs text-ink-faint">
-            Duration is in seconds and starts when the escrow becomes active. Use 60 for the live
-            demo so emergency refund unlocks quickly.
-          </p>
-
-          {err && (
-            <div className="rounded-xl border border-danger/30 bg-danger-soft p-3 text-sm text-danger">
-              {err}
-            </div>
+        <Button className="w-full" type="submit" disabled={busy}>
+          {busy ? (
+            <>
+              <Loader2 size={18} className="animate-spin" aria-hidden /> Waiting for the network to confirm
+            </>
+          ) : (
+            'Create agreement'
           )}
-
-          <button className="btn-primary w-full" type="submit" disabled={busy}>
-            {busy ? 'Sign in your wallet...' : 'Create agreement'}
-          </button>
-        </form>
-      </div>
+        </Button>
+      </form>
     </div>
   );
 }
 
-function Field({
-  label,
-  hint,
-  children,
-}: {
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="label">{label}</span>
+    <label className="block">
+      <span className="block text-[13px] text-slate mb-1.5">{label}</span>
       {children}
-      {hint ? <span className="block text-xs text-ink-faint">{hint}</span> : null}
     </label>
+  );
+}
+
+function Input({
+  value,
+  onChange,
+  mono,
+  ...rest
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  mono?: boolean;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`w-full h-12 px-3.5 rounded-control bg-paper border border-hairline text-ink placeholder:text-fog focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 ${
+        mono ? 'mono' : ''
+      }`}
+      {...rest}
+    />
+  );
+}
+
+function Stepper({
+  value,
+  min,
+  onChange,
+}: {
+  value: number;
+  min: number;
+  onChange: (v: number) => void;
+}) {
+  const btn =
+    'grid h-12 w-12 shrink-0 place-items-center rounded-control bg-paper border border-hairline-strong text-ink hover:bg-mist disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40';
+  return (
+    <div className="flex items-center gap-3">
+      <button type="button" className={btn} aria-label="Fewer milestones" disabled={value <= min} onClick={() => onChange(Math.max(min, value - 1))}>
+        <Minus size={18} aria-hidden />
+      </button>
+      <span className="mono text-[18px] text-ink w-8 text-center">{value}</span>
+      <button type="button" className={btn} aria-label="More milestones" onClick={() => onChange(value + 1)}>
+        <Plus size={18} aria-hidden />
+      </button>
+    </div>
   );
 }

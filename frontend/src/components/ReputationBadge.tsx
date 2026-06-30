@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { CheckCircle2, AlertTriangle } from 'lucide-react';
 import { getReputation, type Reputation } from '../lib/contract';
-import { formatAmount } from '../lib/format';
 
+// Reputation chip (DESIGN §6.6): completed vs refunded, accent vs refund, mono.
 export function ReputationBadge({ trader, publicKey }: { trader: string; publicKey?: string }) {
   const [rep, setRep] = useState<Reputation | null>(null);
 
@@ -16,25 +17,19 @@ export function ReputationBadge({ trader, publicKey }: { trader: string; publicK
   }, [trader, publicKey]);
 
   if (!rep) {
-    return <span className="mono text-xs text-ink-faint">reputation loading...</span>;
+    return <span className="mono text-xs text-fog">reputation loading</span>;
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+    <span className="mono inline-flex items-center gap-2.5 text-xs">
       <span className="inline-flex items-center gap-1 text-accent" title="Completed agreements">
-        <span aria-hidden>✓</span>
-        <span className="mono">{rep.completed}</span>
-        <span className="text-ink-faint">completed</span>
+        <CheckCircle2 size={14} aria-hidden />
+        {rep.completed}
       </span>
-      <span className="inline-flex items-center gap-1 text-danger" title="Refunded agreements">
-        <span aria-hidden>⚠</span>
-        <span className="mono">{rep.refunded}</span>
-        <span className="text-ink-faint">refunded</span>
+      <span className="inline-flex items-center gap-1 text-refund" title="Refunded agreements">
+        <AlertTriangle size={14} aria-hidden />
+        {rep.refunded}
       </span>
-      <span className="inline-flex items-center gap-1 text-ink-muted" title="Total volume handled">
-        <span aria-hidden>Σ</span>
-        <span className="mono">{formatAmount(rep.total_volume)}</span>
-      </span>
-    </div>
+    </span>
   );
 }
