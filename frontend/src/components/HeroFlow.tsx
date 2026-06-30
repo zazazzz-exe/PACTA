@@ -27,10 +27,11 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
 
   return (
     <section className="relative overflow-hidden">
-      <div aria-hidden className="hf-drift1 pointer-events-none absolute -top-16 -right-12 h-64 w-64 rounded-full bg-accent-tint opacity-40 blur-3xl" />
-
+      {/* No local blob here: the section is max-w-6xl with overflow-hidden, so any
+          blob in it gets clipped by a straight line at the section edge (the "edge"
+          artifact). The full-viewport AmbientBackground supplies the glow instead. */}
       <div className="relative mx-auto max-w-5xl px-5 py-12">
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
           {/* Left: heading, copy, connect (left-aligned on desktop) */}
           <div className="min-w-0 text-center lg:text-left">
             <p className="mb-5 text-[12px] font-semibold uppercase tracking-[0.22em] text-accent">Pacta</p>
@@ -52,7 +53,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
           </div>
 
           {/* Right: animated escrow flow */}
-          <div className="flex min-w-0 justify-center overflow-hidden">
+          <div className="flex min-w-0 justify-center">
             <div className="hf-band flex flex-shrink-0 items-center">
               <Node icon={<Wallet size={20} />} label="Investor" />
 
