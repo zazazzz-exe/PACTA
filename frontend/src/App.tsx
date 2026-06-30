@@ -65,7 +65,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <AmbientBackground />
+      {/* Ambient motion/glow is reserved for the landing hero only. */}
+      {route.name === 'landing' && <AmbientBackground />}
       <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 h-14">
           <div className="flex items-center gap-3">
