@@ -3,7 +3,7 @@
 > **Trust, written in code.**
 
 <p align="center">
-  <img alt="Pacta app" src="assets/pacta.png"/>
+  <img alt="Pacta app" src="assets/pacta.png" width="200"/>
 </p>
 
 Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** smart contracts. It turns the informal, trust-based money agreements that people make with independent online traders into secure, programmable contracts: capital is released in milestone tranches, protected by a trader-posted security bond, refundable if the trader fails to deliver, and provable on-chain. An AI Risk Lens reads a trader's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
@@ -35,6 +35,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 
 - [The problem](#the-problem)
 - [The solution](#the-solution)
+- [Contract Addresses and Transactions](#Contract-addresses-and-transactions)
 - [How Pacta works](#how-pacta-works)
 - [Features](#features)
 - [The AI Risk Lens](#the-ai-risk-lens)
@@ -69,6 +70,15 @@ Pacta fixes this not by asking people to trust harder, but by making trust enfor
 - **Records every agreement on-chain**, building a portable reputation that turns anonymous traders into accountable ones.
 
 Pacta does not give investment advice, take custody of trading profits, or guarantee returns. It is **trust infrastructure**.
+
+## Contract Addresses and Transactions
+
+- **Pacta Soroban contract (Stellar Testnet):**
+  `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
+  · [view on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
+<p align="center">
+  <img alt="Pacta app" src="assets/contract.png" width="700" />
+</p>
 
 ## How Pacta works
 
