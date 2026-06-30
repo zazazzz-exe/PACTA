@@ -377,16 +377,12 @@ How this project meets the Level 4 requirements:
 | Stable frontend + contract architecture | [Architecture](#architecture), [contract reference](#smart-contract-reference) |
 | Mobile-responsive UI | Mobile-first build; see mobile screenshot |
 | Loading states + error handling | [Features](#features) — skeletons, tx-pending, contract-error messages, graceful AI fallback |
-| 10+ real users onboarded | [Wallet interactions table](#wallet-interactions-proof) — _[TODO: fill]_ |
-| Proof of wallet interactions | Same table, each linked to Stellar Expert — _[TODO: fill]_ |
-| User feedback collection | [Feedback summary](#feedback-summary) — _[TODO: fill]_ |
 | Production deployment | [Live app](https://pacta-zarrah.vercel.app) |
-| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) + screenshot — _[TODO: screenshot]_ |
+| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) + screenshot |
 | Optimized UX | "Calm Trust" design system (`DESIGN.md`), mobile-first |
 | Project structure + documentation | [Project structure](#project-structure) + this README |
-| Contract on Stellar testnet | `[TODO: CONTRACT_ID]` |
+| Contract on Stellar testnet | `[CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]` |
 | 15+ meaningful commits | See the repository commit history |
-| Public GitHub repository | _[TODO: repo URL]_ |
-| Live demo video | _[TODO: video link]_ |
-| Contract deployment address | _[TODO: CONTRACT_ID]_ in [links](#-links) and [reference](#smart-contract-reference) |
-| Screenshots (UI, mobile, analytics) | [Screenshots](#screenshots) — _[TODO: add files]_ |
+| Public GitHub repository | _[https://github.com/zazazzz-exe/PACTA.git]_ |
+| Live demo video | _[https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=drive_link]_ |
+| Contract deployment address | _[https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]_ in [links](#-links) and [reference](#smart-contract-reference) |
