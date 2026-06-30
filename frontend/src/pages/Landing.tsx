@@ -5,7 +5,7 @@ import { useTour } from '../components/Tour';
 import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
-import { Button } from '../components/Button';
+import { HeroFlow } from '../components/HeroFlow';
 import { ProofPanel } from '../components/ProofPanel';
 import { CONTRACT_ID, contractExplorerUrl } from '../lib/config';
 import { shortAddr } from '../lib/format';
@@ -17,7 +17,7 @@ const STEPS = [
 ];
 
 export function Landing() {
-  const { address, connect, connecting } = useWallet();
+  const { address, connect } = useWallet();
   const { start } = useTour();
 
   // Once connected, move on to the dashboard (behavior unchanged from PRD §9).
@@ -39,31 +39,15 @@ export function Landing() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      {/* Hero: stacked on mobile, two columns on desktop */}
-      <section className="grid gap-8 md:grid-cols-2 md:items-center md:gap-12 md:pt-8">
-        <div>
-          <h1 className="animate-rise text-[26px] sm:text-[34px] font-medium tracking-tight text-ink leading-tight">
-            Trust, written in code.
-          </h1>
-          <p
-            className="animate-rise mt-3 text-[15px] sm:text-[16px] leading-relaxed text-slate max-w-md"
-            style={{ animationDelay: '80ms' }}
-          >
-            Lock money in a contract no one can run off with. Release it step by step, and get it
-            back if the deadline passes.
-          </p>
+      {/* Animated escrow-flow hero (LANDING_HERO.md) */}
+      <HeroFlow onConnect={connect} />
 
-          <div className="animate-rise mt-6 max-w-sm" style={{ animationDelay: '160ms' }}>
-            <Button className="w-full" onClick={connect} disabled={connecting}>
-              {connecting ? 'Connecting' : 'Connect wallet'}
-            </Button>
-            <p className="mt-2 text-center text-[12px] text-fog">
-              Your wallet is your login. No accounts, no passwords.
-            </p>
-          </div>
-        </div>
-
-        <div className="animate-rise" style={{ animationDelay: '240ms' }} data-tour="proof">
+      {/* Provable on-chain — the live proof panel artifact */}
+      <section className="mt-12 md:mt-16">
+        <h2 className="animate-rise text-center text-[13px] font-medium uppercase tracking-wide text-fog">
+          Provable on-chain
+        </h2>
+        <div className="animate-rise mx-auto mt-4 max-w-app" style={{ animationDelay: '80ms' }} data-tour="proof">
           <ProofPanel
             id="agr-001"
             protectedAmount="75.0000000"
@@ -73,6 +57,10 @@ export function Landing() {
             countUp
           />
         </div>
+        <p className="mx-auto mt-3 max-w-[440px] text-center text-[13px] leading-relaxed text-slate">
+          Every agreement is a real Soroban contract. Verify the funds, the bond, and every release
+          on Stellar.
+        </p>
       </section>
 
       <section className="mt-12 md:mt-16" data-tour="how">
