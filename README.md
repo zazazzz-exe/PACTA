@@ -52,9 +52,9 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 - [Production deployment](#production-deployment)
 - [User onboarding and feedback](#user-onboarding-and-feedback)
 - [Roadmap](#roadmap)
-- [Team](#team)
 - [License](#license)
 - [Submission checklist](#submission-checklist)
+- [Developer](#Developer)
 
 ---
 
@@ -163,7 +163,7 @@ A brand-new address with no history is flagged as unproven rather than green-lit
 | Smart contract | Rust, `soroban-sdk`, Stellar CLI, deployed to Stellar **testnet** |
 | Settlement asset | Stellar Asset Contract (native XLM SAC in demo; USDC SAC in production) |
 | Frontend | Vite, React, TypeScript, Tailwind CSS |
-| Wallet | `@creit.tech/stellar-wallets-kit` (Freighter, xBull, Albedo, WalletConnect) |
+| Wallet | `@creit.tech/stellar-wallets-kit` (**Freighter**, xBull, Albedo, WalletConnect) |
 | Contract client | Generated TypeScript bindings (`stellar contract bindings typescript`) |
 | AI Risk Lens | Gemini via a serverless function |
 | Hosting | Vercel |
@@ -233,7 +233,7 @@ Create `frontend/.env` (and set the same in your hosting provider):
 
 ```bash
 # Risk Lens serverless function (server-side only — never exposed to the client)
-ANTHROPIC_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
 
 # Optional monitoring
 VITE_SENTRY_DSN=your_sentry_dsn
@@ -242,8 +242,8 @@ VITE_SENTRY_DSN=your_sentry_dsn
 Contract and network constants live in `frontend/src/lib/config.ts`:
 
 ```ts
-export const CONTRACT_ID = '[TODO: CONTRACT_ID]';
-export const TOKEN_ADDRESS = '[TODO: TOKEN_ADDRESS]';
+export const CONTRACT_ID = 'CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL';
+export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 ```
@@ -352,15 +352,6 @@ Real users onboarded and interacting on testnet:
 - Shareable on-chain proof certificates for completed deals
 - Mainnet deployment and a professional security audit
 
-## Team
-
-> <!-- TODO: confirm names, roles, and links -->
-
-- **Zarrah Exekiel Valles** — [role]
-- **Jecyn Vallirie Turbanos** — [role]
-
-Built for the Build on Stellar APAC hackathon. Country: Philippines.
-
 ## License
 
 Released under the [MIT License](LICENSE).
@@ -386,3 +377,9 @@ How this project meets the Level 4 requirements:
 | Public GitHub repository | _[https://github.com/zazazzz-exe/PACTA.git]_ |
 | Live demo video | _[https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=drive_link]_ |
 | Contract deployment address | _[https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]_ in [links](#-links) and [reference](#smart-contract-reference) |
+
+## Developer
+
+- **Zarrah Exekiel Valles** 
+
+Built for the Build on Stellar. Country: Philippines.
