@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-base text-ink font-sans antialiased;
+    background-image:
+      radial-gradient(60rem 40rem at 75% -10%, rgba(31, 217, 182, 0.06), transparent 60%),
+      radial-gradient(50rem 40rem at 5% 0%, rgba(80, 120, 200, 0.05), transparent 55%);
+    background-attachment: fixed;
+  }
+  /* Hairline focus ring tuned for the accent */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-accent-ring ring-offset-2 ring-offset-base;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-hairline bg-surface shadow-raised;
+  }
+  .mono {
+    @apply font-mono tabular-nums;
+  }
+  .label {
+    @apply text-xs font-medium uppercase tracking-wider text-ink-faint;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+           transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn bg-accent text-base hover:bg-accent/90;
+  }
+  .btn-ghost {
+    @apply btn border border-hairline bg-transparent text-ink hover:bg-white/5;
+  }
+  .btn-warn {
+    @apply btn bg-warn text-base hover:bg-warn/90;
+  }
+  .btn-danger {
+    @apply btn border border-danger/40 bg-danger/10 text-danger hover:bg-danger/20;
+  }
+  .field {
+    @apply w-full rounded-xl border border-hairline bg-base/60 px-3.5 py-2.5 text-sm text-ink
+           placeholder:text-ink-faint focus:border-accent/50;
+  }
+}
