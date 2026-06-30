@@ -1,8 +1,3 @@
-<!--
-  Placeholders to fill before submission are marked like [THIS] and with <!-- TODO --> notes.
-  Search the file for "TODO" and "[" to find every item you need to complete.
--->
-
 # Pacta
 
 > **Trust, written in code.**
@@ -16,7 +11,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 </p>
 
 <!-- TODO: replace with a real hero screenshot of the app -->
-![Pacta dashboard](docs/screenshots/dashboard.png)
+<img src="assets/dashboard.png>
 
 ---
 
@@ -26,8 +21,8 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 |---|---|
 | **Live app** | [https://pacta-zarrah.vercel.app](https://pacta-zarrah.vercel.app) |
 | **Demo video** | [TODO: add demo video link] |
-| **Smart contract (testnet)** | `[TODO: CONTRACT_ID, starts with C…]` · [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/[TODO_CONTRACT_ID]) |
-| **GitHub** | [TODO: public repo URL] |
+| **Smart contract (testnet)** | `[TODO: CONTRACT_ID, starts with C…]` · [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL) |
+| **GitHub** | https://github.com/zazazzz-exe/PACTA.git |
 
 ---
 
