@@ -9,6 +9,7 @@
 Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** smart contracts. It turns the informal, trust-based money agreements that people make with independent online traders into secure, programmable contracts: capital is released in milestone tranches, protected by a trader-posted security bond, refundable if the trader fails to deliver, and provable on-chain. An AI Risk Lens reads a trader's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
 
 <p>
+  <a href="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml/badge.svg" /></a>
   <img alt="Network" src="https://img.shields.io/badge/network-Stellar%20testnet-0B7A63" />
   <img alt="Contracts" src="https://img.shields.io/badge/contracts-Soroban-0B7A63" />
   <img alt="License" src="https://img.shields.io/badge/license-MIT-555" />
@@ -46,6 +47,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
 - [Testing](#testing)
+- [CI/CD](#cicd)
 - [Monitoring and analytics](#monitoring-and-analytics)
 - [Production deployment](#production-deployment)
 - [User onboarding and feedback](#user-onboarding-and-feedback)
@@ -277,6 +279,23 @@ cargo test
 ```
 
 All contract tests must pass before deployment (the deploy script gates on this).
+
+## CI/CD
+
+Every push and pull request to `main` runs an automated pipeline on GitHub Actions
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)):
+
+- **Contract** installs Rust, runs the full `cargo test` suite, and compiles the
+  escrow contract to `wasm32v1-none`.
+- **Frontend** installs dependencies with `npm ci`, type-checks, and builds the
+  Vite production bundle.
+
+Continuous deployment is handled by Vercel: a successful push to `main` is
+auto-deployed to production at
+[pacta-zarrah.vercel.app](https://pacta-zarrah.vercel.app). The live build status
+is shown by the CI badge at the top of this README.
+
+[![CI](https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml/badge.svg)](https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml)
 
 ## Monitoring and analytics
 
