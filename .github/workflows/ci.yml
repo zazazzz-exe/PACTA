@@ -52,7 +52,11 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        # Use `npm install` rather than the stricter `npm ci`: the committed
+        # package-lock.json omits ws's OPTIONAL native deps (bufferutil,
+        # utf-8-validate), which makes `npm ci` fail with EUSAGE on some npm
+        # versions. `npm install` reconciles those optional deps gracefully.
+        run: npm install --no-audit --no-fund
 
       - name: Type-check and build
         run: npm run build
