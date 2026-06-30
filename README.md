@@ -122,7 +122,7 @@ Pacta does not give investment advice, take custody of trading profits, or guara
 When an investor is about to work with a trader, Pacta reads that trader's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
 
 - All statistics (completed/refunded counts, volume, recency, deal-vs-history ratio) are computed deterministically in code, so the numbers are always correct.
-- An LLM (**Claude**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
+- An LLM (**Gemini**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
 - It assesses **counterparty trustworthiness from on-chain history only** — never investment advice, never return predictions.
 
 A brand-new address with no history is flagged as unproven rather than green-lit, which doubles as a lightweight anti-Sybil signal.
