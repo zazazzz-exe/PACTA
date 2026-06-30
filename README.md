@@ -2,6 +2,10 @@
 
 > **Trust, written in code.**
 
+<p align="center">
+  <img alt="Pacta app" src="assets/pacta.png"/>
+</p>
+
 Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** smart contracts. It turns the informal, trust-based money agreements that people make with independent online traders into secure, programmable contracts: capital is released in milestone tranches, protected by a trader-posted security bond, refundable if the trader fails to deliver, and provable on-chain. An AI Risk Lens reads a trader's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
 
 <p>
@@ -117,7 +121,7 @@ A brand-new address with no history is flagged as unproven rather than green-lit
 
 | Product UI | Mobile responsive | Analytics / monitoring |
 |---|---|---|
-| ![UI](docs/screenshots/dashboard.png) | ![Mobile](docs/screenshots/mobile.png) | ![Analytics](docs/screenshots/analytics.png) |
+| ![UI](assets/dashboard.png) | ![Mobile](assets/mobile.jpg) | ![Analytics](assets/analytics.png) |
 
 ## Architecture
 
