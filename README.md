@@ -10,8 +10,9 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
   <img alt="License" src="https://img.shields.io/badge/license-MIT-555" />
 </p>
 
-<!-- TODO: replace with a real hero screenshot of the app -->
-<img src="assets/dashboard.png>
+<p align="center">
+  <img alt="Pacta app" src="assets/dashboard.png" width="900" />
+</p>
 
 ---
 
@@ -21,7 +22,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 |---|---|
 | **Live app** | [https://pacta-zarrah.vercel.app](https://pacta-zarrah.vercel.app) |
 | **Demo video** | [TODO: add demo video link] |
-| **Smart contract (testnet)** | `[TODO: CONTRACT_ID, starts with C…]` · [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL) |
+| **Smart contract (testnet)** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL) |
 | **GitHub** | https://github.com/zazazzz-exe/PACTA.git |
 
 ---
