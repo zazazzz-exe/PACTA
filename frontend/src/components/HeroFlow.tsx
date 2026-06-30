@@ -27,7 +27,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
 
   return (
     <section className="relative overflow-hidden">
-      <div aria-hidden className="hf-drift1 pointer-events-none absolute -top-16 -right-12 h-64 w-64 rounded-full bg-accent-tint opacity-50" />
+      <div aria-hidden className="hf-drift1 pointer-events-none absolute -top-16 -right-12 h-64 w-64 rounded-full bg-accent-tint opacity-40 blur-3xl" />
 
       <div className="relative mx-auto max-w-5xl px-5 py-12">
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
