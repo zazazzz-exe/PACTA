@@ -6,6 +6,7 @@ import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
 import { HeroFlow } from '../components/HeroFlow';
+import { Reveal } from '../components/Reveal';
 import { ProofPanel } from '../components/ProofPanel';
 import { CONTRACT_ID, contractExplorerUrl } from '../lib/config';
 import { shortAddr } from '../lib/format';
@@ -42,45 +43,52 @@ export function Landing() {
       {/* Animated escrow-flow hero (LANDING_HERO.md) */}
       <HeroFlow onConnect={connect} />
 
-      {/* Provable on-chain — the live proof panel artifact */}
+      {/* Provable on-chain — the live proof panel artifact (reveals on scroll) */}
       <section className="mt-12 md:mt-16">
-        <h2 className="animate-rise text-center text-[13px] font-medium uppercase tracking-wide text-fog">
-          Provable on-chain
-        </h2>
-        <div className="animate-rise mx-auto mt-4 max-w-app" style={{ animationDelay: '80ms' }} data-tour="proof">
-          <ProofPanel
-            id="agr-001"
-            protectedAmount="75.0000000"
-            txHash="9f3a…b1c4"
-            contractShort={shortAddr(CONTRACT_ID, 6, 6)}
-            explorerUrl={contractExplorerUrl()}
-            countUp
-          />
-        </div>
-        <p className="mx-auto mt-3 max-w-[440px] text-center text-[13px] leading-relaxed text-slate">
-          Every agreement is a real Soroban contract. Verify the funds, the bond, and every release
-          on Stellar.
-        </p>
+        <Reveal>
+          <h2 className="text-center text-[13px] font-medium uppercase tracking-wide text-fog">
+            Provable on-chain
+          </h2>
+        </Reveal>
+        <Reveal delay={120} className="my-8 flex justify-center">
+          <div data-tour="proof" className="w-full max-w-md origin-center scale-[1.15] sm:scale-125">
+            <ProofPanel
+              id="agr-001"
+              protectedAmount="75.0000000"
+              txHash="9f3a…b1c4"
+              contractShort={shortAddr(CONTRACT_ID, 6, 6)}
+              explorerUrl={contractExplorerUrl()}
+              countUp
+            />
+          </div>
+        </Reveal>
+        <Reveal delay={200}>
+          <p className="mx-auto mt-3 max-w-[440px] text-center text-[13px] leading-relaxed text-slate">
+            Every agreement is a real Soroban contract. Verify the funds, the bond, and every release
+            on Stellar.
+          </p>
+        </Reveal>
       </section>
 
       <section className="mt-12 md:mt-16" data-tour="how">
-        <h2 className="animate-rise text-[13px] font-medium uppercase tracking-wide text-fog">
-          How it works
-        </h2>
+        <Reveal>
+          <h2 className="text-[13px] font-medium uppercase tracking-wide text-fog">How it works</h2>
+        </Reveal>
         <ul className="mt-4 grid gap-3 sm:grid-cols-3">
           {STEPS.map(({ icon: Icon, title, body }, i) => (
-            <li
-              key={title}
-              className="animate-rise flex gap-3 sm:flex-col sm:rounded-card sm:p-4 sm:transition sm:hover:bg-mist"
-              style={{ animationDelay: `${320 + i * 80}ms` }}
-            >
-              <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-control bg-accent-tint text-accent-deep">
-                <Icon size={18} aria-hidden />
-              </span>
-              <div>
-                <p className="text-[15px] font-medium text-ink">{title}</p>
-                <p className="text-[14px] leading-relaxed text-slate">{body}</p>
-              </div>
+            <li key={title}>
+              <Reveal
+                delay={i * 120}
+                className="flex gap-3 sm:flex-col sm:rounded-card sm:p-4 sm:transition sm:hover:bg-mist"
+              >
+                <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-control bg-accent-tint text-accent-deep">
+                  <Icon size={18} aria-hidden />
+                </span>
+                <div>
+                  <p className="text-[15px] font-medium text-ink">{title}</p>
+                  <p className="text-[14px] leading-relaxed text-slate">{body}</p>
+                </div>
+              </Reveal>
             </li>
           ))}
         </ul>

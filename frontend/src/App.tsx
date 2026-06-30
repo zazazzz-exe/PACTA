@@ -1,4 +1,4 @@
-import { X, HelpCircle } from 'lucide-react';
+import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import { useRoute, navigate } from './lib/router';
 import { useWallet } from './hooks/useWallet';
 import { useTour } from './components/Tour';
@@ -11,8 +11,7 @@ import { Dashboard } from './pages/Dashboard';
 import { CreateAgreement } from './pages/CreateAgreement';
 import { AgreementDetail } from './pages/AgreementDetail';
 import { TraderProfile } from './pages/TraderProfile';
-import { CONTRACT_ID, contractExplorerUrl } from './lib/config';
-import { shortAddr } from './lib/format';
+import { contractExplorerUrl } from './lib/config';
 
 function Wordmark() {
   return (
@@ -20,10 +19,8 @@ function Wordmark() {
       onClick={() => navigate('/')}
       className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-control"
     >
-      <span className="grid h-7 w-7 place-items-center rounded-control bg-accent text-white text-sm font-semibold">
-        P
-      </span>
-      <span className="text-[17px] font-medium tracking-tight text-ink">Pacta</span>
+      <img src="/Pacta_logo.png" alt="" aria-hidden className="h-11 w-11 object-contain" />
+      <span className="text-[21px] font-semibold tracking-tight text-ink">Pacta</span>
     </button>
   );
 }
@@ -102,19 +99,97 @@ export default function App() {
         {route.name === 'trader' && <TraderProfile address={route.address} />}
       </main>
 
-      <footer className="relative z-10 px-5 py-6">
-        <div className="mx-auto max-w-6xl border-t border-hairline pt-4 flex flex-col gap-1 text-[12px] text-fog sm:flex-row sm:items-center sm:justify-between">
-          <span>Pacta runs entirely on a Soroban contract. No backend, no custody.</span>
-          <a
-            href={contractExplorerUrl()}
-            target="_blank"
-            rel="noreferrer"
-            className="mono hover:text-accent focus:outline-none focus-visible:text-accent"
-          >
-            contract {shortAddr(CONTRACT_ID, 6, 6)}
-          </a>
+      <footer className="relative z-10 mt-16 bg-[#0A3328] text-panel-ink">
+        <div className="mx-auto max-w-6xl px-5 py-12">
+          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-2.5">
+                <img src="/Pacta_logo.png" alt="" aria-hidden className="h-12 w-12 object-contain" />
+                <span className="text-[21px] font-semibold tracking-tight text-panel-ink">Pacta</span>
+              </div>
+              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-panel-muted">
+                Trust, written in code. A non-custodial escrow for entrusting money to independent
+                traders: locked in a contract, released step by step, backed by a bond.
+              </p>
+              <span className="mono mt-4 inline-flex items-center gap-1.5 text-[12px] text-panel-muted">
+                <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden /> Stellar testnet
+              </span>
+            </div>
+
+            {/* Product */}
+            <div>
+              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Product</h3>
+              <ul className="mt-3 space-y-2.5">
+                <li><FooterBtn onClick={() => navigate('/')}>Home</FooterBtn></li>
+                <li><FooterBtn onClick={() => navigate('/dashboard')}>Dashboard</FooterBtn></li>
+                <li><FooterBtn onClick={() => navigate('/create')}>New agreement</FooterBtn></li>
+              </ul>
+            </div>
+
+            {/* Resources */}
+            <div>
+              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Resources</h3>
+              <ul className="mt-3 space-y-2.5">
+                <li><FooterExt href={contractExplorerUrl()}>Smart contract</FooterExt></li>
+                <li><FooterExt href="https://stellar.org">Stellar network</FooterExt></li>
+                <li><FooterExt href="https://www.freighter.app/">Freighter wallet</FooterExt></li>
+              </ul>
+            </div>
+
+            {/* Security */}
+            <div>
+              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Security</h3>
+              <ul className="mt-3 space-y-2.5 text-[14px] text-panel-muted">
+                <li className="flex items-center gap-2"><ShieldCheck size={15} className="text-signal shrink-0" aria-hidden /> Non-custodial</li>
+                <li className="flex items-center gap-2"><Lock size={15} className="text-signal shrink-0" aria-hidden /> Funds locked in contract</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={15} className="text-signal shrink-0" aria-hidden /> On-chain reputation</li>
+                <li className="flex items-center gap-2"><RotateCcw size={15} className="text-signal shrink-0" aria-hidden /> Deadline refunds</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-5 text-[12px] text-panel-muted sm:flex-row sm:items-center sm:justify-between">
+            <span>© 2026 Pacta. Trust, written in code.</span>
+            <span className="flex items-center gap-1.5">
+              Powered by
+              <a
+                href="https://stellar.org/soroban"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-signal hover:opacity-80 focus:outline-none focus-visible:opacity-80"
+              >
+                Stellar Soroban
+              </a>
+            </span>
+          </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+function FooterBtn({ onClick, children }: { onClick: () => void; children: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="text-[14px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+    >
+      {children}
+    </button>
+  );
+}
+
+function FooterExt({ href, children }: { href: string; children: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-1 text-[14px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+    >
+      {children}
+      <ArrowUpRight size={13} aria-hidden />
+    </a>
   );
 }

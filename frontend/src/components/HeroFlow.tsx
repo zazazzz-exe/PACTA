@@ -33,7 +33,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
         <div className="grid items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
           {/* Left: heading, copy, connect (left-aligned on desktop) */}
           <div className="text-center lg:text-left">
-            <p className="mb-5 text-[13px] font-medium text-slate">Pacta</p>
+            <p className="mb-5 text-[12px] font-semibold uppercase tracking-[0.22em] text-accent">Pacta</p>
             <h1 className="mb-2.5 text-[26px] font-semibold leading-tight text-ink sm:text-[34px]">
               Trust, written in code.
             </h1>
