@@ -3,16 +3,16 @@ import {
   WalletNetwork,
   FREIGHTER_ID,
   FreighterModule,
-  xBullModule,
-  AlbedoModule,
   type ISupportedWallet,
 } from '@creit.tech/stellar-wallets-kit';
 import { NETWORK_PASSPHRASE } from './config';
 
+// Freighter only — the kit modal lists just Freighter (and an install prompt if
+// the extension is missing).
 export const kit = new StellarWalletsKit({
   network: WalletNetwork.TESTNET,
   selectedWalletId: FREIGHTER_ID,
-  modules: [new FreighterModule(), new xBullModule(), new AlbedoModule()],
+  modules: [new FreighterModule()],
 });
 
 export async function connectWallet(): Promise<string> {
