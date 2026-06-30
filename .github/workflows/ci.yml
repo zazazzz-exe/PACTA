@@ -35,9 +35,6 @@ jobs:
   frontend:
     name: Frontend (type-check + build)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -45,18 +42,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           # Node 24 ships npm 11, matching the npm that generated package-lock.json.
-          # (npm 10 on Node 20 rejects the lock as out of sync over the optional
-          # utf-8-validate dep.)
           node-version: 24
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
-        # Use `npm install` rather than the stricter `npm ci`: the committed
-        # package-lock.json omits ws's OPTIONAL native deps (bufferutil,
-        # utf-8-validate), which makes `npm ci` fail with EUSAGE on some npm
-        # versions. `npm install` reconciles those optional deps gracefully.
-        run: npm install --no-audit --no-fund
+      - name: Build the generated contract bindings (packages/pacta)
+        # The frontend imports the `pacta` TS bindings, whose dist/ is gitignored
+        # and therefore absent on a fresh checkout. Build them first so the
+        # frontend's `tsc -b` can resolve `pacta` (mirrors vercel.json).
+        run: |
+          npm install --no-audit --no-fund --prefix packages/pacta
+          npm run build --prefix packages/pacta
 
-      - name: Type-check and build
-        run: npm run build
+      - name: Install frontend dependencies
+        # `npm install` (not the stricter `npm ci`): the lockfile omits ws's
+        # OPTIONAL native deps (bufferutil/utf-8-validate), which makes `npm ci`
+        # fail with EUSAGE. `npm install` reconciles them gracefully.
+        run: npm install --no-audit --no-fund --prefix frontend
+
+      - name: Type-check and build frontend
+        run: npm run build --prefix frontend
