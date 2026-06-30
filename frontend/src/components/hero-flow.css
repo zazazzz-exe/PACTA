@@ -37,6 +37,11 @@
   .hf-band { transform: scale(0.66); }
 }
 
+/* Larger, clearer diagram on desktop (sits in the 600px flow column). */
+@media (min-width: 1024px) {
+  .hf-band { transform: scale(1.25); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hf-token, .hf-release, .hf-vault, .hf-drift1, .hf-drift2 { animation: none !important; }
   .hf-release { width: 100%; }

@@ -28,10 +28,9 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
   return (
     <section className="relative overflow-hidden">
       <div aria-hidden className="hf-drift1 pointer-events-none absolute -top-16 -right-12 h-64 w-64 rounded-full bg-accent-tint opacity-50" />
-      <div aria-hidden className="hf-drift2 pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 rounded-full bg-accent-tint opacity-40" />
 
       <div className="relative mx-auto max-w-5xl px-5 py-12">
-        <div className="grid items-center gap-10 lg:grid-cols-[1fr_500px] lg:gap-12">
+        <div className="grid items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
           {/* Left: heading, copy, connect (left-aligned on desktop) */}
           <div className="text-center lg:text-left">
             <p className="mb-5 text-[13px] font-medium text-slate">Pacta</p>

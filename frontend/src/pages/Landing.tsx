@@ -38,7 +38,7 @@ export function Landing() {
   }, [address, start]);
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className="mx-auto max-w-6xl">
       {/* Animated escrow-flow hero (LANDING_HERO.md) */}
       <HeroFlow onConnect={connect} />
 
