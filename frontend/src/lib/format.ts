@@ -30,6 +30,10 @@ export function formatPhp(base: bigint): string {
   return `≈ ₱${php.toLocaleString()}`;
 }
 
+// True for a well-formed Stellar public key (G... ed25519 account).
+export const isValidStellarAddress = (addr: string): boolean =>
+  /^G[A-Z2-7]{55}$/.test(addr);
+
 // Truncate a Stellar address for display: GABC...WXYZ
 export function shortAddr(addr: string, lead = 4, tail = 4): string {
   if (!addr || addr.length <= lead + tail + 1) return addr;

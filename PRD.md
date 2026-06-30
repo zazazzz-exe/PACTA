@@ -1277,6 +1277,29 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Inve
 
 ---
 
+## 17. AI Risk Lens (add-on feature — implemented)
+
+An add-on that reads a trader's on-chain track record and gives the investor a plain-language counterparty-risk read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
+
+**What it does.** When an investor enters a trader address (create flow) or views a trader profile, Pacta computes that trader's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
+
+**Code does the arithmetic; the model only interprets.** All counts are computed deterministically in `frontend/src/lib/riskStats.ts` (`computeTraderStats`). The model never recomputes numbers — it turns correct stats into plain language and a recommendation. This keeps figures un-hallucinated.
+
+**Responsible-AI boundary (non-negotiable, enforced in the system prompt).** The lens assesses behavioral / counterparty trustworthiness from on-chain history only. It never gives investment advice, predicts trading performance, or estimates profit. Its only recommendations are within Pacta's own mechanics (milestone count, bond size, duration). Consistent with Pacta's stated position that it does not provide investment advice.
+
+**Architecture.**
+- Client fetches the trader's agreements (reuses the existing read path), computes `TraderStats`, and POSTs them to a serverless endpoint.
+- **Serverless endpoint `/api/risk-lens`** (Vercel Edge, file at repo root `api/risk-lens.ts`) calls the Anthropic API (Claude Haiku) and returns a `RiskRead` JSON. The endpoint is the only place the model is called.
+- **The `ANTHROPIC_API_KEY` is server-side only** (host env var; see `.env.example`). It never appears in client code, the repo, or the browser. Only public on-chain stats are sent to the API — nothing the user could not already read on a block explorer.
+
+**Placement.** (1) Create agreement: lens renders above the summary card once a valid trader address is entered; `onApply` sets the milestone field. (2) Trader profile: lens renders as the counterparty read before reaching out. Both are styled only with DESIGN.md tokens.
+
+**Graceful degradation (required).** If the endpoint is unreachable or the key is unset, the lens shows a neutral "risk read unavailable" note and the raw reputation/history remains visible. The core create / fund / release / refund flow is never blocked by the lens.
+
+**Files.** `frontend/src/lib/riskStats.ts`, `riskTypes.ts`, `agreements.ts`; `frontend/src/hooks/useRiskLens.ts`, `useDebounce.ts`; `frontend/src/components/RiskLens.tsx`; `api/risk-lens.ts`. New frontend dependency: none beyond the existing stack (lucide-react already present).
+
+---
+
 ### Appendix A — Glossary
 - **Escrow:** funds held by a neutral party (here, the contract) until conditions are met.
 - **Security bond:** refundable collateral posted by the trader; seized by the investor on emergency refund.

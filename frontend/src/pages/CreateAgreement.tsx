@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { createAgreement } from '../lib/contract';
-import { toBaseUnits, shortAddr } from '../lib/format';
+import { toBaseUnits, shortAddr, isValidStellarAddress } from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { TOKEN_SYMBOL } from '../lib/config';
 import { Button } from '../components/Button';
+import { RiskLens } from '../components/RiskLens';
+import { useRiskLens } from '../hooks/useRiskLens';
+import { useDebounce } from '../hooks/useDebounce';
 
 export function CreateAgreement() {
   const { address, connect } = useWallet();
@@ -18,6 +21,16 @@ export function CreateAgreement() {
   const [duration, setDuration] = useState('60');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // AI Risk Lens: debounce the inputs so it fires at most once per distinct
+  // (trader, capital) the user settles on. Hooks run before any early return.
+  const debouncedTrader = useDebounce(trader);
+  const debouncedCapital = useDebounce(capital);
+  const contemplatedCapital =
+    Number(debouncedCapital) > 0 ? toBaseUnits(Number(debouncedCapital)) : undefined;
+  const lensTrader =
+    isValidStellarAddress(debouncedTrader) && debouncedTrader !== address ? debouncedTrader : null;
+  const lens = useRiskLens(lensTrader, contemplatedCapital);
 
   if (!address) {
     return (
@@ -115,6 +128,16 @@ export function CreateAgreement() {
         <p className="text-[12px] text-fog -mt-1">
           Duration is in seconds and starts when the escrow becomes active. Use 60 for the live demo.
         </p>
+
+        {/* AI Risk Lens — appears once a valid trader address is entered */}
+        {lensTrader && (
+          <RiskLens
+            read={lens.data}
+            loading={lens.loading}
+            error={lens.error}
+            onApply={(m) => setMilestones(m)}
+          />
+        )}
 
         {/* Plain-language summary */}
         <div className="bg-mist rounded-control p-4 text-[14px] leading-relaxed text-slate">

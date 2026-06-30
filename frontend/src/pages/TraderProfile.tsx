@@ -12,10 +12,13 @@ import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { Avatar } from '../components/Avatar';
 import { StatusPill } from '../components/StatusPill';
+import { RiskLens } from '../components/RiskLens';
+import { useRiskLens } from '../hooks/useRiskLens';
 
 // §7.5 — what an investor checks before agreeing to work with a trader.
 export function TraderProfile({ address }: { address: string }) {
   const { address: me } = useWallet();
+  const lens = useRiskLens(address);
   const [rep, setRep] = useState<Reputation | null>(null);
   const [history, setHistory] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,6 +91,9 @@ export function TraderProfile({ address }: { address: string }) {
       </div>
 
       {error && <p className="text-refund text-[13px]">{error}</p>}
+
+      {/* AI Risk Lens — counterparty read before reaching out */}
+      <RiskLens read={lens.data} loading={lens.loading} error={lens.error} />
 
       {/* History */}
       <div>
