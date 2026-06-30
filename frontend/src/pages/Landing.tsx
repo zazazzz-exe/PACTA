@@ -51,7 +51,7 @@ export function Landing() {
           </h2>
         </Reveal>
         <Reveal delay={120} className="my-8 flex justify-center">
-          <div data-tour="proof" className="w-full max-w-md origin-center scale-[1.15] sm:scale-125">
+          <div data-tour="proof" className="w-full max-w-md origin-center sm:scale-110 lg:scale-125">
             <ProofPanel
               id="agr-001"
               protectedAmount="75.0000000"

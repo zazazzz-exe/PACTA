@@ -22,7 +22,13 @@ export function ConnectButton() {
   return (
     <Button variant="secondary" className="h-11 px-4 text-[13px]" onClick={connect} disabled={connecting}>
       <Wallet size={16} aria-hidden />
-      {connecting ? 'Connecting' : 'Connect wallet'}
+      {connecting ? (
+        'Connecting'
+      ) : (
+        <span>
+          Connect<span className="hidden sm:inline">&nbsp;wallet</span>
+        </span>
+      )}
     </Button>
   );
 }

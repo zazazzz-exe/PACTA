@@ -29,7 +29,7 @@ function NetworkBadge() {
   return (
     <span
       data-tour="network"
-      className="mono inline-flex items-center gap-1.5 text-[12px] text-slate"
+      className="mono hidden sm:inline-flex items-center gap-1.5 text-[12px] text-slate"
     >
       <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden />
       testnet

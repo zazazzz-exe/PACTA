@@ -78,6 +78,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
     el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
     const measure = () => {
       const r = el.getBoundingClientRect();
+      // A hidden target (e.g. an element hidden on mobile) measures 0x0; fall
+      // back to a centered step instead of a broken zero-size spotlight.
+      if (r.width === 0 && r.height === 0) {
+        setRect(null);
+        return;
+      }
       setRect({ top: r.top, left: r.left, width: r.width, height: r.height });
     };
     measure();
