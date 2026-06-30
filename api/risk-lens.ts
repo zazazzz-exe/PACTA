@@ -1,10 +1,10 @@
-// Pacta Risk Lens — serverless endpoint (Vercel Edge). The Anthropic key stays
+// Pacta Risk Lens — serverless endpoint (Vercel Edge). The Gemini key stays
 // server-side here; the client only ever sends already-computed stats.
 // Spec: FEATURE_RISK_LENS.md §6. Lives at the repo root so Vercel serves it at
 // /api/risk-lens (the Vercel root is the repo root; see vercel.json).
 export const config = { runtime: 'edge' };
 
-const MODEL = 'claude-haiku-4-5-20251001'; // fast + cheap; swap to the latest Haiku as needed
+const MODEL = 'gemini-2.5-flash'; // fast + cheap, generous free tier
 
 const SYSTEM = `You are the Pacta Risk Lens, a counterparty-risk assistant inside Pacta — a non-custodial escrow protocol on Stellar. In Pacta an investor locks capital for an independent trader; the capital is released in EQUAL milestone tranches (each tranche = capital / number_of_milestones), and the trader posts a refundable security bond. If the trader fails by the deadline, the investor reclaims the unreleased capital plus the bond.
 
@@ -31,34 +31,56 @@ Output ONLY valid JSON, no markdown and no preamble, matching exactly:
 
 export default async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
+
+  // Fail clearly when the key is not configured (the #1 cause of "Risk read
+  // unavailable"). The key must live ONLY in the Vercel env, never in the repo.
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error('[risk-lens] GEMINI_API_KEY is not set in this environment');
+    return json({ error: 'missing_api_key' }, 500);
+  }
+
   try {
     const { stats } = await req.json();
     const user = `Trader on-chain statistics (already computed and correct):\n\n${JSON.stringify(stats, null, 2)}\n\nReturn the risk read as JSON.`;
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: 'user', parts: [{ text: user }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            maxOutputTokens: 1024,
+            temperature: 0.4,
+            // 2.5 Flash thinks by default; disable so the token budget goes to JSON.
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        }),
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 700,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: user }],
-      }),
-    });
-    if (!r.ok) return json({ error: 'upstream' }, 502);
+    );
+    if (!r.ok) {
+      // Surface the real upstream status in the server logs (and a non-sensitive
+      // status code to the client) so misconfig vs. bad key vs. rate limit is clear.
+      const detail = await r.text().catch(() => '');
+      console.error(`[risk-lens] Gemini upstream ${r.status}: ${detail.slice(0, 500)}`);
+      return json({ error: 'upstream', upstreamStatus: r.status }, 502);
+    }
 
     const data = await r.json();
-    const text = (data.content || [])
-      .filter((b: { type: string }) => b.type === 'text')
-      .map((b: { text: string }) => b.text)
+    const text = (data.candidates?.[0]?.content?.parts || [])
+      .map((p: { text?: string }) => p.text || '')
       .join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
     return json(parsed, 200);
-  } catch {
+  } catch (e) {
+    console.error('[risk-lens] handler failed', e);
     return json({ error: 'failed' }, 500);
   }
 }
