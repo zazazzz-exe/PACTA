@@ -165,15 +165,15 @@ A brand-new address with no history is flagged as unproven rather than green-lit
 | Frontend | Vite, React, TypeScript, Tailwind CSS |
 | Wallet | `@creit.tech/stellar-wallets-kit` (Freighter, xBull, Albedo, WalletConnect) |
 | Contract client | Generated TypeScript bindings (`stellar contract bindings typescript`) |
-| AI Risk Lens | Claude (Anthropic) via a serverless function |
+| AI Risk Lens | Gemini via a serverless function |
 | Hosting | Vercel |
 | Monitoring | Vercel Analytics + Speed Insights, Sentry (error tracking) |
 
 ## Smart contract reference
 
 - **Network:** Stellar testnet · RPC `https://soroban-testnet.stellar.org` · passphrase `Test SDF Network ; September 2015`
-- **Contract ID:** `[TODO: CONTRACT_ID]`
-- **Explorer:** [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet/contract/[TODO_CONTRACT_ID])
+- **Contract ID:** `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
+- **Explorer:** [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
 
 **Public interface:**
 
