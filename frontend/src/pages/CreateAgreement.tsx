@@ -7,12 +7,13 @@ import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { TOKEN_SYMBOL } from '../lib/config';
 import { Button } from '../components/Button';
+import { KycGate } from '../components/kyc/KycGate';
 import { RiskLens } from '../components/RiskLens';
 import { useRiskLens } from '../hooks/useRiskLens';
 import { useDebounce } from '../hooks/useDebounce';
 
 export function CreateAgreement() {
-  const { address, connect } = useWallet();
+  const { address, connect, kycStatus, kycLoading } = useWallet();
   const [trader, setTrader] = useState('');
   const [capital, setCapital] = useState('100');
   const [bond, setBond] = useState('20');
@@ -45,9 +46,14 @@ export function CreateAgreement() {
     );
   }
 
+  // Creating an agreement locks funds, so it is a gated action (Option B).
+  if (kycStatus !== 'verified') {
+    return <KycGate status={kycStatus} loading={kycLoading} />;
+  }
+
   function validate(): string | null {
-    if (!/^G[A-Z2-7]{55}$/.test(trader)) return "That trader address isn't valid. Check it and try again.";
-    if (trader === address) return 'The trader cannot be the same as the investor.';
+    if (!/^G[A-Z2-7]{55}$/.test(trader)) return "That provider address isn't valid. Check it and try again.";
+    if (trader === address) return 'The provider cannot be the same as you.';
     if (!(Number(capital) > 0)) return 'Capital must be greater than zero.';
     if (Number(bond) < 0) return 'Bond cannot be negative.';
     if (!Number.isInteger(milestones) || milestones < 1) return 'There must be at least one milestone.';
@@ -84,7 +90,7 @@ export function CreateAgreement() {
     }
   }
 
-  const traderLabel = /^G[A-Z2-7]{55}$/.test(trader) ? shortAddr(trader, 4, 4) : 'The trader';
+  const traderLabel = /^G[A-Z2-7]{55}$/.test(trader) ? shortAddr(trader, 4, 4) : 'The provider';
 
   return (
     <div className="mx-auto max-w-app">
@@ -100,7 +106,7 @@ export function CreateAgreement() {
       </div>
 
       <form className="space-y-4" onSubmit={onSubmit}>
-        <Field label="Trader address">
+        <Field label="Provider address">
           <Input mono placeholder="G..." value={trader} onChange={(v) => setTrader(v.trim())} spellCheck={false} />
         </Field>
 

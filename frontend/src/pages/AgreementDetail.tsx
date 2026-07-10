@@ -29,6 +29,7 @@ import { ReputationBadge } from '../components/ReputationBadge';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { ProofPanel } from '../components/ProofPanel';
+import { CopyButton } from '../components/CopyButton';
 import { AmountDisplay } from '../components/AmountDisplay';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Reveal } from '../components/Reveal';
@@ -43,7 +44,7 @@ interface Pending {
 }
 
 export function AgreementDetail({ id }: { id: bigint }) {
-  const { address } = useWallet();
+  const { address, kycStatus } = useWallet();
   const { agreement: a, loading, error, refresh } = useAgreement(id, address ?? undefined);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
@@ -75,6 +76,14 @@ export function AgreementDetail({ id }: { id: bigint }) {
   // Open the plain-language confirm step; the signature only happens on confirm.
   function ask(p: Pending) {
     setPending(p);
+  }
+
+  // Additive money actions (post bond, deposit, release) are gated on KYC
+  // verification (Option B). Fund-returning actions (complete, emergency refund,
+  // cancel) are never gated, so a user can always reclaim their own funds.
+  function gated(p: Pending) {
+    if (kycStatus === 'verified') ask(p);
+    else navigate('/verify');
   }
   async function onConfirm() {
     if (!pending) return;
@@ -121,16 +130,16 @@ export function AgreementDetail({ id }: { id: bigint }) {
       case Status.Pending:
         return { amount: a.capital, label: 'Capital in escrow once funded', bond: a.bond, proof: (a.capital_deposited ? a.capital : 0n) + (a.bond_posted ? a.bond : 0n) };
       case Status.Completed:
-        return { amount: a.capital, label: 'Capital released to trader', bond: undefined, proof: a.capital };
+        return { amount: a.capital, label: 'Capital released to provider', bond: undefined, proof: a.capital };
       case Status.Refunded:
-        return { amount: unreleased + a.bond, label: 'Refunded to investor', bond: undefined, proof: unreleased + a.bond };
+        return { amount: unreleased + a.bond, label: 'Refunded to client', bond: undefined, proof: unreleased + a.bond };
       default:
         return { amount: a.capital, label: 'Agreement cancelled', bond: undefined, proof: 0n };
     }
   })();
 
   const counterparty = isTrader ? a.investor : a.trader;
-  const counterRole = isTrader ? 'Investor' : 'Trader';
+  const counterRole = isTrader ? 'Client' : 'Provider';
   const closed =
     a.status === Status.Completed || a.status === Status.Refunded || a.status === Status.Cancelled;
 
@@ -225,6 +234,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
               >
                 tx {shortHash(txHash)}
               </a>
+              <CopyButton value={txHash} label="Copy transaction hash" className="ml-auto -my-1" />
             </div>
           )}
           {actionErr && <p className="text-refund text-[13px]">{actionErr}</p>}
@@ -237,7 +247,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   className="w-full"
                   disabled={!!busy}
                   onClick={() =>
-                    ask({
+                    gated({
                       key: 'bond',
                       title: 'Post security bond',
                       description: (
@@ -264,13 +274,13 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   className="w-full"
                   disabled={!!busy}
                   onClick={() =>
-                    ask({
+                    gated({
                       key: 'deposit',
                       title: 'Deposit capital',
                       description: (
                         <>
                           Deposit <span className="mono text-ink">{formatAmount(a.capital)}</span> into the
-                          escrow contract. It is released to the trader milestone by milestone.
+                          escrow contract. It is released to the provider milestone by milestone.
                           {signNote}
                         </>
                       ),
@@ -290,12 +300,12 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   className="w-full"
                   disabled={!!busy}
                   onClick={() =>
-                    ask({
+                    gated({
                       key: 'release',
                       title: 'Release next milestone',
                       description: (
                         <>
-                          Release the next milestone to the trader. About{' '}
+                          Release the next milestone to the provider. About{' '}
                           <span className="mono text-ink">{formatAmount(nextTranche)}</span> goes to{' '}
                           <span className="mono text-ink">{traderShort}</span>.{signNote}
                         </>
@@ -322,7 +332,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                       description: (
                         <>
                           Complete this agreement. The <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
-                          bond is returned to the trader.{signNote}
+                          bond is returned to the provider.{signNote}
                         </>
                       ),
                       confirmLabel: 'Complete',
@@ -351,7 +361,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                             Reclaim <span className="mono text-ink">{formatAmount(unreleased)}</span> of
                             unreleased capital plus the <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
                             bond, totalling <span className="mono text-ink">{formatAmount(unreleased + a.bond)}</span>,
-                            back to you. The trader forfeits the bond.{signNote}
+                            back to you. The provider forfeits the bond.{signNote}
                           </>
                         ),
                         confirmLabel: 'Refund to me',
@@ -403,7 +413,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
           )}
           {!isInvestor && !isTrader && !closed && (
             <p className="text-[13px] text-slate">
-              You are viewing this agreement. Only the investor and trader can act on it.
+              You are viewing this agreement. Only the client and provider can act on it.
             </p>
           )}
 

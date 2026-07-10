@@ -13,6 +13,8 @@ import { Dashboard } from './pages/Dashboard';
 import { CreateAgreement } from './pages/CreateAgreement';
 import { AgreementDetail } from './pages/AgreementDetail';
 import { TraderProfile } from './pages/TraderProfile';
+import { Verify } from './pages/Verify';
+import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
 
 function Wordmark() {
@@ -61,6 +63,7 @@ function LockNotice() {
 export default function App() {
   const route = useRoute();
   const { start } = useTour();
+  const { address, kycStatus } = useWallet();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -107,6 +110,7 @@ export default function App() {
             <NetworkBadge />
           </div>
           <div className="flex items-center gap-2">
+            {address && <IdentityBadge status={kycStatus} className="hidden sm:inline-flex" />}
             <button
               onClick={startTour}
               aria-label="Take a tour"
@@ -132,6 +136,7 @@ export default function App() {
           {route.name === 'create' && <CreateAgreement />}
           {route.name === 'detail' && <AgreementDetail id={route.id} />}
           {route.name === 'trader' && <TraderProfile address={route.address} />}
+          {route.name === 'verify' && <Verify />}
         </PageTransition>
       </main>
 
@@ -146,7 +151,7 @@ export default function App() {
               </div>
               <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-panel-muted">
                 Trust, written in code. A non-custodial escrow for entrusting money to independent
-                traders: locked in a contract, released step by step, backed by a bond.
+                providers: locked in a contract, released step by step, backed by a bond.
               </p>
               <span className="mono mt-4 inline-flex items-center gap-1.5 text-[12px] text-panel-muted">
                 <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden /> Stellar testnet

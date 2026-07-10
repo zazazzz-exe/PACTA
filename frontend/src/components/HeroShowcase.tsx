@@ -1,4 +1,4 @@
-import { CheckCircle2, ShieldCheck, Star, Zap } from 'lucide-react';
+import { CheckCircle2, Lock, ShieldCheck, Star, Zap } from 'lucide-react';
 import { PhoneMockup } from './PhoneMockup';
 import { AppPreview } from './AppPreview';
 import { shortAddr } from '../lib/format';
@@ -10,8 +10,8 @@ function TraderStatsCard() {
   return (
     <div className="w-[210px] rounded-card border border-grid bg-carbon p-3.5 shadow-pop">
       <div className="flex items-start gap-2.5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-onyx text-lg" aria-hidden>
-          🔒
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-control bg-onyx text-signal" aria-hidden>
+          <Lock size={18} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[12px] font-medium text-panel-ink">Agreement agr-001</p>
@@ -113,17 +113,17 @@ export function HeroShowcase() {
       />
       <div className="mesh-dots pointer-events-none absolute inset-0 opacity-20" aria-hidden />
 
-      <div className="float-card-a absolute left-3 top-8 z-20 lg:left-6 lg:top-12">
+      <div className="float-card-a absolute left-3 top-8 z-20 hidden md:block lg:left-6 lg:top-12">
         <div className="float-card-enter float-card-enter-1">
           <TraderStatsCard />
         </div>
       </div>
-      <div className="float-card-b absolute bottom-10 left-2 z-20 lg:bottom-16 lg:left-4">
+      <div className="float-card-b absolute bottom-10 left-2 z-20 hidden md:block lg:bottom-16 lg:left-4">
         <div className="float-card-enter float-card-enter-2">
           <LiveActivityCard />
         </div>
       </div>
-      <div className="float-card-c absolute right-3 top-[38%] z-30 lg:right-8">
+      <div className="float-card-c absolute right-3 top-[38%] z-30 hidden md:block lg:right-8">
         <div className="float-card-enter float-card-enter-3">
           <SuccessCard />
         </div>

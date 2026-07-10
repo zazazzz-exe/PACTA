@@ -11,13 +11,15 @@ import { formatAmount, formatPhp, shortAddr } from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { Avatar } from '../components/Avatar';
+import { CopyButton } from '../components/CopyButton';
+import { IdentityBadge } from '../components/kyc/IdentityBadge';
 import { StatusPill } from '../components/StatusPill';
 import { RiskLens } from '../components/RiskLens';
 import { useRiskLens } from '../hooks/useRiskLens';
 
-// §7.5 — what an investor checks before agreeing to work with a trader.
+// §7.5 — what a client checks before agreeing to work with a provider.
 export function TraderProfile({ address }: { address: string }) {
-  const { address: me } = useWallet();
+  const { address: me, kycStatus } = useWallet();
   const lens = useRiskLens(address);
   const [rep, setRep] = useState<Reputation | null>(null);
   const [history, setHistory] = useState<Agreement[]>([]);
@@ -50,7 +52,7 @@ export function TraderProfile({ address }: { address: string }) {
         >
           <ChevronLeft size={20} aria-hidden />
         </button>
-        <h1 className="text-[22px] font-medium tracking-tight text-ink">Trader</h1>
+        <h1 className="text-[22px] font-medium tracking-tight text-ink">Provider</h1>
       </div>
 
       {/* Identity + reputation summary */}
@@ -59,8 +61,14 @@ export function TraderProfile({ address }: { address: string }) {
           <Avatar addr={address} className="h-12 w-12 text-base" />
           <div className="min-w-0">
             <p className="mono text-sm text-ink truncate">{shortAddr(address, 8, 8)}</p>
-            {me === address && <p className="text-[12px] text-accent">This is you</p>}
+            {me === address && (
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-[12px] text-accent">This is you</span>
+                <IdentityBadge status={kycStatus} />
+              </div>
+            )}
           </div>
+          <CopyButton value={address} label="Copy provider address" className="ml-auto" />
         </div>
 
         {loading && !rep ? (
@@ -101,7 +109,7 @@ export function TraderProfile({ address }: { address: string }) {
           Past agreements
         </h2>
         {history.length === 0 ? (
-          <p className="text-[14px] text-slate">No agreements for this trader yet.</p>
+          <p className="text-[14px] text-slate">No agreements for this provider yet.</p>
         ) : (
           <div className="space-y-3">
             {history.map((a) => (

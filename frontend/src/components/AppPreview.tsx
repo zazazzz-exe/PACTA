@@ -22,7 +22,7 @@ function PreviewDashboard() {
         <div className="flex items-center gap-2">
           <Avatar addr={DEMO_TRADER} />
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] text-fog">Trader</p>
+            <p className="text-[9px] text-fog">Provider</p>
             <p className="mono truncate text-[11px] text-ink">{shortAddr(DEMO_TRADER, 4, 4)}</p>
           </div>
           <StatusPill status={Status.Active} />

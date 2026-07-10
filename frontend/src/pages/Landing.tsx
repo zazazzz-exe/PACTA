@@ -133,7 +133,7 @@ export function Landing() {
                 <button
                   onClick={connect}
                   data-tour="connect"
-                  className="btn-shimmer group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] bg-accent px-6 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:flex-none sm:px-8"
+                  className="group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] bg-accent px-6 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:flex-none sm:px-8"
                 >
                   <Wallet size={20} aria-hidden />
                   I&apos;m a Client
@@ -151,11 +151,11 @@ export function Landing() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <span className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint/80 px-3.5 py-2 text-[13px] font-medium text-accent-deep">
-                  <span className="text-base" aria-hidden>🏦</span>
-                  No bank account needed
+                  <ShieldCheck size={15} className="text-accent" aria-hidden />
+                  No custody, no middleman
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint/80 px-3.5 py-2 text-[13px] font-medium text-accent-deep">
-                  <span className="text-base" aria-hidden>⚡</span>
+                  <Zap size={15} className="text-accent" aria-hidden />
                   Stellar-native settlement
                 </span>
               </div>
@@ -198,8 +198,8 @@ export function Landing() {
                     </div>
                     <h3 className="mt-4 text-[18px] font-medium text-ink">{title}</h3>
                     <p className="mt-2 text-[14px] leading-relaxed text-slate">{body}</p>
-                    <span className="mt-4 inline-flex items-center gap-1 rounded-pill bg-accent-tint px-3 py-1 text-[12px] font-medium text-accent-deep">
-                      ✨ {tag}
+                    <span className="mt-4 inline-flex items-center gap-1.5 rounded-pill bg-accent-tint px-3 py-1 text-[12px] font-medium text-accent-deep">
+                      <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden /> {tag}
                     </span>
                   </div>
                 </Reveal>
@@ -288,7 +288,7 @@ export function Landing() {
                   Available now · Testnet
                 </span>
                 <h2 className="mt-5 text-[26px] font-semibold text-panel-ink sm:text-[34px]">
-                  Ready to go digital?
+                  Protect your first agreement
                 </h2>
                 <p className="mx-auto mt-3 max-w-md text-[15px] text-panel-muted">
                   Join agreements already protected on-chain. No setup fees. No monthly costs.
@@ -297,7 +297,7 @@ export function Landing() {
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={connect}
-                    className="btn-shimmer inline-flex h-14 items-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white transition hover:bg-accent-deep active:scale-[0.98]"
+                    className="inline-flex h-14 items-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white transition hover:bg-accent-deep active:scale-[0.98]"
                   >
                     Connect wallet
                     <ArrowRight size={18} aria-hidden />

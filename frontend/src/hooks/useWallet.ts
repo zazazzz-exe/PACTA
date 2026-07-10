@@ -1,4 +1,5 @@
 import { createContext, useContext } from 'react';
+import type { KycStatus } from '../lib/kycClient';
 
 export interface WalletState {
   address: string | null;
@@ -12,6 +13,12 @@ export interface WalletState {
   /** Set when the session was auto-locked for inactivity; shown as a notice. */
   lockNotice: string | null;
   clearLockNotice: () => void;
+  /** KYC status of the connected wallet; 'unknown' until established this session. */
+  kycStatus: KycStatus;
+  /** True while proving ownership / loading status. */
+  kycLoading: boolean;
+  /** Re-read KYC status using the existing session cookie. */
+  refreshKyc: () => Promise<void>;
 }
 
 export const WalletContext = createContext<WalletState | null>(null);

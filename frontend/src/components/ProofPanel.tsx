@@ -64,9 +64,8 @@ export function ProofPanel({
   const shown = useCountUp(protectedAmount, countUp);
   return (
     <div className="relative overflow-hidden bg-carbon border border-grid rounded-card p-4 sm:p-5">
-      {/* live-instrument motion (decorative) */}
+      {/* static instrument grid (decorative) */}
       <div className="proof-grid" aria-hidden />
-      <div className="proof-sheen" aria-hidden />
 
       <div className="relative z-10">
         <p className="mono text-[11px] text-signal mb-2.5 flex items-center gap-1.5">

@@ -11,6 +11,7 @@ import App from './App';
 import { TourProvider } from './components/Tour';
 import { WalletContext, type WalletState } from './hooks/useWallet';
 import { connectWallet, getWalletNetworkPassphrase, kit } from './lib/wallet';
+import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
 import { NETWORK_PASSPHRASE } from './lib/config';
 
@@ -26,6 +27,8 @@ function WalletProvider({ children }: { children: ReactNode }) {
   const [connecting, setConnecting] = useState(false);
   const [network, setNetwork] = useState<string | null>(null);
   const [lockNotice, setLockNotice] = useState<string | null>(null);
+  const [kycStatus, setKycStatus] = useState<KycStatus>('unknown');
+  const [kycLoading, setKycLoading] = useState(false);
   const idleTimer = useRef<number | undefined>(undefined);
 
   const disconnect = useCallback(() => {
@@ -36,6 +39,8 @@ function WalletProvider({ children }: { children: ReactNode }) {
     }
     setAddress(null);
     setNetwork(null);
+    setKycStatus('unknown');
+    setKycLoading(false);
   }, []);
 
   const connect = useCallback(async () => {
@@ -45,10 +50,34 @@ function WalletProvider({ children }: { children: ReactNode }) {
       const addr = await connectWallet();
       setAddress(addr);
       setNetwork(await getWalletNetworkPassphrase());
+      // Prove wallet ownership for the KYC layer, then load status. A failure
+      // here (backend not configured, or the user declines the signature) must
+      // not break the connection: the app stays usable and only money actions
+      // gate on 'verified'.
+      setKycLoading(true);
+      try {
+        setKycStatus(await proveOwnership(addr));
+      } catch (e) {
+        console.warn('KYC unavailable:', friendlyError(e));
+        setKycStatus('unknown');
+      } finally {
+        setKycLoading(false);
+      }
     } catch (e) {
       console.warn('Wallet connect:', friendlyError(e));
     } finally {
       setConnecting(false);
+    }
+  }, []);
+
+  const refreshKyc = useCallback(async () => {
+    setKycLoading(true);
+    try {
+      setKycStatus((await fetchKycStatus()).kycStatus);
+    } catch (e) {
+      console.warn('KYC status:', friendlyError(e));
+    } finally {
+      setKycLoading(false);
     }
   }, []);
 
@@ -82,6 +111,9 @@ function WalletProvider({ children }: { children: ReactNode }) {
     disconnect,
     lockNotice,
     clearLockNotice: () => setLockNotice(null),
+    kycStatus,
+    kycLoading,
+    refreshKyc,
   };
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 }

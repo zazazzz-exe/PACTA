@@ -16,8 +16,8 @@ import { navigate } from '../lib/router';
 type Filter = 'all' | 'investor' | 'trader';
 const TABS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'investor', label: 'As investor' },
-  { id: 'trader', label: 'As trader' },
+  { id: 'investor', label: 'As client' },
+  { id: 'trader', label: 'As provider' },
 ];
 
 export function Dashboard() {

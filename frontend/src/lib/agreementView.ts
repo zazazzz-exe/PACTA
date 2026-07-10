@@ -64,10 +64,10 @@ export function deadlineLabel(a: Agreement, nowSec: number): string {
 // Pending "next step" line, role-aware.
 export function pendingNextStep(a: Agreement, you: string | null): string {
   if (!a.bond_posted) {
-    return you === a.trader ? 'Waiting for your bond' : "Waiting for the trader's bond";
+    return you === a.trader ? 'Waiting for your bond' : "Waiting for the provider's bond";
   }
   if (!a.capital_deposited) {
-    return you === a.investor ? 'Waiting for your deposit' : "Waiting for the investor's deposit";
+    return you === a.investor ? 'Waiting for your deposit' : "Waiting for the client's deposit";
   }
   return 'Ready to activate';
 }

@@ -5,7 +5,8 @@ export type Route =
   | { name: 'dashboard' }
   | { name: 'create' }
   | { name: 'detail'; id: bigint }
-  | { name: 'trader'; address: string };
+  | { name: 'trader'; address: string }
+  | { name: 'verify' };
 
 export function parseHash(): Route {
   const h = window.location.hash.replace(/^#/, '');
@@ -19,6 +20,7 @@ export function parseHash(): Route {
   }
   if (h === '/dashboard') return { name: 'dashboard' };
   if (h === '/create') return { name: 'create' };
+  if (h === '/verify') return { name: 'verify' };
   return { name: 'landing' };
 }
 

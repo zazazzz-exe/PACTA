@@ -57,3 +57,39 @@ export async function signTransaction(
   });
   return { signedTxXdr, signerAddress };
 }
+
+// Sign an arbitrary message to prove wallet ownership for the KYC layer. This is
+// NOT a transaction: it authorizes nothing and moves no funds. The server issues
+// the exact message (a one-time challenge) and verifies the returned signature
+// against `address`. Freighter has returned the signature as a base64 string in
+// some versions and as raw bytes in others, so we normalize to base64 here.
+export async function signMessage(
+  message: string,
+  opts?: { address?: string },
+): Promise<{ signedMessage: string; signerAddress?: string }> {
+  const res = (await kit.signMessage(message, {
+    networkPassphrase: NETWORK_PASSPHRASE,
+    address: opts?.address,
+  })) as { signedMessage: unknown; signerAddress?: string };
+  return {
+    signedMessage: toBase64(res.signedMessage),
+    signerAddress: res.signerAddress,
+  };
+}
+
+// Normalize a signature the wallet may hand back as a base64 string, a
+// Uint8Array/Buffer, an ArrayBuffer, or a plain byte array — always to base64.
+function toBase64(value: unknown): string {
+  if (typeof value === 'string') return value; // already base64 from the wallet
+  let bytes: Uint8Array | null = null;
+  if (value instanceof Uint8Array) bytes = value;
+  else if (value instanceof ArrayBuffer) bytes = new Uint8Array(value);
+  else if (Array.isArray(value)) bytes = Uint8Array.from(value as number[]);
+  else if (value && typeof value === 'object' && Array.isArray((value as { data?: number[] }).data)) {
+    bytes = Uint8Array.from((value as { data: number[] }).data);
+  }
+  if (!bytes) throw new Error('Unrecognized signature format from wallet');
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin);
+}

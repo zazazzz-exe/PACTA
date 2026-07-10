@@ -6,7 +6,7 @@ import type { TourStep } from '../components/Tour';
 export const landingSteps: TourStep[] = [
   {
     title: 'Welcome to Pacta',
-    body: 'Pacta keeps money safe between an investor and a trader, enforced by a smart contract. Here is a 30 second tour.',
+    body: 'Pacta keeps money safe between a client and a provider, enforced by a smart contract. Here is a 30 second tour.',
     placement: 'center',
   },
   {
@@ -24,7 +24,7 @@ export const landingSteps: TourStep[] = [
   {
     target: '[data-tour="how"]',
     title: 'How it works',
-    body: 'Lock capital, the trader posts a bond, then release in milestones or reclaim it if the deadline passes.',
+    body: 'Lock capital, the provider posts a bond, then release in milestones or reclaim it if the deadline passes.',
     placement: 'top',
   },
   {
@@ -44,13 +44,13 @@ export const dashboardSteps: TourStep[] = [
   {
     target: '[data-tour="filters"]',
     title: 'Filter by your role',
-    body: 'Switch between agreements where you are the investor and where you are the trader.',
+    body: 'Switch between agreements where you are the client and where you are the provider.',
     placement: 'bottom',
   },
   {
     target: '[data-tour="new"]',
     title: 'Create an agreement',
-    body: 'Start a new protected agreement with a trader: set the capital, bond, milestones, and deadline.',
+    body: 'Start a new protected agreement with a provider: set the capital, bond, milestones, and deadline.',
     placement: 'left',
   },
   {

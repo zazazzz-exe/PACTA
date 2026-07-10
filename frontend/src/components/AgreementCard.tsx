@@ -16,9 +16,9 @@ const STRIP: Record<Status, string> = {
 
 export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) {
   const counterparty = you === a.trader ? a.investor : a.trader;
-  const counterpartyRole = you === a.investor ? 'Trader' : 'Investor';
+  const counterpartyRole = you === a.investor ? 'Provider' : 'Client';
   const yourRole =
-    you === a.investor ? "You're the investor" : you === a.trader ? "You're the trader" : null;
+    you === a.investor ? "You're the client" : you === a.trader ? "You're the provider" : null;
   const { amount, label } = statusAmount(a);
   const terminal = isTerminal(a.status);
   const nowSec = Math.floor(Date.now() / 1000);

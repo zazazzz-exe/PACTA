@@ -157,7 +157,7 @@ The emergency-refund path returns the unreleased funds **and** seizes the bond, 
             └───────────────────────────┘
 ```
 
-**There is no backend server.** The Soroban contract is the backend for the escrow: it holds the funds and enforces the agreement between the two parties. All state lives on-chain. Reads are free RPC simulations; writes are wallet-signed transactions. (The optional AI Risk Lens in §17 adds one stateless serverless endpoint that only reads public on-chain stats; it is not part of the escrow and never holds funds.)
+**The escrow has no backend server.** The Soroban contract is the backend for the escrow: it holds the funds and enforces the agreement between the two parties. All escrow state lives on-chain. Reads are free RPC simulations; writes are wallet-signed transactions. (The optional AI Risk Lens in §17 adds one stateless serverless endpoint that only reads public on-chain stats; it is not part of the escrow and never holds funds.) A separate, optional **off-chain KYC identity layer** (Supabase behind `api/kyc-*.ts`) verifies wallet-holder identity and gates the app UI only; it never holds funds, is not part of the escrow, and does not change the contract. See `CLAUDE.md` "Identity / KYC layer" and `supabase/migrations/`.
 
 ---
 

@@ -35,7 +35,7 @@ export function RiskLens({
   if (error || !read) {
     return (
       <div className="bg-mist rounded-control p-4 text-[13px] text-slate">
-        Risk read unavailable right now. The trader on-chain history is still shown above.
+        Risk read unavailable right now. The provider's on-chain history is still shown above.
       </div>
     );
   }
@@ -84,7 +84,7 @@ export function RiskLens({
       )}
 
       <p className="text-[11px] text-fog mt-2.5">
-        Based on this trader on-chain history. A signal, not a guarantee.
+        Based on this provider's on-chain history. A signal, not a guarantee.
       </p>
     </div>
   );

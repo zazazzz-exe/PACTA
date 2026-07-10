@@ -30,7 +30,7 @@ export function MilestoneBar({
         ))}
       </div>
       <p className="mono text-xs text-fog mt-2">
-        {formatAmount(releasedAmount)} released to trader so far
+        {formatAmount(releasedAmount)} released to provider so far
       </p>
     </div>
   );

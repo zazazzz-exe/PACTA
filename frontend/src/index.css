@@ -137,8 +137,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
     linear-gradient(var(--color-grid) 1px, transparent 1px),
     linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
   background-size: 24px 24px;
-  opacity: 0.35;
-  animation: grid-pan 5s linear infinite;
+  opacity: 0.28;
   -webkit-mask-image: radial-gradient(circle at 25% 15%, black, transparent 78%);
   mask-image: radial-gradient(circle at 25% 15%, black, transparent 78%);
 }
