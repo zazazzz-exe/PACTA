@@ -9,22 +9,6 @@
 
 ---
 
-## 0. How Claude Code should use this document
-
-Build in this order. Do not skip ahead — each phase unblocks the next.
-
-1. Read **§6 Tech Stack** and **§10 Repo Structure**, then scaffold the repo.
-2. Build the contract from **§8** (the full reference implementation is provided — use it).
-3. Write and pass the tests in **§8.6** before touching the frontend.
-4. Deploy to testnet using the runbook in **§11**, capturing the contract ID.
-5. Generate TypeScript bindings (§11 step 7).
-6. Build the frontend from **§9** against the deployed contract.
-7. Validate the full **§13 Demo Script** click-path on testnet.
-
-A condensed, copy-pasteable task list for Claude Code is in **§16**.
-
----
-
 ## 1. Vision & problem
 
 ### 1.1 Problem

@@ -54,9 +54,9 @@ It fits any two-party deal: freelance and milestone project payments, service co
 - [Production deployment](#production-deployment)
 - [User onboarding and feedback](#user-onboarding-and-feedback)
 - [Roadmap](#roadmap)
-- [Team](#team)
 - [License](#license)
 - [Submission checklist](#submission-checklist)
+- [Developer](#Developer)
 
 ---
 
@@ -127,7 +127,7 @@ When a Client is about to work with a Provider, PactAI reads that Provider's on-
 
 - All statistics (completed/refunded counts, volume, recency, deal-vs-history ratio) are computed deterministically in code, so the numbers are always correct.
 - An LLM (**Claude**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
-- It assesses **counterparty trustworthiness from on-chain history only**, never financial advice, never outcome predictions.
+- It assesses **counterparty trustworthiness from on-chain history only** — never investment advice, never return predictions.
 
 A brand-new address with no history is flagged as unproven rather than green-lit, which doubles as a lightweight anti-Sybil signal.
 
@@ -167,17 +167,17 @@ A brand-new address with no history is flagged as unproven rather than green-lit
 | Smart contract | Rust, `soroban-sdk`, Stellar CLI, deployed to Stellar **testnet** |
 | Settlement asset | Stellar Asset Contract (native XLM SAC in demo; USDC SAC in production) |
 | Frontend | Vite, React, TypeScript, Tailwind CSS |
-| Wallet | `@creit.tech/stellar-wallets-kit` (Freighter, xBull, Albedo, WalletConnect) |
+| Wallet | `@creit.tech/stellar-wallets-kit` (**Freighter**, xBull, Albedo, WalletConnect) |
 | Contract client | Generated TypeScript bindings (`stellar contract bindings typescript`) |
-| AI Risk Lens | Claude (Anthropic) via a serverless function |
+| AI Risk Lens | Gemini via a serverless function |
 | Hosting | Vercel |
 | Monitoring | Vercel Analytics + Speed Insights, Sentry (error tracking) |
 
 ## Smart contract reference
 
 - **Network:** Stellar testnet · RPC `https://soroban-testnet.stellar.org` · passphrase `Test SDF Network ; September 2015`
-- **Contract ID:** `[TODO: CONTRACT_ID]`
-- **Explorer:** [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet/contract/[TODO_CONTRACT_ID])
+- **Contract ID:** `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
+- **Explorer:** [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
 
 **Public interface:**
 
@@ -237,7 +237,7 @@ Create `frontend/.env` (and set the same in your hosting provider):
 
 ```bash
 # Risk Lens serverless function (server-side only — never exposed to the client)
-ANTHROPIC_API_KEY=your_key_here
+GEMINI_API_KEY=your_key_here
 
 # Optional monitoring
 VITE_SENTRY_DSN=your_sentry_dsn
@@ -246,8 +246,8 @@ VITE_SENTRY_DSN=your_sentry_dsn
 Contract and network constants live in `frontend/src/lib/config.ts`:
 
 ```ts
-export const CONTRACT_ID = '[TODO: CONTRACT_ID]';
-export const TOKEN_ADDRESS = '[TODO: TOKEN_ADDRESS]';
+export const CONTRACT_ID = 'CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL';
+export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 ```
@@ -356,15 +356,6 @@ Real users onboarded and interacting on testnet:
 - Shareable on-chain proof certificates for completed deals
 - Mainnet deployment and a professional security audit
 
-## Team
-
-> <!-- TODO: confirm names, roles, and links -->
-
-- **Zarrah Exekiel Valles** — [role]
-- **Jecyn Vallirie Turbanos** — [role]
-
-Built for the Build on Stellar APAC hackathon. Country: Philippines.
-
 ## License
 
 Released under the [MIT License](LICENSE).
@@ -381,16 +372,18 @@ How this project meets the Level 4 requirements:
 | Stable frontend + contract architecture | [Architecture](#architecture), [contract reference](#smart-contract-reference) |
 | Mobile-responsive UI | Mobile-first build; see mobile screenshot |
 | Loading states + error handling | [Features](#features) — skeletons, tx-pending, contract-error messages, graceful AI fallback |
-| 10+ real users onboarded | [Wallet interactions table](#wallet-interactions-proof) — _[TODO: fill]_ |
-| Proof of wallet interactions | Same table, each linked to Stellar Expert — _[TODO: fill]_ |
-| User feedback collection | [Feedback summary](#feedback-summary) — _[TODO: fill]_ |
 | Production deployment | [Live app](https://pacta-zarrah.vercel.app) |
-| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) + screenshot — _[TODO: screenshot]_ |
+| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) + screenshot |
 | Optimized UX | "Calm Trust" design system (`DESIGN.md`), mobile-first |
 | Project structure + documentation | [Project structure](#project-structure) + this README |
-| Contract on Stellar testnet | `[TODO: CONTRACT_ID]` |
+| Contract on Stellar testnet | `[CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]` |
 | 15+ meaningful commits | See the repository commit history |
-| Public GitHub repository | _[TODO: repo URL]_ |
-| Live demo video | _[TODO: video link]_ |
-| Contract deployment address | _[TODO: CONTRACT_ID]_ in [links](#-links) and [reference](#smart-contract-reference) |
-| Screenshots (UI, mobile, analytics) | [Screenshots](#screenshots) — _[TODO: add files]_ |
+| Public GitHub repository | _[https://github.com/zazazzz-exe/PACTA.git]_ |
+| Live demo video | _[https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=drive_link]_ |
+| Contract deployment address | _[https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]_ in [links](#-links) and [reference](#smart-contract-reference) |
+
+## Developer
+
+- **Zarrah Exekiel Valles** 
+
+Built for the Build on Stellar. Country: Philippines.
