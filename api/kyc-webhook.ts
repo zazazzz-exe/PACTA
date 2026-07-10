@@ -1,5 +1,3 @@
-export const config = { runtime: 'nodejs' };
-
 import { db } from './_lib/db';
 import { json, logError } from './_lib/http';
 import { getProvider } from './_lib/kyc';

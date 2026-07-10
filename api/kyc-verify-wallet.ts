@@ -1,5 +1,3 @@
-export const config = { runtime: 'nodejs' };
-
 import { db } from './_lib/db';
 import { json, isValidAddress, logError } from './_lib/http';
 import { issueSessionToken, sessionCookie } from './_lib/session';
