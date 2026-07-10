@@ -1,4 +1,4 @@
-# Pacta — Feature Spec: AI Risk Lens (FEATURE_RISK_LENS.md)
+# PactAI — Feature Spec: AI Risk Lens (FEATURE_RISK_LENS.md)
 
 > An add-on feature. Build it **after** the core app and demo path work (PRD.md + DESIGN.md). It depends on the deployed contract and the design tokens already being in place.
 
@@ -6,17 +6,18 @@
 
 ## 0. How Claude Code should use this file
 
-- This adds one feature: an AI that reads a trader's on-chain history and gives the investor a plain-language risk read plus a defensive milestone suggestion. It does not change anything else.
+- This adds one feature: an AI that reads a Provider's on-chain history and gives the Client a plain-language counterparty read plus a defensive milestone suggestion. It does not change anything else.
+- The Risk Lens is the "AI" in PactAI ("Pact" + "AI"): it is the AI layer over the on-chain escrow. Note: in code and on-chain, the Provider corresponds to the legacy `trader` field and identifiers, kept for ABI compatibility. The product language is Client and Provider.
 - It introduces **one serverless endpoint** (`/api/risk-lens`) so the Anthropic API key stays server-side. Everything else is client code that reuses the existing contract client and design tokens.
 - Style every UI piece with the tokens from DESIGN.md (`accent`, `deadline`, `refund`, `slate`, etc.). No raw hex.
-- Respect the responsible-AI boundary in §2: this assesses **counterparty risk from on-chain history**, never investment advice.
+- Respect the responsible-AI boundary in §2: this assesses **counterparty trustworthiness from on-chain history**, never financial or investment advice.
 - Kickoff prompt is in §13.
 
 ---
 
 ## 1. What it is
 
-When an investor is about to work with a trader, Pacta reads that trader's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* agreement more safely. With one tap, the investor can apply the suggested protection (milestone count) to the create form.
+When a Client is about to work with a Provider (the party who posts a security bond, delivers, and receives the tranches), PactAI reads that Provider's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* agreement more safely. With one tap, the Client can apply the suggested protection (milestone count) to the create form.
 
 It is the highest-leverage "uniquely yours" feature because a non-crypto user cannot interpret raw reputation counts, but they can act on "12 completed, but 2 recent refunds, and this deal is larger than anything they've handled. Start with 4 milestones."
 
@@ -24,12 +25,12 @@ It is the highest-leverage "uniquely yours" feature because a non-crypto user ca
 
 ## 2. Responsible-AI boundary (non-negotiable)
 
-The Risk Lens assesses **behavioral / counterparty trustworthiness from on-chain history only.** It must never:
-- give investment advice or tell the user whether to invest,
-- predict trading performance or estimate profit,
+The Risk Lens assesses the **Provider's behavioral / counterparty trustworthiness from on-chain history only.** It must never:
+- give financial or investment advice or tell the user whether to fund the deal,
+- predict the Provider's performance or estimate profit,
 - guarantee outcomes.
 
-Its only recommendations are within Pacta's own mechanics (milestone count, bond size, duration). This keeps it consistent with Pacta's stated position ("does not provide investment advice") and is enforced in the system prompt (§6).
+Its only recommendations are within PactAI's own mechanics (milestone count, bond size, duration). This keeps it consistent with PactAI's stated position ("does not provide financial or investment advice") and is enforced in the system prompt (§6).
 
 Privacy note: only public on-chain data is sent to the API. No keys, no secrets, nothing the user wouldn't already see on a block explorer.
 
@@ -324,7 +325,7 @@ export function useRiskLens(trader: string | null, contemplatedCapital?: bigint)
 }
 ```
 
-> Debounce the trader address upstream (call this hook with a value that updates ~600ms after the user stops typing) so it doesn't fire on every keystroke in the create form.
+> Debounce the Provider address upstream (call this hook with a value that updates ~600ms after the user stops typing) so it doesn't fire on every keystroke in the create form. The `trader` param name is the legacy on-chain identifier for the Provider.
 
 ---
 
@@ -420,7 +421,7 @@ export function RiskLens({
 
 ## 10. Placement
 
-1. **Create agreement (primary, highest value).** Once a valid trader address is entered (debounced), render the lens above the summary card, passing the contemplated capital. Wire `onApply` to set the form's milestone count to `suggested_milestones`. Since the contract releases **equal** tranches, the defensive lever is milestone count, so applying the suggestion directly sets that field; the first-milestone percentage is informational (≈ 100 / milestones).
+1. **Create agreement (primary, highest value).** Once a valid Provider address is entered (debounced), render the lens above the summary card, passing the contemplated capital. Wire `onApply` to set the form's milestone count to `suggested_milestones`. Since the contract releases **equal** tranches, the defensive lever is milestone count, so applying the suggestion directly sets that field; the first-milestone percentage is informational (≈ 100 / milestones).
 
    ```tsx
    const lens = useRiskLens(debouncedTrader, capitalBaseUnits);
@@ -430,9 +431,9 @@ export function RiskLens({
    />
    ```
 
-2. **Trader / reputation profile.** Render `<RiskLens read={lens.data} ... />` with `useRiskLens(traderAddress)` (no contemplated capital). This is what an investor checks before reaching out.
+2. **Provider / reputation profile.** Render `<RiskLens read={lens.data} ... />` with `useRiskLens(traderAddress)` (no contemplated capital). This is the counterparty read a Client checks before agreeing to a deal.
 
-3. **Agreement detail (optional).** For an `Active` agreement, show the lens as an ongoing read on the counterparty.
+3. **Agreement detail (optional).** For an `Active` agreement, show the lens as an ongoing read on the Provider counterparty.
 
 ---
 
@@ -455,7 +456,7 @@ export function RiskLens({
 
 ## 13. Demo beat
 
-In the create flow, paste a trader who has a mixed record and enter a capital larger than their largest past deal. The lens returns something like: "Elevated. Strong volume, but 2 refunds in the last month and this deal is about 3x their largest. Spread it across 4 milestones." Tap **Apply suggested protection** and watch the milestone count update to 4. That single moment shows AI doing something no other team's UI does: translating raw on-chain history into a protective action a first-time user can take.
+In the create flow, paste a Provider who has a mixed record and enter a capital larger than their largest past deal. The lens returns something like: "Elevated. Strong volume, but 2 refunds in the last month and this deal is about 3x their largest. Spread it across 4 milestones." Tap **Apply suggested protection** and watch the milestone count update to 4. That single moment shows AI doing something no other team's UI does: translating raw on-chain history into a protective action a first-time user can take.
 
 ---
 
@@ -465,8 +466,8 @@ In the create flow, paste a trader who has a mixed record and enter a capital la
 1. Add `frontend/src/lib/riskStats.ts` (§5), `riskTypes.ts` (§7), and an `agreements.ts` wrapper around the §4 fetch helper.
 2. Add the serverless endpoint `frontend/api/risk-lens.ts` (§6). Set `ANTHROPIC_API_KEY` in the host env (document it in README, never commit it).
 3. Add `useRiskLens` (§8) and `RiskLens` (§9), styled only with DESIGN.md tokens.
-4. Place the lens in the create flow with `onApply` wired to the milestone field (§10.1), and on the trader profile (§10.2).
-5. Verify the responsible-AI boundary holds (§2): the read never advises on the investment, only on counterparty trust and protective structuring.
+4. Place the lens in the create flow with `onApply` wired to the milestone field (§10.1), and on the Provider profile (§10.2).
+5. Verify the responsible-AI boundary holds (§2): the read never gives financial or investment advice, only a counterparty-trust read and protective structuring.
 6. Confirm graceful degradation when the endpoint is unreachable (§11).
 
 **Kickoff prompt:**

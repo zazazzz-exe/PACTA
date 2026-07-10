@@ -4,7 +4,7 @@ import './hero-flow.css';
 
 const CYCLE = 7000;
 
-export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
+export function HeroFlow() {
   const [amount, setAmount] = useState(0);
 
   useEffect(() => {
@@ -26,71 +26,43 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
   }, []);
 
   return (
-    <section className="relative overflow-hidden">
-      {/* No local blob here: the section is max-w-6xl with overflow-hidden, so any
-          blob in it gets clipped by a straight line at the section edge (the "edge"
-          artifact). The full-viewport AmbientBackground supplies the glow instead. */}
-      <div className="relative mx-auto max-w-5xl px-5 py-12">
-        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[1fr_600px] lg:gap-12">
-          {/* Left: heading, copy, connect (left-aligned on desktop) */}
-          <div className="min-w-0 text-center lg:text-left">
-            <p className="mb-5 text-[12px] font-semibold uppercase tracking-[0.22em] text-accent">Pacta</p>
-            <h1 className="mb-2.5 text-[26px] font-semibold leading-tight text-ink sm:text-[34px]">
-              Trust, written in code.
-            </h1>
-            <p className="mx-auto mb-8 max-w-[440px] text-[15px] leading-relaxed text-slate lg:mx-0">
-              Lock your money in a contract no one can run off with. Released step by step,
-              backed by the trader's bond, and provable on-chain.
-            </p>
-            <div className="flex justify-center lg:justify-start">
-              <button
-                onClick={onConnect}
-                className="h-12 rounded-control bg-accent px-7 text-[15px] font-medium text-white transition hover:bg-accent-deep active:scale-[0.98]"
-              >
-                Connect wallet
-              </button>
+    <section className="relative overflow-hidden py-8">
+      <div className="relative mx-auto flex justify-center px-5">
+        <div className="hf-band flex flex-shrink-0 items-center">
+          <Node icon={<Wallet size={20} />} label="Investor" />
+
+          <Wire>
+            <span className="hf-token hf-in-a" />
+            <span className="hf-token hf-in-b" />
+          </Wire>
+
+          <div className="hf-vault w-[194px] flex-shrink-0 rounded-card border border-grid bg-carbon p-4 text-left">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Lock size={14} className="text-signal" />
+              <span className="font-mono text-[11px] text-signal">protected</span>
             </div>
+            <div className="mb-3 flex items-baseline gap-1.5">
+              <span className="font-mono text-[26px] font-medium text-signal">{amount}</span>
+              <span className="font-mono text-xs text-panel-muted">XLM</span>
+            </div>
+            <div className="relative mb-2.5 h-1.5 overflow-hidden rounded-pill bg-grid">
+              <div className="hf-release h-1.5 rounded-pill bg-signal" />
+              <span className="absolute top-0 left-1/4 h-1.5 w-[1.5px] bg-carbon" />
+              <span className="absolute top-0 left-1/2 h-1.5 w-[1.5px] bg-carbon" />
+              <span className="absolute top-0 left-3/4 h-1.5 w-[1.5px] bg-carbon" />
+            </div>
+            <span className="inline-flex items-center gap-1.5 rounded-pill bg-onyx px-2.5 py-1">
+              <ShieldCheck size={13} className="text-panel-muted" />
+              <span className="font-mono text-[11px] text-panel-muted">20 XLM bond</span>
+            </span>
           </div>
 
-          {/* Right: animated escrow flow */}
-          <div className="flex min-w-0 justify-center">
-            <div className="hf-band flex flex-shrink-0 items-center">
-              <Node icon={<Wallet size={20} />} label="Investor" />
+          <Wire>
+            <span className="hf-token hf-out-a" />
+            <span className="hf-token hf-out-b" />
+          </Wire>
 
-              <Wire>
-                <span className="hf-token hf-in-a" />
-                <span className="hf-token hf-in-b" />
-              </Wire>
-
-              <div className="hf-vault w-[194px] flex-shrink-0 rounded-card border border-grid bg-carbon p-4 text-left">
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Lock size={14} className="text-signal" />
-                  <span className="font-mono text-[11px] text-signal">protected</span>
-                </div>
-                <div className="mb-3 flex items-baseline gap-1.5">
-                  <span className="font-mono text-[26px] font-medium text-signal">{amount}</span>
-                  <span className="font-mono text-xs text-panel-muted">XLM</span>
-                </div>
-                <div className="relative mb-2.5 h-1.5 overflow-hidden rounded-pill bg-grid">
-                  <div className="hf-release h-1.5 rounded-pill bg-signal" />
-                  <span className="absolute top-0 left-1/4 h-1.5 w-[1.5px] bg-carbon" />
-                  <span className="absolute top-0 left-1/2 h-1.5 w-[1.5px] bg-carbon" />
-                  <span className="absolute top-0 left-3/4 h-1.5 w-[1.5px] bg-carbon" />
-                </div>
-                <span className="inline-flex items-center gap-1.5 rounded-pill bg-onyx px-2.5 py-1">
-                  <ShieldCheck size={13} className="text-panel-muted" />
-                  <span className="font-mono text-[11px] text-panel-muted">20 XLM bond</span>
-                </span>
-              </div>
-
-              <Wire>
-                <span className="hf-token hf-out-a" />
-                <span className="hf-token hf-out-b" />
-              </Wire>
-
-              <Node icon={<LineChart size={20} />} label="Trader" />
-            </div>
-          </div>
+          <Node icon={<LineChart size={20} />} label="Trader" />
         </div>
       </div>
     </section>

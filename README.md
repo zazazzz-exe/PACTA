@@ -1,12 +1,14 @@
-# Pacta
+# PactAI
 
 > **Trust, written in code.**
 
 <p align="center">
-  <img alt="Pacta app" src="assets/pacta.png" width="200"/>
+  <img alt="PactAI app" src="assets/pacta.png" width="200"/>
 </p>
 
-Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** smart contracts. It turns the informal, trust-based money agreements that people make with independent online traders into secure, programmable contracts: capital is released in milestone tranches, protected by a trader-posted security bond, refundable if the trader fails to deliver, and provable on-chain. An AI Risk Lens reads a trader's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
+PactAI is a non-custodial escrow protocol on **Stellar** and **Soroban** that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract. Whatever the deal is, funds are released in milestone tranches, protected by a Provider-posted security bond, refundable if the Provider fails to deliver, and provable on-chain. An AI Risk Lens reads a Provider's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
+
+It fits any two-party deal: freelance and milestone project payments, service contracts (design, development, consulting), custom or made-to-order goods, peer-to-peer marketplace deals, and cross-border entrusted funds (remittances) as just one example among many. (The name PactAI = "Pact" for the agreement, "AI" for the built-in risk lens.)
 
 <p>
   <a href="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml/badge.svg" /></a>
@@ -16,7 +18,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 </p>
 
 <p align="center">
-  <img alt="Pacta app" src="assets/dashboard.png" width="900" />
+  <img alt="PactAI app" src="assets/dashboard.png" width="900" />
 </p>
 
 ---
@@ -25,7 +27,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 
 | | |
 |---|---|
-| **Live app** | [PACTA](https://pacta-zarrah.vercel.app) |
+| **Live app** | [PactAI](https://pacta-zarrah.vercel.app) |
 | **Demo video** | [Google Drive](https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=sharing )|
 | **Smart contract (testnet)** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL) |
 | **GitHub** | [Repository](https://github.com/zazazzz-exe/PACTA.git) |
@@ -37,7 +39,7 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 - [The problem](#the-problem)
 - [The solution](#the-solution)
 - [Contract Addresses and Transactions](#Contract-addresses-and-transactions)
-- [How Pacta works](#how-pacta-works)
+- [How PactAI works](#how-pactai-works)
 - [Features](#features)
 - [The AI Risk Lens](#the-ai-risk-lens)
 - [Screenshots](#screenshots)
@@ -60,29 +62,29 @@ Pacta is a non-custodial escrow protocol on **Stellar**, powered by **Soroban** 
 
 ## The problem
 
-Every day, thousands of people, especially Overseas Filipino Workers (OFWs), seafarers, and first-time investors, hand their savings to independent traders they meet in Facebook groups, Telegram channels, and Discord servers. These arrangements run entirely on trust: money sent over GCash, bank transfer, or crypto with no contract, no transparency, and no protection. When a trader disappears or misuses the funds, the investor usually loses everything and has no recourse. There is no accessible, low-cost tool that lets ordinary people safely entrust money to someone else online.
+Every day, people put money behind agreements with someone they do not fully trust: hiring a freelancer for a milestone project, commissioning a designer, developer, or consultant, ordering custom or made-to-order goods, closing a peer-to-peer marketplace deal, or sending entrusted funds across borders. These arrangements run entirely on trust: money sent over GCash, bank transfer, or crypto with no contract, no transparency, and no protection. When the other side disappears or misuses the funds, the payer usually loses everything and has no recourse. There is no accessible, low-cost tool that lets two ordinary people safely put money behind an agreement online.
 
 ## The solution
 
-Pacta fixes this not by asking people to trust harder, but by making trust enforceable. Instead of sending money directly to a trader, the investor locks it in a Soroban escrow contract that:
+PactAI fixes this not by asking people to trust harder, but by making trust enforceable. Instead of sending money directly to a Provider, the Client locks it in a Soroban escrow contract that:
 
-- **Releases capital in milestone tranches** so only a portion is ever exposed at a time.
-- **Requires a security bond** the trader posts as skin in the game.
-- **Refunds automatically** if the trader fails to deliver by the deadline: the investor reclaims the unreleased capital plus the trader's bond.
-- **Records every agreement on-chain**, building a portable reputation that turns anonymous traders into accountable ones.
+- **Releases funds in milestone tranches** so only a portion is ever exposed at a time.
+- **Requires a security bond** the Provider posts as skin in the game.
+- **Refunds automatically** if the Provider fails to deliver by the deadline: the Client reclaims the unreleased funds plus the Provider's bond.
+- **Records every agreement on-chain**, building a portable reputation that turns anonymous Providers into accountable ones.
 
-Pacta does not give investment advice, take custody of trading profits, or guarantee returns. It is **trust infrastructure**.
+PactAI does not give advice, take custody of anyone's profits, or guarantee outcomes. It is **trust infrastructure**.
 
 ## Contract Addresses and Transactions
 
-- **Pacta Soroban contract (Stellar Testnet):**
+- **PactAI Soroban contract (Stellar Testnet):**
   `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
   · [view on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
 <p align="center">
-  <img alt="Pacta app" src="assets/contract.png" width="700" />
+  <img alt="PactAI app" src="assets/contract.png" width="700" />
 </p>
 
-## How Pacta works
+## How PactAI works
 
 ```
             create agreement
@@ -105,25 +107,27 @@ Pacta does not give investment advice, take custody of trading profits, or guara
             └───────────┘  reputation ✓      └───────────┘  reputation ⚠
 ```
 
-**The protection model, honestly stated:** a naive "lock all the money and trust the trader" escrow is not actually safer, because once capital reaches the trader, code cannot claw it back. Pacta's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased capital and seizes the bond, the concrete on-chain penalty for a trader who walks away.
+**The protection model, honestly stated:** a naive "lock all the money and trust the Provider" escrow is not actually safer, because once funds reach the Provider, code cannot claw them back. PactAI's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased funds and seizes the bond, the concrete on-chain penalty for a Provider who walks away.
+
+> On-chain, the two parties are stored as the legacy `investor` (the Client, who deposits funds and approves releases) and `trader` (the Provider, who posts the bond and delivers) fields, kept for compatibility with the deployed contract. The UI presents them as Client and Provider, and `profit_share_bps` is a legacy, informational field that is hidden in the UI.
 
 ## Features
 
-- **Non-custodial escrow** on Stellar/Soroban, with milestone-based capital release.
+- **Non-custodial escrow** on Stellar/Soroban, with milestone-based fund release.
 - **Security bonds** and **deadline-gated emergency refunds**.
-- **On-chain reputation** per trader (completed, refunded, total volume).
-- **AI Risk Lens** that interprets a trader's on-chain history in plain language and suggests safer agreement terms.
+- **On-chain reputation** per Provider (completed, refunded, total volume).
+- **AI Risk Lens** that interprets a Provider's on-chain history in plain language and suggests safer agreement terms.
 - **Wallet-native auth** (Freighter and others via Stellar Wallets Kit) — no signup, no passwords.
 - **Mobile-responsive UI** built mobile-first for the real user base.
 - **Proper loading and error handling**: skeleton loaders, transaction-pending states, friendly contract-error messages, and graceful degradation when the AI endpoint is unavailable.
 
 ## The AI Risk Lens
 
-When an investor is about to work with a trader, Pacta reads that trader's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
+When a Client is about to work with a Provider, PactAI reads that Provider's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
 
 - All statistics (completed/refunded counts, volume, recency, deal-vs-history ratio) are computed deterministically in code, so the numbers are always correct.
 - An LLM (**Claude**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
-- It assesses **counterparty trustworthiness from on-chain history only** — never investment advice, never return predictions.
+- It assesses **counterparty trustworthiness from on-chain history only**, never financial advice, never outcome predictions.
 
 A brand-new address with no history is flagged as unproven rather than green-lit, which doubles as a lightweight anti-Sybil signal.
 
@@ -190,7 +194,7 @@ get_reputation(trader) -> Reputation
 get_count() -> u64
 ```
 
-Authorization is enforced on-chain with `require_auth` (investor for create/deposit/release/complete/refund/cancel; trader for `post_bond`). Amounts are in the token's base units (7 decimals).
+Authorization is enforced on-chain with `require_auth` (the Client, stored as `investor`, for create/deposit/release/complete/refund/cancel; the Provider, stored as `trader`, for `post_bond`). Amounts are in the token's base units (7 decimals).
 
 ## Getting started
 
@@ -344,11 +348,11 @@ Real users onboarded and interacting on testnet:
 
 ## Roadmap
 
-- Trader-initiated completion with a grace timer (fairness for both sides)
+- Provider-initiated completion with a grace timer (fairness for both sides)
 - Dispute resolution / arbitration path (the contract reserves an admin role)
 - Identity-bound reputation (passkeys, proof-of-personhood) to harden against Sybil attacks
 - Passkey onboarding and voice input for non-crypto users
-- USDC settlement and a discoverable, reputation-ranked trader directory
+- USDC settlement and a discoverable, reputation-ranked Provider directory
 - Shareable on-chain proof certificates for completed deals
 - Mainnet deployment and a professional security audit
 

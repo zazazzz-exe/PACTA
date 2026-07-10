@@ -40,6 +40,10 @@
   --color-signal-amber: #F2B442;
   --color-signal-red: #FB6A57;
 
+  /* hero marketing panel (landing split — navy like PalengkePay reference) */
+  --color-hero-panel: #0A3328;
+  --color-hero-navy: #0B1F3A;
+
   /* radius */
   --radius-card: 16px;
   --radius-control: 12px;
@@ -153,4 +157,160 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
     animation: none !important;
   }
   .proof-sheen, .particle { display: none; }
+}
+
+/* Phone mockup — gentle float on desktop hero. */
+@keyframes phone-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+.phone-float { animation: phone-float 5s ease-in-out infinite; }
+.phone-tilt { transform: rotate(-7deg); transform-origin: center center; }
+.phone-tilt.phone-float { animation: phone-float-tilt 5s ease-in-out infinite; }
+
+@keyframes phone-float-tilt {
+  0%, 100% { transform: rotate(-7deg) translateY(0); }
+  50% { transform: rotate(-7deg) translateY(-8px); }
+}
+
+/* Floating hero cards — staggered idle drift + entrance. */
+@keyframes float-card-a {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes float-card-b {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@keyframes float-card-c {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-6px) translateX(3px); }
+}
+@keyframes float-card-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.float-card-a { animation: float-card-a 4.2s ease-in-out infinite; }
+.float-card-b { animation: float-card-b 5s ease-in-out infinite 0.8s; }
+.float-card-c { animation: float-card-c 4.6s ease-in-out infinite 1.4s; }
+.float-card-enter { animation: float-card-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.float-card-enter-1 { animation-delay: 0.25s; }
+.float-card-enter-2 { animation-delay: 0.45s; }
+.float-card-enter-3 { animation-delay: 0.65s; }
+
+/* App preview — 3-screen crossfade inside phone (9s cycle). */
+.preview-stack { position: relative; }
+.preview-screen {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: preview-crossfade 9s ease-in-out infinite;
+}
+.preview-screen-1 { animation-delay: 0s; }
+.preview-screen-2 { animation-delay: -6s; }
+.preview-screen-3 { animation-delay: -3s; }
+
+@keyframes preview-crossfade {
+  0%, 5%   { opacity: 0; }
+  8%, 28%  { opacity: 1; }
+  33%, 100% { opacity: 0; }
+}
+
+/* Dialog enter — backdrop + panel. */
+.dialog-backdrop { animation: dialog-fade-in 0.2s ease-out both; }
+.dialog-panel { animation: dialog-rise-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes dialog-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dialog-rise-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-float { animation: none !important; }
+  .phone-tilt { transform: rotate(-7deg); }
+  .phone-tilt.phone-float { animation: none !important; }
+  .float-card-a, .float-card-b, .float-card-c { animation: none !important; }
+  .float-card-enter { animation: none !important; opacity: 1; }
+  .preview-screen { animation: none !important; opacity: 0; }
+  .preview-screen-1 { opacity: 1; position: relative; }
+  .preview-screen-2, .preview-screen-3 { display: none; }
+  .dialog-backdrop, .dialog-panel { animation: none !important; }
+  .btn-shimmer::after, .glow-orb, .step-card-hover { animation: none !important; }
+}
+
+/* Primary button shimmer sweep. */
+.btn-shimmer { position: relative; overflow: hidden; }
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0.22) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: shimmer-sweep 3.5s ease-in-out infinite;
+}
+@keyframes shimmer-sweep {
+  0%, 65% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* Step / feature cards — lift + glow on hover. */
+.step-card {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.step-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-pop);
+}
+
+/* Floating glow orbs (hero showcase). */
+@keyframes glow-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+  50% { transform: translate(12px, -16px) scale(1.15); opacity: 0.75; }
+}
+.glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(40px);
+  animation: glow-drift 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Icon pop on card hover. */
+.icon-pop { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.group:hover .icon-pop { transform: scale(1.12) rotate(-4deg); }
+
+/* Allocation bar segment grow-in. */
+.bar-segment { transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Subtle mesh dot pattern for sections. */
+.mesh-dots {
+  background-image: radial-gradient(circle, var(--color-accent) 1px, transparent 1px);
+  background-size: 24px 24px;
+  opacity: 0.07;
+}
+
+/* Status strip pulse for active cards. */
+@keyframes strip-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+.strip-pulse { animation: strip-pulse 2.5s ease-in-out infinite; }
+
+/* Landing — green wash backgrounds (token-based). */
+.landing-hero-left {
+  background: linear-gradient(135deg, var(--color-accent-tint) 0%, var(--color-canvas) 45%, rgba(226,242,236,0.85) 100%);
+}
+.landing-section-green {
+  background: linear-gradient(180deg, rgba(226,242,236,0.55) 0%, var(--color-accent-tint) 50%, rgba(226,242,236,0.4) 100%);
+}
+.landing-section-mint {
+  background: linear-gradient(180deg, var(--color-accent-tint) 0%, var(--color-canvas) 100%);
+}
+.landing-hero-panel {
+  background: linear-gradient(145deg, var(--color-accent-deep) 0%, var(--color-hero-navy) 40%, var(--color-accent) 100%);
 }

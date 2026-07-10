@@ -6,6 +6,14 @@ import { StatusPill } from './StatusPill';
 import { MilestoneBar } from './MilestoneBar';
 import { Avatar } from './Avatar';
 
+const STRIP: Record<Status, string> = {
+  [Status.Pending]: 'bg-deadline',
+  [Status.Active]: 'bg-accent strip-pulse',
+  [Status.Completed]: 'bg-accent-deep',
+  [Status.Refunded]: 'bg-refund',
+  [Status.Cancelled]: 'bg-fog',
+};
+
 export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) {
   const counterparty = you === a.trader ? a.investor : a.trader;
   const counterpartyRole = you === a.investor ? 'Trader' : 'Investor';
@@ -18,10 +26,15 @@ export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) 
   return (
     <button
       onClick={() => navigate(`/agreement/${a.id}`)}
-      className={`w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition duration-200 hover:-translate-y-0.5 hover:border-hairline-strong hover:shadow-pop focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+      className={`group relative w-full overflow-hidden text-left rounded-card border border-hairline bg-paper p-5 shadow-card transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:shadow-pop focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
         terminal ? 'opacity-60 hover:opacity-100' : ''
       }`}
     >
+      <span
+        className={`absolute left-0 top-0 h-full w-1 rounded-l-card ${STRIP[a.status]}`}
+        aria-hidden
+      />
+      <div className="pl-2">
       <div className="flex items-center gap-3">
         <Avatar addr={counterparty} />
         <div className="min-w-0 flex-1">
@@ -58,6 +71,7 @@ export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) 
       </div>
 
       <p className="mono text-[11px] text-fog mt-3">agr-{a.id.toString().padStart(3, '0')}</p>
+      </div>
     </button>
   );
 }

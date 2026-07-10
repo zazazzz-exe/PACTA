@@ -31,6 +31,7 @@ import { Button } from '../components/Button';
 import { ProofPanel } from '../components/ProofPanel';
 import { AmountDisplay } from '../components/AmountDisplay';
 import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Reveal } from '../components/Reveal';
 
 interface Pending {
   key: string;
@@ -156,53 +157,63 @@ export function AgreementDetail({ id }: { id: bigint }) {
       <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
         {/* Main column */}
         <div className="space-y-5">
-          <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
-            <AmountDisplay amount={headline.amount} label={headline.label} bond={headline.bond} />
-          </div>
-
-          <button
-            onClick={() => navigate(`/trader/${a.trader}`)}
-            className="w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition hover:border-hairline-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          >
-            <div className="flex items-center gap-3">
-              <Avatar addr={counterparty} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[11px] text-fog">{counterRole}</p>
-                <p className="mono text-sm text-ink truncate">{shortAddr(counterparty, 6, 6)}</p>
-              </div>
-              <ReputationBadge trader={a.trader} publicKey={address ?? undefined} />
+          <Reveal>
+            <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
+              <AmountDisplay amount={headline.amount} label={headline.label} bond={headline.bond} />
             </div>
-          </button>
+          </Reveal>
 
-          <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
-            <MilestoneBar
-              released={a.released_milestones}
-              total={a.milestones}
-              releasedAmount={a.released_amount}
-            />
-          </div>
+          <Reveal delay={60}>
+            <button
+              onClick={() => navigate(`/trader/${a.trader}`)}
+              className="w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition hover:border-hairline-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar addr={counterparty} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] text-fog">{counterRole}</p>
+                  <p className="mono text-sm text-ink truncate">{shortAddr(counterparty, 6, 6)}</p>
+                </div>
+                <ReputationBadge trader={a.trader} publicKey={address ?? undefined} />
+              </div>
+            </button>
+          </Reveal>
+
+          <Reveal delay={120}>
+            <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
+              <MilestoneBar
+                released={a.released_milestones}
+                total={a.milestones}
+                releasedAmount={a.released_amount}
+              />
+            </div>
+          </Reveal>
 
           {a.status === Status.Active && (
-            <div
-              className={`rounded-control p-4 flex items-center gap-2.5 text-[13px] ${
-                deadlinePassed ? 'bg-refund-tint text-refund-deep' : 'bg-deadline-tint text-deadline-deep'
-              }`}
-            >
-              <Clock size={16} aria-hidden />
-              {deadlinePassed ? (
-                <span>Refund available. The deadline has passed.</span>
-              ) : (
-                <span>
-                  Deadline in <span className="mono">{countdown(Number(a.deadline), now)}</span>
-                  <span className="text-deadline/70"> · {fromTimestamp(a.deadline).toLocaleString()}</span>
-                </span>
-              )}
-            </div>
+            <Reveal delay={180}>
+              <div
+                className={`rounded-control p-4 flex items-center gap-2.5 text-[13px] ${
+                  deadlinePassed ? 'bg-refund-tint text-refund-deep' : 'bg-deadline-tint text-deadline-deep'
+                }`}
+              >
+                <Clock size={16} aria-hidden />
+                {deadlinePassed ? (
+                  <span>Refund available. The deadline has passed.</span>
+                ) : (
+                  <span>
+                    Deadline in <span className="mono">{countdown(Number(a.deadline), now)}</span>
+                    <span className="text-deadline/70"> · {fromTimestamp(a.deadline).toLocaleString()}</span>
+                  </span>
+                )}
+              </div>
+            </Reveal>
           )}
         </div>
 
         {/* Aside: actions + proof */}
         <aside className="space-y-4 lg:sticky lg:top-20">
+          <Reveal delay={60}>
+          <div className="space-y-4">
           {txHash && (
             <div className="rounded-control bg-accent-tint text-accent-deep p-3 text-[13px] flex items-center gap-2">
               <span>Done.</span>
@@ -403,6 +414,8 @@ export function AgreementDetail({ id }: { id: bigint }) {
             contractShort={shortAddr(CONTRACT_ID, 6, 6)}
             explorerUrl={contractExplorerUrl()}
           />
+          </div>
+          </Reveal>
         </aside>
       </div>
 

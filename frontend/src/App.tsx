@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import { useRoute, navigate } from './lib/router';
 import { useWallet } from './hooks/useWallet';
@@ -6,6 +7,7 @@ import { landingSteps, dashboardSteps } from './lib/tours';
 import { ConnectButton } from './components/ConnectButton';
 import { NetworkGuard } from './components/NetworkGuard';
 import { AmbientBackground } from './components/AmbientBackground';
+import { PageTransition, routeKey } from './components/PageTransition';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { CreateAgreement } from './pages/CreateAgreement';
@@ -31,7 +33,7 @@ function NetworkBadge() {
       data-tour="network"
       className="mono hidden sm:inline-flex items-center gap-1.5 text-[12px] text-slate"
     >
-      <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden />
+      <span className="h-1.5 w-1.5 rounded-pill bg-accent pulse-dot" aria-hidden />
       testnet
     </span>
   );
@@ -59,15 +61,46 @@ function LockNotice() {
 export default function App() {
   const route = useRoute();
   const { start } = useTour();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const startTour = () =>
     start(route.name === 'dashboard' ? dashboardSteps : landingSteps);
 
+  const key = routeKey(route);
+
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Ambient motion/glow is reserved for the landing hero only. */}
-      {route.name === 'landing' && <AmbientBackground />}
-      <header className="sticky top-0 z-20 border-b border-hairline bg-canvas/85 backdrop-blur">
+      {/* Ambient glow — full on mobile landing, subtle on all other pages. */}
+      {route.name === 'landing' ? (
+        <>
+          <div className="hidden lg:block">
+            <AmbientBackground variant="subtle" />
+          </div>
+          <div className="lg:hidden">
+            <AmbientBackground variant="full" />
+          </div>
+        </>
+      ) : (
+        <AmbientBackground variant="subtle" />
+      )}
+      <header
+        className={`sticky top-0 z-20 border-b backdrop-blur transition-shadow duration-200 ${
+          route.name === 'landing'
+            ? scrolled
+              ? 'border-accent/20 bg-accent-tint/90 shadow-card'
+              : 'border-accent/15 bg-accent-tint/70'
+            : scrolled
+              ? 'border-hairline bg-canvas/95 shadow-card'
+              : 'border-hairline bg-canvas/85'
+        }`}
+      >
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 h-14">
           <div className="flex items-center gap-3">
             <Wordmark />
@@ -92,15 +125,17 @@ export default function App() {
       <NetworkGuard />
       <LockNotice />
 
-      <main className="relative z-10 flex-1 px-5 py-6 sm:py-8">
-        {route.name === 'landing' && <Landing />}
-        {route.name === 'dashboard' && <Dashboard />}
-        {route.name === 'create' && <CreateAgreement />}
-        {route.name === 'detail' && <AgreementDetail id={route.id} />}
-        {route.name === 'trader' && <TraderProfile address={route.address} />}
+      <main className={`relative z-10 flex-1 ${route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'}`}>
+        <PageTransition routeKey={key}>
+          {route.name === 'landing' && <Landing />}
+          {route.name === 'dashboard' && <Dashboard />}
+          {route.name === 'create' && <CreateAgreement />}
+          {route.name === 'detail' && <AgreementDetail id={route.id} />}
+          {route.name === 'trader' && <TraderProfile address={route.address} />}
+        </PageTransition>
       </main>
 
-      <footer className="relative z-10 mt-16 bg-[#0A3328] text-panel-ink">
+      <footer className={`relative z-10 bg-[#0A3328] text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-16'}`}>
         <div className="mx-auto max-w-6xl px-5 py-12">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             {/* Brand */}

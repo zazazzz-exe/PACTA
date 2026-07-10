@@ -23,7 +23,7 @@ export function MilestoneBar({
         {Array.from({ length: total }).map((_, i) => (
           <div
             key={i}
-            className={`flex-1 h-2 rounded-pill transition-colors ${
+            className={`flex-1 h-2 rounded-pill transition-colors duration-300 ${
               i < released ? 'bg-accent' : 'bg-hairline-strong'
             }`}
           />

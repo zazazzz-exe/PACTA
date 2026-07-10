@@ -1,11 +1,11 @@
-# Pacta — Product Requirements Document (PRD)
+# PactAI — Product Requirements Document (PRD)
 
-> **Tagline:** Pacta — Trust, written in code.
-> **One-liner:** A decentralized escrow protocol on Stellar/Soroban that turns informal fund-management agreements between investors and independent traders into secure, staged, bond-protected on-chain contracts.
+> **Tagline:** PactAI — Trust, written in code.
+> **One-liner:** PactAI is a non-custodial escrow protocol on Stellar and Soroban that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract.
 
 **Document status:** Build-ready. This PRD is written so it can be handed directly to Claude Code as the source of truth for an end-to-end build (smart contracts + frontend + deploy).
 
-**Naming note:** The original concept doc used two names interchangeably ("Pacta" and "Katiwala"). This project is named **Pacta** everywhere. There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to Pacta.
+**Naming note:** The product is named **PactAI** everywhere in human-readable copy (headings, prose, taglines, UI). The name is "Pact" (agreement) plus "AI" (the built-in AI risk lens). Code identifiers stay on the legacy name for ABI and package compatibility: the contract crate `pacta-escrow`, the struct `PactaEscrow`, the package dir `packages/pacta`, the deploy alias `pacta_escrow`, and the wasm `pacta_escrow.wasm` are unchanged. There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to PactAI (or, for code identifiers, keep the legacy `pacta` form).
 
 ---
 
@@ -28,68 +28,68 @@ A condensed, copy-pasteable task list for Claude Code is in **§16**.
 ## 1. Vision & problem
 
 ### 1.1 Problem
-Every day thousands of people — especially Overseas Filipino Workers (OFWs), seafarers, first-time investors, and people with modest savings — hand money to independent traders and "fund managers" they meet in Facebook groups, Telegram channels, Discord servers, or through referrals. These arrangements are informal and run entirely on trust. Money is sent directly via bank transfer, GCash, or crypto with no enforceable agreement, no transparency, and no protection.
+Every day people hand money to someone they met online for a deal or a deliverable: a freelance project, a service contract, a custom or made-to-order item, a peer-to-peer marketplace purchase, or funds entrusted across borders. These arrangements are informal and run entirely on trust. Money is sent directly via bank transfer, GCash, or crypto with no enforceable agreement, no transparency, and no protection.
 
-When a trader disappears, misuses funds, or fails to deliver, the investor usually loses everything with little recourse. There is no accessible, low-cost tool that gives ordinary people a safe, transparent way to entrust money to someone else online.
+When the other party disappears, misuses the funds, or fails to deliver, the person who paid usually loses everything with little recourse. There is no accessible, low-cost tool that gives ordinary people a safe, transparent way to entrust money to someone else online.
 
 ### 1.2 Solution
-Pacta is a non-custodial escrow protocol built on Stellar and powered by Soroban smart contracts. Instead of sending money directly to a trader, the investor locks capital in a programmable escrow agreement that enforces:
+PactAI is a non-custodial escrow protocol built on Stellar and powered by Soroban smart contracts. Instead of sending money directly to the other party, the Client locks funds in a programmable escrow agreement that enforces:
 
-- **Staged capital release** — capital is released to the trader in milestone tranches, not all at once, so exposure is limited and earns trust progressively.
-- **Security bonds** — the trader posts a refundable bond as skin-in-the-game. If they disappear, the bond compensates the investor.
-- **Deadline-protected emergency refunds** — if the trader fails to deliver within the agreed window, the investor reclaims all unreleased capital plus the trader's bond.
-- **On-chain reputation** — every completed and refunded agreement is recorded per trader, so investors can evaluate counterparties from verifiable history.
+- **Staged fund release:** funds are released to the Provider in milestone tranches, not all at once, so exposure is limited and trust is earned progressively.
+- **Security bonds:** the Provider posts a refundable bond as skin-in-the-game. If they disappear, the bond compensates the Client.
+- **Deadline-protected emergency refunds:** if the Provider fails to deliver within the agreed window, the Client reclaims all unreleased funds plus the Provider's bond.
+- **On-chain reputation:** every completed and refunded agreement is recorded per Provider, so Clients can evaluate counterparties from verifiable history.
 
-Pacta does **not** give investment advice, take custody of trading profits, or guarantee returns. It is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
+PactAI does **not** give investment advice, take custody of profits, or guarantee outcomes. It is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
 
 ### 1.3 Why this design is safe and honest (important for judges)
-A naive "lock all the money and trust the trader" escrow is not actually safer — the moment capital reaches the trader, code can't claw it back. Pacta's protection comes from two mechanics that *are* enforceable on-chain:
+A naive "lock all the money and trust the other party" escrow is not actually safer: the moment funds reach the Provider, code can't claw them back. PactAI's protection comes from two mechanics that *are* enforceable on-chain:
 - **Limiting exposure over time** (staged release), and
 - **Collateralizing the released portion** (the bond).
 
-The emergency-refund path returns the unreleased capital **and** seizes the bond, which is the concrete on-chain penalty for a trader who walks away.
+The emergency-refund path returns the unreleased funds **and** seizes the bond, which is the concrete on-chain penalty for a Provider who walks away.
 
 ---
 
 ## 2. Hackathon context
 
 - **Event:** Build on Stellar — APAC track.
-- **Primary track:** **Payment & Consumer Applications.** Pacta is a consumer-facing financial-protection app that helps everyday users safely coordinate money with independent traders.
-- **Why it fits the track:** consumer protection against trading scams; financial accessibility (anyone with a Stellar wallet); real-world SEA impact; an easy-to-use financial tool (connect wallet → create agreement → deposit → approve releases → refund).
+- **Primary track:** **Payment & Consumer Applications.** PactAI is a consumer-facing financial-protection app that helps everyday users safely coordinate money for any two-party deal or deliverable.
+- **Why it fits the track:** consumer protection for any informal money agreement; financial accessibility (anyone with a Stellar wallet); real-world SEA impact; an easy-to-use financial tool (connect wallet → create agreement → deposit → approve releases → refund).
 - **Team:**
   - Zarrah Exekiel Valles
   - Jecyn Vallirie Turbanos
 - **Country:** Philippines.
 
 ### 2.1 Track statement (for submission)
-> Pacta is a Payment & Consumer Application built on Stellar and powered by Soroban that protects everyday investors by turning informal fund-management agreements into secure, programmable, transparent financial contracts.
+> PactAI is a Payment & Consumer Application built on Stellar and powered by Soroban that protects everyday users by turning any informal money agreement between two people into a secure, programmable, transparent financial contract.
 
 ---
 
 ## 3. Users & personas
 
-**Primary users (investors):**
-- OFWs and seafarers with disposable income but limited financial/legal protection.
-- First-time investors and employees seeking managed trading services.
+**Primary users (Clients):**
+- People paying or hiring someone online for a deliverable, with limited financial or legal protection.
+- First-time buyers of freelance work, services, or made-to-order goods.
 - People with limited financial knowledge who currently rely on pure trust.
 
-**Secondary users (traders / fund managers):**
-- Independent forex and crypto traders, copy traders, trading mentors offering account management.
-- They benefit because a posted bond + transparent track record lets them **signal credibility** and win clients who would otherwise be too scared to engage.
+**Secondary users (Providers):**
+- Freelancers, service providers (design, dev, consulting), makers of custom goods, and marketplace sellers.
+- They benefit because a posted bond plus a transparent track record lets them **signal credibility** and win clients who would otherwise be too scared to engage.
 
-**Persona A — "Tita Maria" (investor):** OFW in Dubai, sends remittances home, wants to grow ₱100k with a trader she met in a Facebook group but has been scammed before. She needs proof she can get her money back if things go wrong.
+**Persona A — "Tita Maria" (Client):** OFW in Dubai who is paying someone online for a deliverable (a custom order, or a piece of freelance work). She has been scammed before, so she needs proof she can get her money back if things go wrong.
 
-**Persona B — "Jay" (trader):** Skilled retail trader with no formal credentials. Honest, but indistinguishable from scammers online. He posts a bond and builds an on-chain track record to stand out.
+**Persona B — "Jay" (Provider):** Skilled and honest, but with no formal credentials, so online he is indistinguishable from scammers. He posts a bond and builds an on-chain track record to stand out.
 
 ---
 
 ## 4. Core user flows
 
-**Investor flow:** Connect wallet → Create agreement (set trader, capital, bond, milestones, duration, profit share) → Deposit capital → Approve milestone releases as trust builds → Either Complete (returns bond to trader) or Emergency Refund (reclaim unreleased capital + bond if deadline passes).
+**Client flow:** Connect wallet → Create agreement (set Provider, funds, bond, milestones, duration) → Deposit funds → Approve milestone releases as trust builds → Either Complete (returns bond to the Provider) or Emergency Refund (reclaim unreleased funds + bond if the deadline passes).
 
-**Trader flow:** Connect wallet → Review agreement → Post security bond → Receive milestone tranches as the investor approves them → Get bond back on completion.
+**Provider flow:** Connect wallet → Review agreement → Post security bond → Receive milestone tranches as the Client approves them → Get the bond back on completion.
 
-**Reputation flow:** Anyone can read a trader's on-chain reputation (completed count, refunded count, total volume) before agreeing to work with them.
+**Reputation flow:** Anyone can read a Provider's on-chain reputation (completed count, refunded count, total volume) before agreeing to work with them.
 
 ---
 
@@ -103,7 +103,7 @@ The emergency-refund path returns the unreleased capital **and** seizes the bond
 - Everything runs against a real deployed Soroban contract on Stellar testnet.
 
 ### 5.2 Stretch (if time remains)
-- Profit-share settlement on completion (trader returns capital + profit via a `settle` call).
+- Optional settlement on completion (legacy profit-share path via a `settle` call; the `profit_share_bps` field is informational and hidden in the UI).
 - Events feed / activity timeline read from contract events.
 - Mobile wallet support via WalletConnect (Stellar Wallets Kit handles this).
 - Polished multi-agreement dashboard.
@@ -114,7 +114,7 @@ The emergency-refund path returns the unreleased capital **and** seizes the bond
 - Multi-asset support, fiat on/off-ramp, KYC/identity attestations.
 - Mainnet deployment + professional security audit.
 
-> **Scope discipline:** The protection story is fully told by create → bond → deposit → staged release → emergency refund + reputation. Resist adding anything that isn't on the demo click-path until that path is solid.
+> **Scope discipline:** The protection story is fully told by create → bond → deposit → staged release → emergency refund + reputation. Resist adding anything that is not on the demo click-path until that path is solid.
 
 ---
 
@@ -173,7 +173,7 @@ The emergency-refund path returns the unreleased capital **and** seizes the bond
             └───────────────────────────┘
 ```
 
-**There is no backend server.** The Soroban contract is the backend. All state lives on-chain. Reads are free RPC simulations; writes are wallet-signed transactions.
+**There is no backend server.** The Soroban contract is the backend for the escrow: it holds the funds and enforces the agreement between the two parties. All state lives on-chain. Reads are free RPC simulations; writes are wallet-signed transactions. (The optional AI Risk Lens in §17 adds one stateless serverless endpoint that only reads public on-chain stats; it is not part of the escrow and never holds funds.)
 
 ---
 
@@ -225,6 +225,8 @@ complete                                   emergency_refund
 All amounts are `i128` in the token's base units. **SAC/USDC use 7 decimals**, so `10_000_000` = 1.0 token.
 
 ### 8.3 Data types
+
+> **Role mapping (product to on-chain):** in the UI the two parties are the **Client** (deposits funds, approves releases) and the **Provider** (posts the bond, delivers). On-chain the Client is stored in the `investor` field and the Provider in the `trader` field. These legacy field and parameter names are kept for ABI compatibility with the already-deployed contract, so all code below keeps `investor`/`trader`. `profit_share_bps` is legacy and informational: it is hidden in the UI and does not affect settlement in the MVP.
 
 ```rust
 #[contracttype]
@@ -984,16 +986,16 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 
 ### 9.4 Screens
 1. **Landing / Connect** — value prop, "Connect Wallet" button, short "how it works" (3 steps). After connect, show truncated address + network badge.
-2. **Dashboard** — list of agreements (iterate `get_count()` then `get_agreement(i)` for `i in 1..=count`). Each card: counterparty, capital, bond, status pill, milestone progress bar. Filter by "As investor" / "As trader" using the connected address.
-3. **Create Agreement** — form: trader address, capital, bond, milestones, profit share %, duration. Validation (capital > 0, milestones ≥ 1, share ≤ 100%). Submit → `create_agreement`.
+2. **Dashboard** — list of agreements (iterate `get_count()` then `get_agreement(i)` for `i in 1..=count`). Each card: counterparty, funds, bond, status pill, milestone progress bar. Filter by "As client" / "As provider" using the connected address.
+3. **Create Agreement** — form: Provider address, funds, bond, milestones, duration. Validation (funds > 0, milestones ≥ 1). Submit → `create_agreement`. (`profit_share_bps` is legacy and hidden from the form; the call passes a default value.)
 4. **Agreement Detail** — full terms, status, milestone progress, and the action buttons valid for the connected role/state:
-   - Trader + Pending + not bonded → **Post Bond**
-   - Investor + Pending + not deposited → **Deposit Capital**
-   - Investor + Active + milestones remaining → **Release Milestone**
-   - Investor + Active + all milestones released → **Complete**
-   - Investor + Active + `now ≥ deadline` → **Emergency Refund**
-   - Investor + Pending → **Cancel**
-5. **Reputation badge** — wherever a trader address appears, show `✓ {completed}  ⚠ {refunded}  Σ {volume}` from `get_reputation`.
+   - Provider + Pending + not bonded → **Post Bond**
+   - Client + Pending + not deposited → **Deposit Funds**
+   - Client + Active + milestones remaining → **Release Milestone**
+   - Client + Active + all milestones released → **Complete**
+   - Client + Active + `now ≥ deadline` → **Emergency Refund**
+   - Client + Pending → **Cancel**
+5. **Reputation badge** — wherever a Provider address appears, show `✓ {completed}  ⚠ {refunded}  Σ {volume}` from `get_reputation`.
 
 ### 9.5 State & UX details
 - After any write, poll/refetch the affected agreement (RPC may take a few seconds to reflect new state).
@@ -1003,7 +1005,7 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 
 ### 9.6 Security UX (wallet-as-login, hardened)
 
-Pacta stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
+PactAI stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
 
 - **Network guard.** On connect, read the wallet's network (best effort). If it is not the Stellar test network, show a persistent warning banner so the user does not sign against the wrong network. If the network cannot be determined, do not block.
 - **Confirm before signing.** Every fund-moving action (post bond, deposit, release, complete, emergency refund, cancel) opens a plain-language confirmation dialog stating the amount, the counterparty, and the effect before the wallet signature is requested. Nothing is signed blindly. Copy follows §12/DESIGN voice (sentence case, no jargon, names the effect the user controls).
@@ -1014,13 +1016,13 @@ These are functional-UX additions; the contract interface in §8.5 and the flows
 
 ### 9.7 Responsive layout (website + mobile)
 
-The app is **mobile-first** (primary users are OFWs on phones) and also a comfortable desktop website. One implementation, fluid across breakpoints:
+The app is **mobile-first** (many primary users are on phones) and also a comfortable desktop website. One implementation, fluid across breakpoints:
 
 - **Shell.** Header, content, and footer share a centered container that grows to a wide max width on desktop; screen padding stays comfortable from 360px up.
 - **Landing.** Single column on mobile; two-column hero (copy beside the proof panel) on desktop. "How it works" stacks on mobile, three across on wider screens.
 - **Dashboard.** Agreement cards are a one-column list on mobile, two columns at the small breakpoint, three at large.
 - **Agreement detail.** Single stacked column on mobile (amount, parties, milestones, deadline, actions, proof). On desktop it splits into a main column plus a sticky aside holding the actions and the proof panel.
-- **Create / trader profile.** Stay in a comfortably narrow centered column on all sizes (forms and profiles read better narrow).
+- **Create / provider profile.** Stay in a comfortably narrow centered column on all sizes (forms and profiles read better narrow).
 - **Quality floor (DESIGN §10).** Tap targets stay at least 44px, every interactive element shows a visible focus ring, motion respects `prefers-reduced-motion`, and amounts use tabular mono with thousands separators.
 
 > Visual tokens, components, and exact styling live in **DESIGN.md** (which supersedes §12). This section captures only the behavioral/layout contract.
@@ -1184,51 +1186,51 @@ npm run dev
 
 ## 12. Design direction
 
-Pacta protects people's savings — it must look **trustworthy, precise, and calm**, not like a hype crypto app. Target sensibility: technical credibility meets clean fintech (think mission-control instrument panel rendered as polished SaaS).
+PactAI protects people's money in real agreements, so it must look **trustworthy, precise, and calm**, not like a hype crypto app. Target sensibility: technical credibility meets clean fintech (think mission-control instrument panel rendered as polished SaaS).
 
 - **Palette:** deep near-black/navy base (`#0B0F14`), high-contrast off-white text, a single confident accent (a trust-green or electric-teal) for primary actions and "protected" states; amber for warnings (deadline approaching / refund available); restrained red only for destructive/refund.
 - **Type:** a clean grotesque/sans for UI (Inter or similar); a monospace for addresses, amounts, IDs, and status codes — it reads as "verifiable / on-chain."
 - **Components:** generous spacing, hairline borders, subtle elevation, status pills, a clear milestone progress bar, and a live deadline countdown. No gradients-for-the-sake-of-it, no clutter.
 - **Trust cues everywhere:** show the contract ID (linked to Stellar Expert), tx hashes (linked), and reputation counts prominently. Make "your money is in a contract, here's the proof" the emotional core of the UI.
-- **Microcopy:** plain, reassuring, OFW-friendly. "Your capital is locked in the contract. Release it step by step. Get it back if the deadline passes." No jargon in the primary flow.
+- **Microcopy:** plain and reassuring. "Your funds are locked in the contract. Release them step by step. Get them back if the deadline passes." No jargon in the primary flow.
 - **No em-dashes in UI copy.**
 
 ---
 
 ## 13. Demo script (the click-path judges will see)
 
-Set up beforehand: two browser profiles (or two wallets in Freighter) — **Investor** and **Trader** — both funded on testnet. Use the native XLM SAC as the token. The contract is already deployed; bindings generated; app running.
+Set up beforehand: two browser profiles (or two wallets in Freighter) — **Client** and **Provider** — both funded on testnet. Use the native XLM SAC as the token. The contract is already deployed; bindings generated; app running.
 
-**Act 1 — The problem (15s, spoken):** "Every day OFWs hand savings to traders they met online with zero protection. When the trader vanishes, the money is gone. Pacta fixes that with code."
+**Act 1 — The problem (15s, spoken):** "Every day people pay someone online for work or a deliverable with zero protection. When the other party vanishes, the money is gone. PactAI fixes that with code."
 
-**Act 2 — Create (Investor):**
-1. Connect Investor wallet.
-2. Create Agreement: trader = Trader's address, capital = 100 XLM, bond = 20 XLM, **milestones = 4**, profit share = 20%, **duration = 60 seconds**.
+**Act 2 — Create (Client):**
+1. Connect Client wallet.
+2. Create Agreement: Provider = Provider's address, funds = 100 XLM, bond = 20 XLM, **milestones = 4**, **duration = 60 seconds**.
 3. Sign. Show the new agreement on the dashboard in `Pending`.
 
 **Act 3 — Fund it (both):**
-4. Switch to Trader → **Post Bond** (20 XLM). Sign.
-5. Switch to Investor → **Deposit Capital** (100 XLM). Sign.
+4. Switch to Provider → **Post Bond** (20 XLM). Sign.
+5. Switch to Client → **Deposit Funds** (100 XLM). Sign.
 6. Agreement flips to `Active`. Point out: "120 XLM is now held by the contract, not by either person. Here's the contract on Stellar Expert." Show the deadline countdown starting.
 
-**Act 4 — Staged release (Investor):**
-7. **Release Milestone** once → 25 XLM goes to the Trader. Progress bar 1/4. "The investor only exposes a quarter at a time. Trust is earned, not assumed."
+**Act 4 — Staged release (Client):**
+7. **Release Milestone** once → 25 XLM goes to the Provider. Progress bar 1/4. "The client only exposes a quarter at a time. Trust is earned, not assumed."
 
-**Act 5 — The save (Investor):**
+**Act 5 — The save (Client):**
 8. Wait for the 60-second deadline to elapse (it will during the narration above). The **Emergency Refund** button activates.
-9. Click **Emergency Refund**. Sign. The Investor receives 75 XLM unreleased capital **plus** the 20 XLM bond = 95 XLM back. Status → `Refunded`.
-10. Open the Trader's **reputation**: refunded count is now 1. "The bad actor is recorded forever. The next investor will see this."
+9. Click **Emergency Refund**. Sign. The Client receives 75 XLM unreleased funds **plus** the 20 XLM bond = 95 XLM back. Status → `Refunded`.
+10. Open the Provider's **reputation**: refunded count is now 1. "The bad actor is recorded forever. The next client will see this."
 
-**Act 6 — The happy ending (optional, fresh agreement):** run a short agreement, release all milestones, **Complete** → bond returns to the trader, reputation `completed` increments. "When the trader delivers, they get their bond back and a verifiable track record that wins them future clients."
+**Act 6 — The happy ending (optional, fresh agreement):** run a short agreement, release all milestones, **Complete** → bond returns to the Provider, reputation `completed` increments. "When the Provider delivers, they get their bond back and a verifiable track record that wins them future clients."
 
-**Close (10s):** "Pacta: informal trust, made enforceable. Built entirely on Stellar and Soroban. Trust, written in code."
+**Close (10s):** "PactAI: informal trust, made enforceable. Built entirely on Stellar and Soroban. Trust, written in code."
 
 ---
 
 ## 14. Submission checklist (RiseIn / hackathon form)
 
-- **Project name:** Pacta (Latin *pactum*, "agreement"). 5 letters, easy to pronounce across SEA, professional.
-- **Tagline:** Pacta — Trust, written in code. (alt: "Agreements you can trust.")
+- **Project name:** PactAI ("Pact," agreement, plus "AI," the built-in AI risk lens). Short and easy to pronounce across SEA, professional.
+- **Tagline:** PactAI — Trust, written in code. (alt: "Agreements you can trust.")
 - **Problem statement:** §1.1.
 - **Proposed solution:** §1.2 + §8.2 mechanics.
 - **Target users:** §3.
@@ -1255,7 +1257,7 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Inve
 
 ## 16. Claude Code execution guide (copy this into CLAUDE.md)
 
-**Goal:** Build Pacta — a Soroban escrow dApp on Stellar testnet — per this PRD. No backend; the contract is the backend. Naming is "Pacta" everywhere (never "Katiwala").
+**Goal:** Build PactAI, a Soroban escrow dApp on Stellar testnet, per this PRD. No backend; the contract is the backend. The product name is "PactAI" everywhere in human-readable copy; code identifiers stay on the legacy `pacta` form (crate `pacta-escrow`, struct `PactaEscrow`, package `packages/pacta`, alias `pacta_escrow`, on-chain fields `investor`/`trader`). Never "Katiwala".
 
 **Ordered tasks:**
 1. Scaffold the repo per §10 (workspace `Cargo.toml`, `contracts/pacta-escrow`, `frontend` Vite+React+TS+Tailwind).
@@ -1279,20 +1281,20 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Inve
 
 ## 17. AI Risk Lens (add-on feature — implemented)
 
-An add-on that reads a trader's on-chain track record and gives the investor a plain-language counterparty-risk read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
+An add-on that reads a Provider's on-chain track record and gives the Client a plain-language counterparty reputation read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
 
-**What it does.** When an investor enters a trader address (create flow) or views a trader profile, Pacta computes that trader's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
+**What it does.** When a Client enters a Provider address (create flow) or views a Provider profile, PactAI computes that Provider's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
 
 **Code does the arithmetic; the model only interprets.** All counts are computed deterministically in `frontend/src/lib/riskStats.ts` (`computeTraderStats`). The model never recomputes numbers — it turns correct stats into plain language and a recommendation. This keeps figures un-hallucinated.
 
-**Responsible-AI boundary (non-negotiable, enforced in the system prompt).** The lens assesses behavioral / counterparty trustworthiness from on-chain history only. It never gives investment advice, predicts trading performance, or estimates profit. Its only recommendations are within Pacta's own mechanics (milestone count, bond size, duration). Consistent with Pacta's stated position that it does not provide investment advice.
+**Responsible-AI boundary (non-negotiable, enforced in the system prompt).** The lens assesses behavioral / counterparty trustworthiness from on-chain history only. It never gives investment advice, predicts future performance, or estimates profit. Its only recommendations are within PactAI's own mechanics (milestone count, bond size, duration). Consistent with PactAI's stated position that it does not provide investment advice.
 
 **Architecture.**
-- Client fetches the trader's agreements (reuses the existing read path), computes `TraderStats`, and POSTs them to a serverless endpoint.
+- The client app fetches the Provider's agreements (reuses the existing read path), computes `TraderStats`, and POSTs them to a serverless endpoint.
 - **Serverless endpoint `/api/risk-lens`** (Vercel Edge, file at repo root `api/risk-lens.ts`) calls the Anthropic API (Claude Haiku) and returns a `RiskRead` JSON. The endpoint is the only place the model is called.
 - **The `ANTHROPIC_API_KEY` is server-side only** (host env var; see `.env.example`). It never appears in client code, the repo, or the browser. Only public on-chain stats are sent to the API — nothing the user could not already read on a block explorer.
 
-**Placement.** (1) Create agreement: lens renders above the summary card once a valid trader address is entered; `onApply` sets the milestone field. (2) Trader profile: lens renders as the counterparty read before reaching out. Both are styled only with DESIGN.md tokens.
+**Placement.** (1) Create agreement: lens renders above the summary card once a valid Provider address is entered; `onApply` sets the milestone field. (2) Provider profile: lens renders as the counterparty read before reaching out. Both are styled only with DESIGN.md tokens.
 
 **Graceful degradation (required).** If the endpoint is unreachable or the key is unset, the lens shows a neutral "risk read unavailable" note and the raw reputation/history remains visible. The core create / fund / release / refund flow is never blocked by the lens.
 
@@ -1302,10 +1304,10 @@ An add-on that reads a trader's on-chain track record and gives the investor a p
 
 ### Appendix A — Glossary
 - **Escrow:** funds held by a neutral party (here, the contract) until conditions are met.
-- **Security bond:** refundable collateral posted by the trader; seized by the investor on emergency refund.
-- **Milestone tranche:** one staged portion of capital (`capital / milestones`) released to the trader.
+- **Security bond:** refundable collateral posted by the Provider; seized by the Client on emergency refund.
+- **Milestone tranche:** one staged portion of the funds (`capital / milestones`) released to the Provider.
 - **SAC (Stellar Asset Contract):** the Soroban contract wrapper that lets a classic Stellar asset (XLM, USDC) be used by smart contracts via a standard token interface.
-- **Reputation:** on-chain per-trader tally of completed vs refunded agreements and total volume.
+- **Reputation:** on-chain per-Provider tally of completed vs refunded agreements and total volume.
 
 ### Appendix B — Network constants
 - RPC: `https://soroban-testnet.stellar.org`

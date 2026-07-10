@@ -37,6 +37,8 @@ export default {
           amber: 'var(--color-signal-amber)',
           red: 'var(--color-signal-red)',
         },
+        'hero-panel': 'var(--color-hero-panel)',
+        'hero-navy': 'var(--color-hero-navy)',
       },
       fontFamily: {
         sans: 'var(--font-sans)',

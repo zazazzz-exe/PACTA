@@ -1,6 +1,6 @@
-# Pacta — Design System (DESIGN.md)
+# PactAI — Design System (DESIGN.md)
 
-> Visual + interaction spec for the Pacta frontend. **This supersedes PRD.md §12.** Use this file for all visual decisions; use PRD.md for everything functional (contract interface, flows, screens-as-behavior).
+> Visual + interaction spec for the PactAI frontend. **This supersedes PRD.md §12.** Use this file for all visual decisions; use PRD.md for everything functional (contract interface, flows, screens-as-behavior).
 
 ---
 
@@ -8,7 +8,7 @@
 
 - Apply this as the **visual layer** over the frontend specified in PRD.md §9. Do **not** change any functional behavior, contract calls, or screen logic from the PRD — only how it looks and feels.
 - The tokens in §2 are the single source of truth. Put the CSS variables in `frontend/src/index.css` and the Tailwind mappings in `frontend/tailwind.config.js` exactly as given. Every color, radius, and shadow in components must reference a token, never a raw hex.
-- Build **mobile-first** (your real users are OFWs on phones). The app content column is centered, max ~480px on phones scaling to ~560px on larger screens; the dashboard list may go wider.
+- Build **mobile-first** (your real users are on phones). The app content column is centered, max ~480px on phones scaling to ~560px on larger screens; the dashboard list may go wider.
 - The **proof panel** (§6.9) is the signature element. It is the only dark surface in the app. Treat it as a reusable component and use it wherever the app shows on-chain truth (live contract, tx hash, protected amount).
 - Hold the **quality floor** in §10 (responsive, keyboard focus, reduced motion) without exception.
 
@@ -20,9 +20,9 @@ Kickoff is in the chat message that accompanies this file.
 
 **One sentence:** a warm, calm, human interface that any first-time user can trust, with a single dark "instrument" panel that proves everything is real on-chain.
 
-Pacta holds people's savings. Most are scam-wary, mobile-first, low on crypto literacy. So the core must feel like a premium consumer finance app (Wise / Mercury / Monzo register), not a crypto terminal. The personality does **not** come from a loud display face or decoration. It comes from four disciplined choices:
+PactAI holds people's money. Most users are cautious, mobile-first, low on crypto literacy. So the core must feel like a premium consumer finance app (Wise / Mercury / Monzo register), not a crypto terminal. The personality does **not** come from a loud display face or decoration. It comes from four disciplined choices:
 
-1. **Warm humanist neutrals** instead of cold gray. Warmth signals humanity and safety, the opposite of the cold dashboards that scam victims associate with being burned. (This is a deliberate counter-move, not the default cream-background look. Spend no other boldness on the neutrals.)
+1. **Warm humanist neutrals** instead of cold gray. Warmth signals humanity and safety, the opposite of the cold, technical dashboards that make people wary. (This is a deliberate counter-move, not the default cream-background look. Spend no other boldness on the neutrals.)
 2. **A single emerald accent.** Emerald is trust, growth, and "protected" all at once. It is *the* accent. Amber and clay are states, never decoration.
 3. **Mono for everything verifiable.** Every amount, address, tx hash, ID, and countdown is monospace. Mono reads as "precise, on-chain, not marketing."
 4. **The proof panel as signature.** One dark, mono, instrument-grade block showing the live contract and protected amount. It is the thing the product is remembered by, and the moment that lands with judges. Everything around it stays quiet so it carries weight.
@@ -321,7 +321,7 @@ Numbering is earned here (real sequence). Flat segments; filled = accent, empty 
       <div key={i} className={`flex-1 h-2 rounded-pill transition-colors ${i < released ? 'bg-accent' : 'bg-hairline-strong'}`} />
     ))}
   </div>
-  <p className="mono text-xs text-fog mt-2">{releasedAmount} XLM released to trader so far</p>
+  <p className="mono text-xs text-fog mt-2">{releasedAmount} XLM released to provider so far</p>
 </div>
 ```
 
@@ -382,11 +382,11 @@ Content is a centered column (`max-w-app` on phones, `max-w-app-wide` on larger)
 
 ### 7.1 Landing / Connect — the hero is the thesis
 
-The most characteristic thing about Pacta is verifiable protection, so the hero *is* the proof panel, not a marketing illustration.
+The most characteristic thing about PactAI is verifiable protection, so the hero *is* the proof panel, not a marketing illustration.
 
 ```
 ┌──────────────────────────┐
-│  Pacta            ● test  │   wordmark + network badge
+│  PactAI           ● test  │   wordmark + network badge
 │                           │
 │  Trust, written in code.  │   H1, ink
 │  Lock money in a contract │   body, slate
@@ -411,7 +411,7 @@ After connect: replace the connect button with a truncated mono address + the ne
 ```
 ┌──────────────────────────┐
 │  Your agreements   [ + ]  │   H1 + new-agreement button
-│  [ As investor | trader ] │   segmented filter
+│  [ As client | provider ] │   segmented filter
 │                           │
 │  ┌──────────────────────┐ │   AgreementCard (paper, shadow-card)
 │  │ JM Jay Mercado  ●Active│ │   avatar · name · status pill
@@ -428,12 +428,12 @@ Empty state (an invitation, not an apology): heading "No agreements yet", one li
 
 ### 7.3 Create agreement
 
-Single scrollable form, fields in this order: trader address, capital, security bond, milestones (stepper), profit share %, duration. A live summary card at the bottom restates terms in plain language before the primary "Create agreement" button. Validate inline (capital > 0, milestones ≥ 1, share ≤ 100%) with `text-refund` messages.
+Single scrollable form, fields in this order: provider address, capital, security bond, milestones (stepper), profit share %, duration. A live summary card at the bottom restates terms in plain language before the primary "Create agreement" button. Validate inline (capital > 0, milestones ≥ 1, share ≤ 100%) with `text-refund` messages.
 
 ```
 ┌──────────────────────────┐
 │  ← New agreement          │
-│  Trader address  [______] │  mono input
+│  Provider address[______] │  mono input
 │  Capital (XLM)   [______] │  mono
 │  Security bond   [______] │  mono
 │  Milestones      [- 4 +]  │
@@ -452,13 +452,13 @@ Single scrollable form, fields in this order: trader address, capital, security 
 
 ### 7.4 Agreement detail
 
-Already designed (the mock you approved). Order: header (back · `AGR-id` · status pill) → amount display (protected + bond line) → trader card with reputation chip → milestone bar → deadline banner (amber, with live countdown) → action buttons (primary "Release next milestone"; "Emergency refund" shown but disabled until `now ≥ deadline`, with helper text "Refund unlocks when the deadline passes.") → **ProofPanel** → contract link footer.
+Already designed (the mock you approved). Order: header (back · `AGR-id` · status pill) → amount display (protected + bond line) → provider card with reputation chip → milestone bar → deadline banner (amber, with live countdown) → action buttons (primary "Release next milestone"; "Emergency refund" shown but disabled until `now ≥ deadline`, with helper text "Refund unlocks when the deadline passes.") → **ProofPanel** → contract link footer.
 
-The trader's view of the same screen swaps the primary action to "Post bond" (when pending) and shows received tranches instead of release controls.
+The provider's view of the same screen swaps the primary action to "Post bond" (when pending) and shows received tranches instead of release controls.
 
-### 7.5 Trader / reputation profile
+### 7.5 Provider / reputation profile
 
-A focused card: avatar + name + truncated address, a large reputation summary (completed / refunded / total volume in mono), then a short list of that trader's past agreements with status pills. This is what an investor checks before agreeing. Make the completed-vs-refunded contrast (accent vs refund) immediately legible.
+A focused card: avatar + name + truncated address, a large reputation summary (completed / refunded / total volume in mono), then a short list of that provider's past agreements with status pills. This is what a client checks before agreeing. Make the completed-vs-refunded contrast (accent vs refund) immediately legible.
 
 ---
 
@@ -486,9 +486,9 @@ Plain, warm, and specific. Copy is design material; each line helps the user act
 | Release action | "Release next milestone" |
 | Refund available | "Refund available. The deadline has passed." |
 | Refund locked | "Refund unlocks when the deadline passes." |
-| Completed | "Agreement complete. The bond was returned to the trader." |
+| Completed | "Agreement complete. The bond was returned to the provider." |
 | Pending confirmation | "Waiting for the network to confirm…" |
-| Bad address error | "That trader address isn't valid. Check it and try again." |
+| Bad address error | "That provider address isn't valid. Check it and try again." |
 | Insufficient balance | "Your balance is too low to cover this. Top up and try again." |
 | Empty dashboard | "No agreements yet. Create your first protected agreement." |
 

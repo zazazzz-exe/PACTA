@@ -47,11 +47,11 @@ export function ConfirmDialog({
       className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
     >
       <div
-        className="absolute inset-0 bg-ink/40"
+        className="absolute inset-0 bg-ink/40 dialog-backdrop"
         onClick={() => !busy && onCancel()}
         aria-hidden
       />
-      <div className="relative w-full sm:max-w-sm bg-paper border border-hairline rounded-t-card sm:rounded-card shadow-pop p-5 m-0 sm:m-5">
+      <div className="relative w-full sm:max-w-sm bg-paper border border-hairline rounded-t-card sm:rounded-card shadow-pop p-5 m-0 sm:m-5 dialog-panel">
         <h2 className="text-[16px] font-medium text-ink">{title}</h2>
         <div className="mt-2 text-[14px] leading-relaxed text-slate">{description}</div>
         <div className="mt-5 flex gap-3">

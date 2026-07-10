@@ -1,7 +1,5 @@
-// Slow-drifting emerald aurora plus a few floating particles behind all
-// content. Decorative only, fixed, non-interactive, disabled under reduced motion.
+// Slow-drifting emerald aurora plus floating particles. Decorative only.
 
-// position %, size px, duration s, delay s
 const PARTICLES = [
   { left: 12, size: 5, dur: 17, delay: 0 },
   { left: 28, size: 3, dur: 22, delay: 4 },
@@ -12,7 +10,15 @@ const PARTICLES = [
   { left: 53, size: 4, dur: 26, delay: 12 },
 ];
 
-export function AmbientBackground() {
+const SUBTLE_PARTICLES = PARTICLES.slice(0, 4);
+
+export function AmbientBackground({ variant = 'full' }: { variant?: 'full' | 'subtle' }) {
+  const subtle = variant === 'subtle';
+  const particles = subtle ? SUBTLE_PARTICLES : PARTICLES;
+  const blobOpacity = subtle ? 0.28 : 0.55;
+  const signalOpacity = subtle ? 0.22 : 0.5;
+  const deepOpacity = subtle ? 0.18 : 0.45;
+
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>
       <div
@@ -20,9 +26,9 @@ export function AmbientBackground() {
         style={{
           top: '2%',
           left: '2%',
-          width: '38vw',
-          height: '38vw',
-          background: 'radial-gradient(circle, rgba(11,122,99,0.55), transparent 65%)',
+          width: subtle ? '28vw' : '38vw',
+          height: subtle ? '28vw' : '38vw',
+          background: `radial-gradient(circle, rgba(11,122,99,${blobOpacity}), transparent 65%)`,
         }}
       />
       <div
@@ -30,9 +36,9 @@ export function AmbientBackground() {
         style={{
           top: '18%',
           right: '-4%',
-          width: '36vw',
-          height: '36vw',
-          background: 'radial-gradient(circle, rgba(52,227,176,0.50), transparent 65%)',
+          width: subtle ? '26vw' : '36vw',
+          height: subtle ? '26vw' : '36vw',
+          background: `radial-gradient(circle, rgba(52,227,176,${signalOpacity}), transparent 65%)`,
         }}
       />
       <div
@@ -40,13 +46,26 @@ export function AmbientBackground() {
         style={{
           bottom: '-8%',
           left: '28%',
-          width: '36vw',
-          height: '36vw',
-          background: 'radial-gradient(circle, rgba(10,90,73,0.45), transparent 65%)',
+          width: subtle ? '26vw' : '36vw',
+          height: subtle ? '26vw' : '36vw',
+          background: `radial-gradient(circle, rgba(10,90,73,${deepOpacity}), transparent 65%)`,
         }}
       />
+      {!subtle && (
+        <div
+          className="blob blob-b"
+          style={{
+            top: '55%',
+            left: '60%',
+            width: '22vw',
+            height: '22vw',
+            background: 'radial-gradient(circle, rgba(199,125,17,0.18), transparent 65%)',
+            animationDelay: '-8s',
+          }}
+        />
+      )}
 
-      {PARTICLES.map((p, i) => (
+      {particles.map((p, i) => (
         <span
           key={i}
           className="particle"
@@ -57,6 +76,7 @@ export function AmbientBackground() {
             boxShadow: '0 0 8px rgba(11,122,99,0.5)',
             animationDuration: `${p.dur}s`,
             animationDelay: `${p.delay}s`,
+            opacity: subtle ? 0.5 : 1,
           }}
         />
       ))}

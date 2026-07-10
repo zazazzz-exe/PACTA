@@ -7,6 +7,7 @@ import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { useAgreements } from '../hooks/useAgreements';
 import { AgreementCard } from '../components/AgreementCard';
 import { Button } from '../components/Button';
+import { Reveal } from '../components/Reveal';
 import { Status } from '../lib/contract';
 import { needsAttentionReason, urgencyRank } from '../lib/agreementView';
 import { formatAmount, formatPhp } from '../lib/format';
@@ -82,21 +83,21 @@ export function Dashboard() {
 
       {/* Money summary strip + allocation bar */}
       {agreements.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 animate-rise">
           <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Metric label="Protected in escrow">
+            <Metric label="Protected in escrow" accent="accent">
               <p className="mono text-[20px] font-medium text-accent">
                 {formatAmount(protectedTotal)}
               </p>
               <p className="text-[12px] text-fog">{formatPhp(protectedTotal)}</p>
             </Metric>
-            <Metric label="Active">
-              <p className="mono text-[20px] font-medium text-ink">{activeCount}</p>
+            <Metric label="Active" accent="deep">
+              <p className="mono text-[20px] font-medium text-accent-deep">{activeCount}</p>
             </Metric>
-            <Metric label="Released">
+            <Metric label="Released" accent="muted">
               <p className="mono text-[20px] font-medium text-ink">{formatAmount(releasedTotal)}</p>
             </Metric>
-            <Metric label="Needs attention" tint={attention.length > 0}>
+            <Metric label="Needs attention" accent={attention.length > 0 ? 'deadline' : 'muted'} tint={attention.length > 0}>
               <p
                 className={`mono text-[20px] font-medium ${
                   attention.length > 0 ? 'text-deadline-deep' : 'text-ink'
@@ -113,15 +114,23 @@ export function Dashboard() {
 
       {/* Filter */}
       <div
-        className="inline-flex rounded-pill bg-mist p-1 border border-hairline"
+        className="relative inline-grid grid-cols-3 rounded-pill bg-mist p-1 border border-hairline"
         data-tour="filters"
       >
+        <span
+          className="absolute top-1 bottom-1 left-1 rounded-pill bg-paper shadow-card transition-transform duration-200 ease-out"
+          style={{
+            width: `calc((100% - 8px) / ${TABS.length})`,
+            transform: `translateX(calc(${TABS.findIndex((t) => t.id === filter)} * 100%))`,
+          }}
+          aria-hidden
+        />
         {TABS.map((t) => (
           <button
             key={t.id}
             onClick={() => setFilter(t.id)}
-            className={`px-3.5 h-11 rounded-pill text-[13px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-              filter === t.id ? 'bg-paper text-ink shadow-card' : 'text-slate hover:text-ink'
+            className={`relative z-10 px-3.5 h-11 rounded-pill text-[13px] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+              filter === t.id ? 'text-ink' : 'text-slate hover:text-ink'
             }`}
           >
             {t.label}
@@ -163,9 +172,11 @@ export function Dashboard() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((a, i) => (
-            <div key={a.id.toString()} data-tour={i === 0 ? 'card' : undefined}>
-              <AgreementCard a={a} you={address} />
-            </div>
+            <Reveal key={a.id.toString()} delay={Math.min(i * 60, 300)}>
+              <div data-tour={i === 0 ? 'card' : undefined}>
+                <AgreementCard a={a} you={address} />
+              </div>
+            </Reveal>
           ))}
         </div>
       )}
@@ -176,20 +187,30 @@ export function Dashboard() {
 function Metric({
   label,
   tint,
+  accent = 'muted',
   children,
 }: {
   label: string;
   tint?: boolean;
+  accent?: 'accent' | 'deep' | 'deadline' | 'muted';
   children: ReactNode;
 }) {
+  const strip = {
+    accent: 'bg-accent',
+    deep: 'bg-accent-deep',
+    deadline: 'bg-deadline',
+    muted: 'bg-hairline-strong',
+  }[accent];
+
   return (
     <div
-      className={`rounded-card border p-4 ${
+      className={`relative overflow-hidden rounded-card border p-4 transition duration-300 hover:-translate-y-0.5 hover:shadow-pop ${
         tint ? 'border-deadline/30 bg-deadline-tint' : 'border-hairline bg-paper shadow-card'
       }`}
     >
-      <p className="text-[12px] text-slate">{label}</p>
-      <div className="mt-1">{children}</div>
+      <span className={`absolute left-0 top-0 h-full w-1 ${strip}`} aria-hidden />
+      <p className="pl-2 text-[12px] text-slate">{label}</p>
+      <div className="mt-1 pl-2">{children}</div>
     </div>
   );
 }
@@ -207,15 +228,15 @@ function AllocationBar({
   const pct = (v: bigint) => (total > 0n ? (Number(v) / Number(total)) * 100 : 0);
   return (
     <div className="rounded-card border border-hairline bg-paper p-4 shadow-card">
-      <div className="flex h-2 overflow-hidden rounded-pill bg-mist">
-        <div className="bg-accent" style={{ width: `${pct(inEscrow)}%` }} />
-        <div className="bg-accent-deep" style={{ width: `${pct(bonds)}%` }} />
-        <div className="bg-fog" style={{ width: `${pct(released)}%` }} />
+      <div className="flex h-2.5 overflow-hidden rounded-pill bg-mist">
+        <div className="bar-segment bg-accent" style={{ width: `${pct(inEscrow)}%` }} />
+        <div className="bar-segment bg-accent-deep" style={{ width: `${pct(bonds)}%` }} />
+        <div className="bar-segment bg-signal/60" style={{ width: `${pct(released)}%` }} />
       </div>
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-slate">
         <Legend dot="bg-accent" label="Protected" amount={inEscrow} />
         <Legend dot="bg-accent-deep" label="Bonds" amount={bonds} />
-        <Legend dot="bg-fog" label="Released" amount={released} />
+        <Legend dot="bg-signal/60" label="Released" amount={released} />
       </div>
     </div>
   );
@@ -232,12 +253,18 @@ function Legend({ dot, label, amount }: { dot: string; label: string; amount: bi
 
 function EmptyState() {
   return (
-    <div className="bg-paper border border-hairline rounded-card shadow-card p-8 text-center">
-      <h2 className="text-[16px] font-medium text-ink">No agreements yet</h2>
-      <p className="mt-1 text-[14px] text-slate">Create your first protected agreement.</p>
-      <Button className="mt-5" onClick={() => navigate('/create')}>
-        Create agreement
-      </Button>
+    <div className="relative overflow-hidden rounded-card border border-accent/20 bg-accent-tint/50 p-8 text-center shadow-card">
+      <div className="mesh-dots pointer-events-none absolute inset-0" aria-hidden />
+      <div className="relative">
+        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-card">
+          <Plus size={22} aria-hidden />
+        </span>
+        <h2 className="text-[16px] font-medium text-ink">No agreements yet</h2>
+        <p className="mt-1 text-[14px] text-slate">Create your first protected agreement.</p>
+        <Button className="mt-5" onClick={() => navigate('/create')}>
+          Create agreement
+        </Button>
+      </div>
     </div>
   );
 }
@@ -246,8 +273,13 @@ function ConnectGate() {
   const { connect, connecting } = useWallet();
   return (
     <div className="mx-auto max-w-app">
-      <div className="bg-paper border border-hairline rounded-card shadow-card p-8 text-center">
-        <h1 className="text-[18px] font-medium text-ink">Connect your wallet</h1>
+      <div className="relative overflow-hidden rounded-card border border-accent/20 bg-gradient-to-br from-accent-tint to-paper p-8 text-center shadow-card">
+        <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-accent/10 blur-2xl" aria-hidden />
+        <div className="relative">
+          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-accent text-white shadow-pop">
+            <Wallet size={24} aria-hidden />
+          </span>
+          <h1 className="text-[18px] font-medium text-ink">Connect your wallet</h1>
         <p className="mx-auto mt-1.5 max-w-xs text-[14px] text-slate">
           Your wallet is your login. Connect to see your agreements and create new ones.
         </p>
@@ -255,6 +287,7 @@ function ConnectGate() {
           <Wallet size={16} aria-hidden />
           {connecting ? 'Connecting' : 'Connect wallet'}
         </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
-# Pacta — Animated Landing Hero (LANDING_HERO.md)
+# PactAI — Animated Landing Hero (LANDING_HERO.md)
 
-> Drop-in animated hero for the landing page. Pure CSS animation (no new dependencies beyond `lucide-react`, which you already use), styled with the DESIGN.md tokens. It realizes the DESIGN.md §7.1 hero as a living escrow-flow loop: capital flows into the contract, it locks and counts up, then releases to the trader in milestones, with the bond held underneath.
+> Drop-in animated hero for the landing page. Pure CSS animation (no new dependencies beyond `lucide-react`, which you already use), styled with the DESIGN.md tokens. It realizes the DESIGN.md §7.1 hero as a living escrow-flow loop: capital flows from the Client into the contract, it locks and counts up, then releases to the Provider in milestone tranches, with the Provider's security bond held underneath.
 
 To use: create the two files below, then render `<HeroFlow onConnect={...} />` as the landing hero. Or hand this whole file to Claude Code with the prompt in §3.
 
@@ -42,18 +42,19 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
       <div aria-hidden className="hf-drift2 pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 rounded-full bg-accent-tint opacity-40" />
 
       <div className="relative mx-auto max-w-app-wide px-5 py-12 text-center">
-        <p className="mb-5 text-[13px] font-medium text-slate">Pacta</p>
+        <p className="mb-5 text-[13px] font-medium text-slate">PactAI</p>
         <h1 className="mb-2.5 text-[26px] font-semibold leading-tight text-ink sm:text-[34px]">
-          Trust, written in code.
+          Any handshake deal, written in code.
         </h1>
         <p className="mx-auto mb-8 max-w-[440px] text-[15px] leading-relaxed text-slate">
-          Lock your money in a contract no one can run off with. Released step by step,
-          backed by the trader's bond, and provable on-chain.
+          Turn any informal money agreement between two people into a secure, staged,
+          bond-protected on-chain contract. Funds release step by step, backed by the
+          Provider's bond, and provable on-chain.
         </p>
 
         <div className="mb-9 flex justify-center">
           <div className="hf-band flex flex-shrink-0 items-center">
-            <Node icon={<Wallet size={20} />} label="Investor" />
+            <Node icon={<Wallet size={20} />} label="Client" />
 
             <Wire>
               <span className="hf-token hf-in-a" />
@@ -86,7 +87,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
               <span className="hf-token hf-out-b" />
             </Wire>
 
-            <Node icon={<LineChart size={20} />} label="Trader" />
+            <Node icon={<LineChart size={20} />} label="Provider" />
           </div>
         </div>
 
@@ -194,6 +195,6 @@ is installed. Then run the app and show me the landing page.
 - **Tokens:** the component relies on the DESIGN.md Tailwind tokens (`accent`, `carbon`, `grid`, `onyx`, `signal`, `panel-muted`, `ink`, `slate`, `canvas`, `accent-tint`, `hairline-strong`, `paper`, `rounded-card`, `rounded-control`, `rounded-pill`, `max-w-app-wide`, `font-mono`) and the CSS variable `--color-signal` from `index.css`. If those aren't in place yet, apply DESIGN.md §2 first.
 - **The glow** on the vault (the `hf-lock` box-shadow) is the one enhancement the chat preview couldn't show. Keep it subtle; if you want it stronger for the demo, raise the `0.35` alpha or the `30px` blur, but don't let it tip into neon.
 - **Reduced motion:** users with that OS setting see a calm, fully-resolved state (vault locked, 100 XLM, milestones filled, no movement). This is required by the DESIGN.md quality floor — keep it.
-- **Mobile:** the flow scales to 0.66 under 640px so it fits a phone. If you'd rather it stack vertically on small screens (investor on top, vault, trader below) for a cleaner phone layout, that's a straightforward variant — ask and I'll provide it.
+- **Mobile:** the flow scales to 0.66 under 640px so it fits a phone. If you'd rather it stack vertically on small screens (Client on top, vault, Provider below) for a cleaner phone layout, that's a straightforward variant — ask and I'll provide it.
 - **Timing:** everything runs on one 7-second loop. To slow it down, change `CYCLE` in the component and the `7s` durations in the CSS to the same value.
 ```
