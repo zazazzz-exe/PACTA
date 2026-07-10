@@ -10,7 +10,7 @@ import { overLimit } from './_lib/ratelimit';
 // session cookie. The nonce is consumed ATOMICALLY (single-use) before the
 // signature is checked, so a nonce can never be replayed even under a race.
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   let body: { address?: unknown; nonce?: unknown; signedMessage?: unknown };
@@ -90,3 +90,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

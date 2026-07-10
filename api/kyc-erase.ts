@@ -9,7 +9,7 @@ import { readSession } from './_lib/session';
 // so there is nothing else to purge. Clearing gov_id_hash also frees the wallet
 // to verify again later.
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   const address = readSession(req);
@@ -54,3 +54,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

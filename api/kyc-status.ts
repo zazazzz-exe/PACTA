@@ -9,7 +9,7 @@ import { getProvider } from './_lib/kyc';
 // from the signed cookie, never from the request body, so a caller can only ever
 // read their own status. Poll this while status is 'pending'.
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return json({ error: 'method' }, 405);
 
   const address = readSession(req);
@@ -38,3 +38,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

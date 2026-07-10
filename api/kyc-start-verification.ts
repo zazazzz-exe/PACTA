@@ -15,7 +15,7 @@ import type { DocType } from './_lib/kyc/types';
 
 const DOC_TYPES: DocType[] = ['passport', 'national_id', 'drivers_license'];
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   const address = readSession(req);
@@ -97,3 +97,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

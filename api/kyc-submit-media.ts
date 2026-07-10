@@ -9,7 +9,7 @@ import { applyOutcome } from './_lib/kyc/apply';
 // Stream the ID + liveness media straight to the provider and persist ONLY the
 // result. The media is never written to disk, DB, or storage, and never logged.
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   const address = readSession(req);
@@ -52,3 +52,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

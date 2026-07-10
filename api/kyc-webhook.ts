@@ -9,7 +9,7 @@ import { applyOutcome } from './_lib/kyc/apply';
 // wallet by provider_ref and applies the outcome. No media is ever received or
 // stored here.
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   const rawBody = await req.text();
@@ -44,3 +44,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };

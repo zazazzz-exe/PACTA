@@ -21,7 +21,7 @@ function buildChallenge(address: string, nonce: string, issuedAt: string): strin
   ].join('\n');
 }
 
-export default async function handler(req: Request): Promise<Response> {
+async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   let body: { address?: unknown };
@@ -60,3 +60,5 @@ export default async function handler(req: Request): Promise<Response> {
     return json({ error: 'server_error' }, 500);
   }
 }
+
+export default { fetch: handler };
