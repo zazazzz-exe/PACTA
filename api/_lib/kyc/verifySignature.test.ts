@@ -8,6 +8,18 @@ describe('verifyWalletSignature', () => {
   const addr = kp.publicKey();
   const msg = `Pacta ownership\nAddress: ${addr}\nNonce: xyz789`;
 
+  it('accepts a valid SEP-53 signature (Freighter)', () => {
+    const encoded = Buffer.concat([
+      Buffer.from('Stellar Signed Message:\n', 'utf8'),
+      Buffer.from(msg, 'utf8'),
+    ]);
+    const hash = createHash('sha256').update(encoded).digest();
+    const sig = kp.sign(hash).toString('base64');
+    const r = verifyWalletSignature(addr, msg, sig);
+    expect(r.ok).toBe(true);
+    expect(r.encoding).toBe('sep53');
+  });
+
   it('accepts a valid utf8 signature (base64)', () => {
     const sig = kp.sign(Buffer.from(msg, 'utf8')).toString('base64');
     const r = verifyWalletSignature(addr, msg, sig);
