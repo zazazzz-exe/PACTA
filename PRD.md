@@ -1286,12 +1286,64 @@ An add-on that reads a Provider's on-chain track record and gives the Client a p
 
 ---
 
+## 18. Identity & KYC verification (add-on feature — implemented)
+
+A wallet-linked identity layer. A user verifies their real-world identity **once** — a government ID document check plus a liveness/face match through an external identity provider — and that verified identity is then permanently associated with their wallet. On every later connect the app re-establishes that the wallet is verified and shows an identity badge. Verification gates the money and commitment actions in the app, so both sides of an agreement can trust that the counterparty is a **verified person**, not just an anonymous address. Like the AI Risk Lens (§17), it changes nothing in the core protocol: the frozen escrow contract (§8.5) is untouched. Operator/reference detail lives in **`docs/kyc.md`**; this section records what the feature is and how it is wired.
+
+### 18.1 Why it matters (product + pitch framing)
+PactAI already makes the *money* safe (staged release, bonds, refunds). KYC makes the *counterparty* accountable. Anonymous escrow still lets a bad actor spin up a fresh wallet after every scam; binding a wallet to a verified government identity adds real-world consequences and Sybil resistance without sacrificing the non-custodial, wallet-first model. It also puts PactAI on a credible path to regulatory acceptance (a KYC'd P2P financial-protection app is deployable where an anonymous one is not), while keeping funds fully non-custodial and on-chain.
+
+### 18.2 What it does (user flow)
+1. **Connect wallet → prove ownership.** On connect, the user signs a one-time server-issued challenge (a message, not a transaction — it moves no funds). This proves they control the wallet before any identity is bound to it.
+2. **Verify once.** The user gives consent, then completes a government-ID check and a liveness selfie. On success the wallet's status becomes **verified** and an identity badge appears.
+3. **Gated actions.** Verification is required only for **money/commitment actions** — create an agreement, post a bond, deposit capital, release a milestone. Browsing the dashboard, viewing a Provider profile, and the Risk Lens stay open. Fund-**returning** actions (emergency refund, cancel, complete) are deliberately **never** gated, so a user can always reclaim their own funds.
+4. **Every login is authoritative.** Re-connecting re-runs the ownership signature and re-reads status, so the badge always reflects the current verification state.
+
+### 18.3 Design principles
+- **A deliberate, documented exception to "no backend."** The escrow has no backend; this identity layer is the one sanctioned stateful server component (Supabase behind `api/kyc-*`). It is **off-chain, never holds funds, and is not part of the escrow.** (See CLAUDE.md "Identity / KYC layer.")
+- **Minimal PII by construction.** Raw ID images and selfies are **streamed to the verification provider and never stored by PactAI.** We persist only: verification status, a provider reference, document type/country/expiry, keyed HMAC hashes (for dedup / Sybil resistance), a masked display name, a versioned consent record, and a PII-free audit log.
+- **Honest scope.** KYC gates the **app UI**, not the on-chain protocol. The frozen contract has no KYC hook, so a determined user could still call the contract directly. This is stated plainly in code, UI, and docs — consistent with PactAI's "safe and honest" positioning (§1.3).
+
+### 18.4 Architecture
+- **Server-mediated; the browser holds no database credentials.** All DB access goes through repo-root **`api/kyc-*.ts` Node functions** using the Supabase service-role key. The browser only calls same-origin `/api/*` (the same pattern as the Risk Lens) and holds a short-lived signed session cookie.
+- **Wallet-ownership → session.** `POST /api/kyc-request-nonce` issues a single-use, 5-minute, address-bound nonce → the wallet signs it (`signMessage`) → `POST /api/kyc-verify-wallet` verifies the ed25519 signature against the Stellar address, consumes the nonce atomically (replay-proof), and sets an `HttpOnly; Secure; SameSite=Strict` JWT cookie. Money-action gating always re-checks DB status server-side; the cookie never asserts "verified."
+- **Endpoints:** `kyc-request-nonce`, `kyc-verify-wallet`, `kyc-status`, `kyc-start-verification`, `kyc-submit-media`, `kyc-webhook`, `kyc-refresh`, `kyc-erase`.
+- **Supabase schema (deny-by-default RLS on every table):** `kyc_profile` (status + provider ref + doc metadata + hashes + masked name), `kyc_challenge` (single-use nonces), `kyc_consent` (versioned consent), `kyc_event` (PII-free audit). Migration: `supabase/migrations/0001_kyc_identity.sql`.
+- **Pluggable provider interface (`KycProvider`).** Swapping vendors is a one-file add + one env var (`KYC_PROVIDER`); no endpoint, schema, or frontend change. Providers declare `capture`: capture-in-app vs hosted redirect.
+
+### 18.5 Verification providers
+- **`mock` (built-in sandbox).** The app captures the document + selfie and streams them to a mock that drains and discards the media, returning a forced outcome (`approve` / `review` / `reject`) — used for local development and demos of all outcome paths.
+- **`didit` (Didit — production).** A **hosted** flow: `kyc-start-verification` creates a Didit session (`POST /v3/session/`) and returns a hosted `url`; the app redirects the user to Didit, where the ID + selfie are captured **directly by Didit (never touching our server)**; the result arrives via an HMAC-signed webhook (`kyc-webhook`) and/or a decision fetch (`kyc-refresh` → `GET /v3/session/{id}/decision/`). Didit provides document verification + passive liveness + face match on a free tier.
+
+### 18.6 Security & compliance
+- **Wallet control** proven by signed nonce (single-use, expiring, address-bound, replay-proof); ed25519 verified server-side.
+- **Data-privacy posture (PH Data Privacy Act 2012 as baseline):** explicit **versioned consent** captured before any media; **data minimization** (no raw media persisted); **right to erasure** (`kyc-erase` nulls PII columns, deletes consent, writes a tombstone); **PII-free logs and audit trail**.
+- **Platform hardening:** deny-by-default RLS (a leaked anon key reads nothing); service-role key server-only; per-address rate limits on nonce/verify; webhook HMAC + timestamp replay check; short-lived `HttpOnly`/`Secure`/`SameSite=Strict` session cookie.
+- **Verified locally:** unit tests cover ed25519 verification, nonce lifecycle, session/JWT/cookies, the provider mock, and Didit webhook signatures + status mapping (31 passing).
+
+### 18.7 Files & environment
+- **Backend:** `api/kyc-*.ts`; `api/_lib/{http,db,session,ratelimit}.ts`; `api/_lib/kyc/{types,mock,didit,index,apply,consent,hash,verifySignature}.ts`.
+- **Frontend:** `frontend/src/lib/{kycClient,consent}.ts`; `frontend/src/hooks/useWallet.ts` (adds `kycStatus`); `frontend/src/pages/Verify.tsx`; `frontend/src/components/kyc/{KycGate,IdentityBadge,ConsentStep,DocumentCapture,LivenessCapture}.tsx`; gating wired into `CreateAgreement.tsx` and `AgreementDetail.tsx`.
+- **Data/config:** `supabase/migrations/0001_kyc_identity.sql`; env in `.env.example` (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SESSION_JWT_SECRET`, `KYC_HASH_SECRET`, `KYC_PROVIDER`, `KYC_WEBHOOK_SECRET`, `DIDIT_API_KEY`, `DIDIT_WORKFLOW_ID`, `DIDIT_WEBHOOK_SECRET`). Reference: `docs/kyc.md`. New deps: `@supabase/supabase-js`, `@stellar/stellar-sdk`, `jsonwebtoken` (server only).
+
+### 18.8 Pitch talking points
+- **"Safe money *and* accountable people."** Escrow protects the funds; KYC binds each wallet to a real, verified identity — Sybil-resistant and consequence-bearing, without custody.
+- **"Privacy by construction."** We verify identity but never store ID images or selfies; only a status, hashes, and a masked name — with one-tap erasure.
+- **"Non-custodial, still compliant."** Wallet stays the login and funds stay on-chain; the identity layer is off-chain, holds no money, and gates only the app.
+- **"Vendor-agnostic."** A clean provider interface (mock today, Didit in production) means the identity provider is a swap, not a rebuild.
+
+---
+
 ### Appendix A — Glossary
 - **Escrow:** funds held by a neutral party (here, the contract) until conditions are met.
 - **Security bond:** refundable collateral posted by the Provider; seized by the Client on emergency refund.
 - **Milestone tranche:** one staged portion of the funds (`capital / milestones`) released to the Provider.
 - **SAC (Stellar Asset Contract):** the Soroban contract wrapper that lets a classic Stellar asset (XLM, USDC) be used by smart contracts via a standard token interface.
 - **Reputation:** on-chain per-Provider tally of completed vs refunded agreements and total volume.
+- **KYC (Know Your Customer):** verifying a user's real-world identity (government ID + liveness) and binding it to their wallet; off-chain, gates the app UI only (§18).
+- **Liveness check:** a face/selfie check confirming a live person (not a photo) is present, matched against the ID document.
+- **Wallet-ownership proof:** signing a one-time server nonce (a message, not a transaction) to prove control of a wallet before identity is bound to it.
+- **Identity provider:** the external KYC vendor that performs document + liveness verification (mock for demo, Didit in production); pluggable behind the `KycProvider` interface.
 
 ### Appendix B — Network constants
 - RPC: `https://soroban-testnet.stellar.org`
