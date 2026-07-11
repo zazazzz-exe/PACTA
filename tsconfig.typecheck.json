@@ -1,4 +1,5 @@
 {
+  "comment": "Local typecheck ONLY (npm run typecheck). NOT named tsconfig.json so Vercel does not use it to compile /api functions — a root tsconfig with noEmit:true breaks the Node function build.",
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
