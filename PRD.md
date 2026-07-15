@@ -1,11 +1,11 @@
-# PactAI — Product Requirements Document (PRD)
+# PACTA — Product Requirements Document (PRD)
 
-> **Tagline:** PactAI — Trust, written in code.
-> **One-liner:** PactAI is a non-custodial escrow protocol on Stellar and Soroban that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract.
+> **Tagline:** PACTA — Trust, written in code.
+> **One-liner:** PACTA is a non-custodial escrow protocol on Stellar and Soroban that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract.
 
 **Document status:** Build-ready. This PRD is written so it can be handed directly to Claude Code as the source of truth for an end-to-end build (smart contracts + frontend + deploy).
 
-**Naming note:** The product is named **PactAI** everywhere in human-readable copy (headings, prose, taglines, UI). The name is "Pact" (agreement) plus "AI" (the built-in AI risk lens). Code identifiers stay on the legacy name for ABI and package compatibility: the contract crate `pacta-escrow`, the struct `PactaEscrow`, the package dir `packages/pacta`, the deploy alias `pacta_escrow`, and the wasm `pacta_escrow.wasm` are unchanged. There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to PactAI (or, for code identifiers, keep the legacy `pacta` form).
+**Naming note:** The product is named **PACTA** everywhere in human-readable copy (headings, prose, taglines, UI). Code identifiers stay on the legacy name for ABI and package compatibility: the contract crate `pacta-escrow`, the struct `PactaEscrow`, the package dir `packages/pacta`, the deploy alias `pacta_escrow`, and the wasm `pacta_escrow.wasm` are unchanged. There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to PACTA (or, for code identifiers, keep the legacy `pacta` form).
 
 ---
 
@@ -16,29 +16,43 @@ Every day people hand money to someone they met online for a deal or a deliverab
 
 When the other party disappears, misuses the funds, or fails to deliver, the person who paid usually loses everything with little recourse. There is no accessible, low-cost tool that gives ordinary people a safe, transparent way to entrust money to someone else online.
 
+Existing solutions fail because trust is platform-owned, not user-owned. On Fiverr or Upwork, your reputation and dispute history belong to the platform; leave and it vanishes. On GCash or bank transfer, there is no protection layer at all. PayPal Buyer Protection is unavailable for most service transactions in the Philippines, and centralized escrow services require custody (trusting yet another party). None of these give the user sovereign, portable, verifiable trust that travels with them.
+
 ### 1.2 Solution
-PactAI is a non-custodial escrow protocol built on Stellar and powered by Soroban smart contracts. Instead of sending money directly to the other party, the Client locks funds in a programmable escrow agreement that enforces:
+PACTA is a non-custodial escrow protocol built on Stellar and powered by Soroban smart contracts. Instead of sending money directly to the other party, the Client locks funds in a programmable escrow agreement that enforces:
 
 - **Staged fund release:** funds are released to the Provider in milestone tranches, not all at once, so exposure is limited and trust is earned progressively.
 - **Security bonds:** the Provider posts a refundable bond as skin-in-the-game. If they disappear, the bond compensates the Client.
 - **Deadline-protected emergency refunds:** if the Provider fails to deliver within the agreed window, the Client reclaims all unreleased funds plus the Provider's bond.
 - **On-chain reputation:** every completed and refunded agreement is recorded per Provider, so Clients can evaluate counterparties from verifiable history.
 
-PactAI does **not** give investment advice, take custody of profits, or guarantee outcomes. It is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
+PACTA does **not** give investment advice, take custody of profits, or guarantee outcomes. It is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
 
 ### 1.3 Why this design is safe and honest (important for judges)
-A naive "lock all the money and trust the other party" escrow is not actually safer: the moment funds reach the Provider, code can't claw them back. PactAI's protection comes from two mechanics that *are* enforceable on-chain:
+A naive "lock all the money and trust the other party" escrow is not actually safer: the moment funds reach the Provider, code can't claw them back. PACTA's protection comes from two mechanics that *are* enforceable on-chain:
 - **Limiting exposure over time** (staged release), and
 - **Collateralizing the released portion** (the bond).
 
 The emergency-refund path returns the unreleased funds **and** seizes the bond, which is the concrete on-chain penalty for a Provider who walks away.
+
+### 1.4 Why wallet-native
+
+PACTA is **wallet-native** by design. The wallet is not merely a login method; it is the entire identity, trust, and authority layer. This is a deliberate architectural choice that shapes every decision in the product:
+
+- **Wallet is login.** Connect and you're in. No accounts, no emails, no passwords, no platform profile to maintain.
+- **Wallet is identity.** Your Stellar address IS your profile. KYC verification (§18) binds to the wallet once and never needs re-doing.
+- **Wallet is reputation.** On-chain history (completed deals, refunds, volume) is permanently attached to your address. It is portable: any future dApp that reads on-chain data can see a Provider's PACTA track record without asking permission.
+- **Wallet is authority.** Only your cryptographic signature can move funds, approve releases, or post bonds. No admin, no intermediary, no platform can override this.
+- **No platform lock-in.** Unlike Fiverr/Upwork where your reviews die if you leave, PACTA reputation belongs to the wallet holder forever and travels across any ecosystem that reads the contract.
+
+This positioning means PACTA is not "a platform with crypto payments." It is a **trust protocol that lives in the wallet** — composable, portable, and owned by the user.
 
 ---
 
 ## 2. Hackathon context
 
 - **Event:** Build on Stellar — APAC track.
-- **Primary track:** **Payment & Consumer Applications.** PactAI is a consumer-facing financial-protection app that helps everyday users safely coordinate money for any two-party deal or deliverable.
+- **Primary track:** **Payment & Consumer Applications.** PACTA is a consumer-facing financial-protection app that helps everyday users safely coordinate money for any two-party deal or deliverable.
 - **Why it fits the track:** consumer protection for any informal money agreement; financial accessibility (anyone with a Stellar wallet); real-world SEA impact; an easy-to-use financial tool (connect wallet → create agreement → deposit → approve releases → refund).
 - **Team:**
   - Zarrah Exekiel Valles
@@ -46,7 +60,7 @@ The emergency-refund path returns the unreleased funds **and** seizes the bond, 
 - **Country:** Philippines.
 
 ### 2.1 Track statement (for submission)
-> PactAI is a Payment & Consumer Application built on Stellar and powered by Soroban that protects everyday users by turning any informal money agreement between two people into a secure, programmable, transparent financial contract.
+> PACTA is a Payment & Consumer Application built on Stellar and powered by Soroban that protects everyday users by turning any informal money agreement between two people into a secure, programmable, transparent financial contract.
 
 ---
 
@@ -64,6 +78,31 @@ The emergency-refund path returns the unreleased funds **and** seizes the bond, 
 **Persona A — "Tita Maria" (Client):** OFW in Dubai who is paying someone online for a deliverable (a custom order, or a piece of freelance work). She has been scammed before, so she needs proof she can get her money back if things go wrong.
 
 **Persona B — "Jay" (Provider):** Skilled and honest, but with no formal credentials, so online he is indistinguishable from scammers. He posts a bond and builds an on-chain track record to stand out.
+
+**Wallet-native implications for users:**
+- The only prerequisite to use PACTA is a Stellar wallet. No signup, no email, no form to fill. Connect and you're protected.
+- Tita Maria doesn't "register" — she connects her wallet and has access to the full protection layer immediately.
+- Jay's reputation **travels with his wallet**. If he moves to a different marketplace or app that reads on-chain PACTA data, his track record follows. He is never hostage to one platform.
+- Both users own their trust data. Deleting the app, clearing the browser, switching devices — none of this erases their on-chain history. The wallet is the account.
+
+### 3.1 Beachhead segment
+
+PACTA's initial target is specific: **Filipino freelancers, OFWs, and informal online deal-makers** who already use digital wallets (GCash, Maya) for payments but have zero protection when money is entrusted to a stranger.
+
+| Segment | Example use case | Why them |
+|---|---|---|
+| Filipino freelance clients | Hire a designer on FB Marketplace or Telegram; lock payment in escrow until deliverable is done | ~1.5M Filipino freelancers active online; countless more deal off-platform with no protection |
+| OFW → PH service providers | OFW in Dubai pays a contractor in Cavite to build a fence or finish a renovation; staged release per phase | 10M+ OFWs, majority transact informally with providers back home |
+| FB Marketplace / Carousell buyers | Custom-made or pre-order items where buyer pays upfront and seller ghosts | Scam reports in PH buy-and-sell FB groups number in thousands weekly |
+| Micro-outsourcing (Fiverr gap) | Small deals (₱1,000–₱10,000) too small for Fiverr/Upwork fees but still risky without protection | Unserved by platforms that take 20% — PACTA takes 0% at MVP |
+
+**Why this segment first:**
+- Already digital-wallet literate (GCash has 90M+ registered users in PH)
+- High scam exposure and real financial pain from trust failure
+- Philippines ranks among the highest in SEA for crypto awareness (16%+ adoption)
+- The team is Filipino — credibility, context, and community access
+
+**Expansion path:** PH freelance/OFW → broader SEA informal commerce → cross-border P2P → regulated mainnet with fiat on/off-ramp
 
 ---
 
@@ -99,6 +138,22 @@ The emergency-refund path returns the unreleased funds **and** seizes the bond, 
 - Mainnet deployment + professional security audit.
 
 > **Scope discipline:** The protection story is fully told by create → bond → deposit → staged release → emergency refund + reputation. Resist adding anything that is not on the demo click-path until that path is solid.
+
+### 5.4 Success metrics
+
+How we know PACTA is working (post-launch, not hackathon):
+
+| Metric | What it measures | Target (first 90 days) |
+|---|---|---|
+| Agreements created | Adoption / product-market fit | 100+ on testnet; 20+ on mainnet |
+| Completion rate | `completed / (completed + refunded)` — healthy ecosystem signal | > 70% |
+| Repeat usage | Same wallet creating 2+ agreements | > 30% of active wallets |
+| Emergency refund rate | Lower = healthier; measures Provider reliability | < 20% |
+| Average time to completion | Efficiency of the milestone flow | Declining over time |
+| Provider bond-post rate | Providers willing to put skin in the game | > 80% of agreements reach Active |
+| Risk Lens apply rate | Users acting on AI recommendations | > 40% of create flows with lens visible |
+
+These metrics are readable directly from on-chain data (contract state + events), consistent with the wallet-native model: no analytics backend needed.
 
 ---
 
@@ -860,6 +915,12 @@ Run with `stellar contract build` then `cargo test` (or just `cargo test` from t
 ## 9. Frontend specification
 
 ### 9.1 Principles
+- **Wallet-native by design (see §1.4):**
+  - Wallet is login — connect and you're in
+  - Wallet is identity — your address IS your profile
+  - Wallet is reputation — on-chain history is your track record, portable to any app
+  - Wallet is authority — only your signature moves funds
+  - Nothing stored in browser, nothing stored on a server (for escrow)
 - One screen per action. No multi-step wizards.
 - The wallet **is** the login. No accounts, no passwords, no backend.
 - Optimistic but honest: show pending state while a tx is in flight; refetch agreement after confirmation.
@@ -989,7 +1050,7 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 
 ### 9.6 Security UX (wallet-as-login, hardened)
 
-PactAI stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
+PACTA stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
 
 - **Network guard.** On connect, read the wallet's network (best effort). If it is not the Stellar test network, show a persistent warning banner so the user does not sign against the wrong network. If the network cannot be determined, do not block.
 - **Confirm before signing.** Every fund-moving action (post bond, deposit, release, complete, emergency refund, cancel) opens a plain-language confirmation dialog stating the amount, the counterparty, and the effect before the wallet signature is requested. Nothing is signed blindly. Copy follows §12/DESIGN voice (sentence case, no jargon, names the effect the user controls).
@@ -1170,7 +1231,7 @@ npm run dev
 
 ## 12. Design direction
 
-PactAI protects people's money in real agreements, so it must look **trustworthy, precise, and calm**, not like a hype crypto app. Target sensibility: technical credibility meets clean fintech (think mission-control instrument panel rendered as polished SaaS).
+PACTA protects people's money in real agreements, so it must look **trustworthy, precise, and calm**, not like a hype crypto app. Target sensibility: technical credibility meets clean fintech (think mission-control instrument panel rendered as polished SaaS).
 
 - **Palette:** deep near-black/navy base (`#0B0F14`), high-contrast off-white text, a single confident accent (a trust-green or electric-teal) for primary actions and "protected" states; amber for warnings (deadline approaching / refund available); restrained red only for destructive/refund.
 - **Type:** a clean grotesque/sans for UI (Inter or similar); a monospace for addresses, amounts, IDs, and status codes — it reads as "verifiable / on-chain."
@@ -1185,7 +1246,7 @@ PactAI protects people's money in real agreements, so it must look **trustworthy
 
 Set up beforehand: two browser profiles (or two wallets in Freighter) — **Client** and **Provider** — both funded on testnet. Use the native XLM SAC as the token. The contract is already deployed; bindings generated; app running.
 
-**Act 1 — The problem (15s, spoken):** "Every day people pay someone online for work or a deliverable with zero protection. When the other party vanishes, the money is gone. PactAI fixes that with code."
+**Act 1 — The problem (15s, spoken):** "Every day people pay someone online for work or a deliverable with zero protection. When the other party vanishes, the money is gone. PACTA fixes that with code."
 
 **Act 2 — Create (Client):**
 1. Connect Client wallet.
@@ -1207,17 +1268,18 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 
 **Act 6 — The happy ending (optional, fresh agreement):** run a short agreement, release all milestones, **Complete** → bond returns to the Provider, reputation `completed` increments. "When the Provider delivers, they get their bond back and a verifiable track record that wins them future clients."
 
-**Close (10s):** "PactAI: informal trust, made enforceable. Built entirely on Stellar and Soroban. Trust, written in code."
+**Close (10s):** "PACTA: informal trust, made enforceable. Built entirely on Stellar and Soroban. Trust, written in code."
 
 ---
 
 ## 14. Submission checklist (RiseIn / hackathon form)
 
-- **Project name:** PactAI ("Pact," agreement, plus "AI," the built-in AI risk lens). Short and easy to pronounce across SEA, professional.
-- **Tagline:** PactAI — Trust, written in code. (alt: "Agreements you can trust.")
+- **Project name:** PACTA. Short and easy to pronounce across SEA, professional.
+- **Tagline:** PACTA — Trust, written in code. (alt: "Your wallet is your protection." / "The trust layer that lives in your wallet.")
 - **Problem statement:** §1.1.
 - **Proposed solution:** §1.2 + §8.2 mechanics.
-- **Target users:** §3.
+- **Target users:** §3 + §3.1 (beachhead: Filipino freelancers, OFWs, informal online deal-makers).
+- **Positioning:** Wallet-native trust protocol — no platform, no lock-in, portable reputation (§1.4).
 - **Team:** Zarrah Exekiel Valles; Jecyn Vallirie Turbanos.
 - **Country:** Philippines.
 - **Stellar integration:** Soroban smart contract (escrow, bonds, staged release, refunds, reputation) deployed on testnet; Stellar Asset Contract token settlement (XLM SAC for demo, USDC SAC in production); Freighter / Stellar Wallets Kit for non-custodial signing; on-chain transparency for every create/bond/deposit/release/refund event.
@@ -1237,11 +1299,24 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 | Judges question "is escrow really safer?" | Lead with the honest framing in §1.3: protection = staged exposure + bond collateral + recorded reputation, all enforceable on-chain. |
 | Scope creep | §5.3 items are slide-only. Freeze the contract interface (§8.5) before parallelizing. |
 
+### 15.1 Competitive landscape
+
+| Alternative | Model | PACTA wallet-native advantage |
+|---|---|---|
+| Direct bank/GCash transfer | Trust-based, zero protection | Wallet-signed escrow with staged release + bond + refund |
+| Fiverr / Upwork | Platform-owned reputation, 20% fee, lock-in | 0% fee, reputation lives in the wallet and is portable, no lock-in |
+| PayPal Buyer Protection | Platform-controlled disputes, unavailable for PH services | Permissionless, any wallet can use it, no geography restriction |
+| Escrow.com | Centralized custodial (trust the company) | Non-custodial, code holds funds, no single point of failure |
+| Other crypto escrow | Often custodial or single-release | Staged milestones + security bond + on-chain reputation + AI risk lens |
+| "Trust me, bro" | The problem itself | Code-enforced, transparent, verifiable |
+
+**Key differentiator:** PACTA is the only solution where both the protection (escrow) and the trust signal (reputation) are **wallet-native and portable** — owned by the user, not hostage to any platform.
+
 ---
 
 ## 16. Claude Code execution guide (copy this into CLAUDE.md)
 
-**Goal:** Build PactAI, a Soroban escrow dApp on Stellar testnet, per this PRD. No backend; the contract is the backend. The product name is "PactAI" everywhere in human-readable copy; code identifiers stay on the legacy `pacta` form (crate `pacta-escrow`, struct `PactaEscrow`, package `packages/pacta`, alias `pacta_escrow`, on-chain fields `investor`/`trader`). Never "Katiwala".
+**Goal:** Build PACTA, a Soroban escrow dApp on Stellar testnet, per this PRD. No backend; the contract is the backend. The product name is "PACTA" everywhere in human-readable copy; code identifiers stay on the legacy `pacta` form (crate `pacta-escrow`, struct `PactaEscrow`, package `packages/pacta`, alias `pacta_escrow`, on-chain fields `investor`/`trader`). Never "Katiwala".
 
 **Ordered tasks:**
 1. Scaffold the repo per §10 (workspace `Cargo.toml`, `contracts/pacta-escrow`, `frontend` Vite+React+TS+Tailwind).
@@ -1267,11 +1342,11 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 
 An add-on that reads a Provider's on-chain track record and gives the Client a plain-language counterparty reputation read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
 
-**What it does.** When a Client enters a Provider address (create flow) or views a Provider profile, PactAI computes that Provider's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
+**What it does.** When a Client enters a Provider address (create flow) or views a Provider profile, PACTA computes that Provider's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
 
 **Code does the arithmetic; the model only interprets.** All counts are computed deterministically in `frontend/src/lib/riskStats.ts` (`computeTraderStats`). The model never recomputes numbers — it turns correct stats into plain language and a recommendation. This keeps figures un-hallucinated.
 
-**Responsible-AI boundary (non-negotiable, enforced in the system prompt).** The lens assesses behavioral / counterparty trustworthiness from on-chain history only. It never gives investment advice, predicts future performance, or estimates profit. Its only recommendations are within PactAI's own mechanics (milestone count, bond size, duration). Consistent with PactAI's stated position that it does not provide investment advice.
+**Responsible-AI boundary (non-negotiable, enforced in the system prompt).** The lens assesses behavioral / counterparty trustworthiness from on-chain history only. It never gives investment advice, predicts future performance, or estimates profit. Its only recommendations are within PACTA's own mechanics (milestone count, bond size, duration). Consistent with PACTA's stated position that it does not provide investment advice.
 
 **Architecture.**
 - The client app fetches the Provider's agreements (reuses the existing read path), computes `TraderStats`, and POSTs them to a serverless endpoint.
@@ -1284,6 +1359,8 @@ An add-on that reads a Provider's on-chain track record and gives the Client a p
 
 **Files.** `frontend/src/lib/riskStats.ts`, `riskTypes.ts`, `agreements.ts`; `frontend/src/hooks/useRiskLens.ts`, `useDebounce.ts`; `frontend/src/components/RiskLens.tsx`; `api/risk-lens.ts`. New frontend dependency: none beyond the existing stack (lucide-react already present).
 
+**Wallet-native composability.** The Risk Lens reads reputation FROM the wallet's on-chain history. This is inherently cross-app: any dApp that uses PACTA's contract can surface the same Provider trust score. The reputation signal is not locked in one UI — it is a public good attached to the wallet address, readable by anyone.
+
 ---
 
 ## 18. Identity & KYC verification (add-on feature — implemented)
@@ -1291,7 +1368,7 @@ An add-on that reads a Provider's on-chain track record and gives the Client a p
 A wallet-linked identity layer. A user verifies their real-world identity **once** — a government ID document check plus a liveness/face match through an external identity provider — and that verified identity is then permanently associated with their wallet. On every later connect the app re-establishes that the wallet is verified and shows an identity badge. Verification gates the money and commitment actions in the app, so both sides of an agreement can trust that the counterparty is a **verified person**, not just an anonymous address. Like the AI Risk Lens (§17), it changes nothing in the core protocol: the frozen escrow contract (§8.5) is untouched. Operator/reference detail lives in **`docs/kyc.md`**; this section records what the feature is and how it is wired.
 
 ### 18.1 Why it matters (product + pitch framing)
-PactAI already makes the *money* safe (staged release, bonds, refunds). KYC makes the *counterparty* accountable. Anonymous escrow still lets a bad actor spin up a fresh wallet after every scam; binding a wallet to a verified government identity adds real-world consequences and Sybil resistance without sacrificing the non-custodial, wallet-first model. It also puts PactAI on a credible path to regulatory acceptance (a KYC'd P2P financial-protection app is deployable where an anonymous one is not), while keeping funds fully non-custodial and on-chain.
+PACTA already makes the *money* safe (staged release, bonds, refunds). KYC makes the *counterparty* accountable. Anonymous escrow still lets a bad actor spin up a fresh wallet after every scam; binding a wallet to a verified government identity adds real-world consequences and Sybil resistance without sacrificing the non-custodial, wallet-first model. It also puts PACTA on a credible path to regulatory acceptance (a KYC'd P2P financial-protection app is deployable where an anonymous one is not), while keeping funds fully non-custodial and on-chain.
 
 ### 18.2 What it does (user flow)
 1. **Connect wallet → prove ownership.** On connect, the user signs a one-time server-issued challenge (a message, not a transaction — it moves no funds). This proves they control the wallet before any identity is bound to it.
@@ -1301,8 +1378,8 @@ PactAI already makes the *money* safe (staged release, bonds, refunds). KYC make
 
 ### 18.3 Design principles
 - **A deliberate, documented exception to "no backend."** The escrow has no backend; this identity layer is the one sanctioned stateful server component (Supabase behind `api/kyc-*`). It is **off-chain, never holds funds, and is not part of the escrow.** (See CLAUDE.md "Identity / KYC layer.")
-- **Minimal PII by construction.** Raw ID images and selfies are **streamed to the verification provider and never stored by PactAI.** We persist only: verification status, a provider reference, document type/country/expiry, keyed HMAC hashes (for dedup / Sybil resistance), a masked display name, a versioned consent record, and a PII-free audit log.
-- **Honest scope.** KYC gates the **app UI**, not the on-chain protocol. The frozen contract has no KYC hook, so a determined user could still call the contract directly. This is stated plainly in code, UI, and docs — consistent with PactAI's "safe and honest" positioning (§1.3).
+- **Minimal PII by construction.** Raw ID images and selfies are **streamed to the verification provider and never stored by PACTA.** We persist only: verification status, a provider reference, document type/country/expiry, keyed HMAC hashes (for dedup / Sybil resistance), a masked display name, a versioned consent record, and a PII-free audit log.
+- **Honest scope.** KYC gates the **app UI**, not the on-chain protocol. The frozen contract has no KYC hook, so a determined user could still call the contract directly. This is stated plainly in code, UI, and docs — consistent with PACTA's "safe and honest" positioning (§1.3).
 
 ### 18.4 Architecture
 - **Server-mediated; the browser holds no database credentials.** All DB access goes through repo-root **`api/kyc-*.ts` Node functions** using the Supabase service-role key. The browser only calls same-origin `/api/*` (the same pattern as the Risk Lens) and holds a short-lived signed session cookie.
@@ -1331,6 +1408,63 @@ PactAI already makes the *money* safe (staged release, bonds, refunds). KYC make
 - **"Privacy by construction."** We verify identity but never store ID images or selfies; only a status, hashes, and a masked name — with one-tap erasure.
 - **"Non-custodial, still compliant."** Wallet stays the login and funds stay on-chain; the identity layer is off-chain, holds no money, and gates only the app.
 - **"Vendor-agnostic."** A clean provider interface (mock today, Didit in production) means the identity provider is a swap, not a rebuild.
+
+---
+
+## 19. Business model
+
+**Hackathon phase:** free, no fees. The protocol takes nothing.
+
+**Production model (post-mainnet):**
+- **Protocol fee:** 0.5–1% of capital, taken on-chain at `complete()`. The fee is deducted from the final milestone tranche before transfer to the Provider, so it is transparent, predictable, and wallet-native (no invoicing, no billing system, no payment method).
+- **Fee waiver:** first N deals per wallet are free to drive adoption.
+- **Zero fee on refunds:** the protocol never profits from failure. Emergency refunds and cancellations are always free.
+
+**Revenue expansion (roadmap):**
+- Premium features: priority arbitration, enhanced analytics dashboard, verified Provider badges
+- Marketplace integrations: API licensing for platforms that embed PACTA escrow
+- Enterprise: white-label escrow for B2B marketplaces in SEA
+
+**Why this model works wallet-native:** the fee is taken programmatically by the contract at settlement. No payment processor, no subscription, no credit card. The wallet is the billing method — consistent with the entire architecture.
+
+---
+
+## 20. Why blockchain (for judges and skeptics)
+
+"Why not just a database with a payment gateway?"
+
+| # | Reason | What it means for users |
+|---|---|---|
+| 1 | **Non-custodial** | No company holds the funds. No company can run off with them. The code holds the funds. |
+| 2 | **Censorship-resistant** | No one can freeze, redirect, or block an escrow. The rules are immutable once deployed. |
+| 3 | **Verifiable** | Anyone can audit the contract source, check balances, verify that the rules match what the UI claims. No "trust us." |
+| 4 | **Cross-border by default** | No bank routing, no SWIFT fees, no 3-day delays, no geography restriction. A wallet in Dubai and a wallet in Cavite settle in 5 seconds. |
+| 5 | **Portable reputation** | On-chain track record follows the wallet, not locked in one platform. Leave PACTA's UI and your reputation still exists for anyone to read. |
+
+**The honest framing:** the payment rails already exist (Stellar is fast, cheap, global). What didn't exist was a **trust layer** on top of those rails. PACTA is that layer.
+
+---
+
+## 21. Go-to-market
+
+### Phase 1 — Community seeding (hackathon → 3 months post)
+- Launch in Filipino freelance and buy-sell Facebook groups (500k+ member groups exist for design, dev, services)
+- Partner with OFW community organizations (e.g., OFW-focused Telegram and Viber groups)
+- Demo at PH crypto meetups and Stellar community events
+- Content: "How I stopped getting scammed on FB Marketplace" explainer videos showing the actual flow
+
+### Phase 2 — Wallet integration (3–6 months)
+- Partner with Stellar ecosystem wallets (Lobstr, Freighter, xBull) as an embedded protection feature: "Send with PACTA protection" button inside the wallet
+- Integrate with Stellar anchors for fiat on/off-ramp (PHP → XLM → escrow → XLM → PHP)
+- List on Stellar dApp directories and ecosystem pages
+
+### Phase 3 — Marketplace API (6–12 months)
+- Offer a PACTA SDK / API for existing marketplaces to embed escrow into their own flows
+- White-label for PH e-commerce platforms that want buyer protection without building it
+- Cross-chain bridge exploration (EVM, other L1s) for broader reach
+
+### Long-term vision
+PACTA becomes the **trust protocol that wallets integrate natively** — like how wallets integrated token swap, they integrate escrow. Every wallet has a "protected send" option powered by PACTA. The reputation layer becomes infrastructure, not just one app's feature.
 
 ---
 

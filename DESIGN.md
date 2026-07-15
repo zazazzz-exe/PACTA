@@ -1,6 +1,6 @@
-# PactAI — Design System (DESIGN.md)
+# PACTA — Design System (DESIGN.md)
 
-> Visual + interaction spec for the PactAI frontend. **This supersedes PRD.md §12.** Use this file for all visual decisions; use PRD.md for everything functional (contract interface, flows, screens-as-behavior).
+> Visual + interaction spec for the PACTA frontend. **This supersedes PRD.md §12.** Use this file for all visual decisions; use PRD.md for everything functional (contract interface, flows, screens-as-behavior).
 
 ---
 
@@ -20,7 +20,9 @@ Kickoff is in the chat message that accompanies this file.
 
 **One sentence:** a warm, calm, human interface that any first-time user can trust, with a single dark "instrument" panel that proves everything is real on-chain.
 
-PactAI holds people's money. Most users are cautious, mobile-first, low on crypto literacy. So the core must feel like a premium consumer finance app (Wise / Mercury / Monzo register), not a crypto terminal. The personality does **not** come from a loud display face or decoration. It comes from four disciplined choices:
+**Wallet-native positioning (see PRD §1.4):** PACTA is wallet-native — the wallet is the login, identity, reputation, and authority. The design must make this feel natural and empowering, not technical. A first-time user should feel "I connected my wallet and I'm protected" within seconds, not "I need to learn blockchain." The proof panel exists to make the on-chain truth visible and confidence-building, bridging the gap between wallet-native architecture and human trust.
+
+PACTA holds people's money. Most users are cautious, mobile-first, low on crypto literacy. So the core must feel like a premium consumer finance app (Wise / Mercury / Monzo register), not a crypto terminal. The personality does **not** come from a loud display face or decoration. It comes from four disciplined choices:
 
 1. **Warm humanist neutrals** instead of cold gray. Warmth signals humanity and safety, the opposite of the cold, technical dashboards that make people wary. (This is a deliberate counter-move, not the default cream-background look. Spend no other boldness on the neutrals.)
 2. **A single emerald accent.** Emerald is trust, growth, and "protected" all at once. It is *the* accent. Amber and clay are states, never decoration.
@@ -382,11 +384,11 @@ Content is a centered column (`max-w-app` on phones, `max-w-app-wide` on larger)
 
 ### 7.1 Landing / Connect — the hero is the thesis
 
-The most characteristic thing about PactAI is verifiable protection, so the hero *is* the proof panel, not a marketing illustration.
+The most characteristic thing about PACTA is verifiable protection, so the hero *is* the proof panel, not a marketing illustration. The landing communicates the wallet-native model immediately: "Connect wallet" is the only action, and the proof panel shows that protection is real, on-chain, and owned by you.
 
 ```
 ┌──────────────────────────┐
-│  PactAI           ● test  │   wordmark + network badge
+│  PACTA           ● test  │   wordmark + network badge
 │                           │
 │  Trust, written in code.  │   H1, ink
 │  Lock money in a contract │   body, slate

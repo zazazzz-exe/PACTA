@@ -24,7 +24,7 @@ function Wordmark() {
       className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-control"
     >
       <img src="/Pacta_logo.png" alt="" aria-hidden className="h-11 w-11 object-contain" />
-      <span className="text-[21px] font-semibold tracking-tight text-ink">Pacta</span>
+      <span className="text-[21px] font-semibold tracking-tight text-ink">PACTA</span>
     </button>
   );
 }
@@ -147,7 +147,7 @@ export default function App() {
             <div>
               <div className="flex items-center gap-2.5">
                 <img src="/Pacta_logo.png" alt="" aria-hidden className="h-12 w-12 object-contain" />
-                <span className="text-[21px] font-semibold tracking-tight text-panel-ink">Pacta</span>
+                <span className="text-[21px] font-semibold tracking-tight text-panel-ink">PACTA</span>
               </div>
               <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-panel-muted">
                 Trust, written in code. A non-custodial escrow for entrusting money to independent
@@ -191,7 +191,7 @@ export default function App() {
           </div>
 
           <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-5 text-[12px] text-panel-muted sm:flex-row sm:items-center sm:justify-between">
-            <span>© 2026 Pacta. Trust, written in code.</span>
+            <span>© 2026 PACTA. Trust, written in code.</span>
             <span className="flex items-center gap-1.5">
               Powered by
               <a

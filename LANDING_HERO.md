@@ -1,4 +1,4 @@
-# PactAI — Animated Landing Hero (LANDING_HERO.md)
+# PACTA — Animated Landing Hero (LANDING_HERO.md)
 
 > Drop-in animated hero for the landing page. Pure CSS animation (no new dependencies beyond `lucide-react`, which you already use), styled with the DESIGN.md tokens. It realizes the DESIGN.md §7.1 hero as a living escrow-flow loop: capital flows from the Client into the contract, it locks and counts up, then releases to the Provider in milestone tranches, with the Provider's security bond held underneath.
 
@@ -42,7 +42,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
       <div aria-hidden className="hf-drift2 pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 rounded-full bg-accent-tint opacity-40" />
 
       <div className="relative mx-auto max-w-app-wide px-5 py-12 text-center">
-        <p className="mb-5 text-[13px] font-medium text-slate">PactAI</p>
+        <p className="mb-5 text-[13px] font-medium text-slate">PACTA</p>
         <h1 className="mb-2.5 text-[26px] font-semibold leading-tight text-ink sm:text-[34px]">
           Any handshake deal, written in code.
         </h1>

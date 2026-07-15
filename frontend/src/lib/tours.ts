@@ -5,8 +5,8 @@ import type { TourStep } from '../components/Tour';
 
 export const landingSteps: TourStep[] = [
   {
-    title: 'Welcome to Pacta',
-    body: 'Pacta keeps money safe between a client and a provider, enforced by a smart contract. Here is a 30 second tour.',
+    title: 'Welcome to PACTA',
+    body: 'PACTA keeps money safe between a client and a provider, enforced by a smart contract. Here is a 30 second tour.',
     placement: 'center',
   },
   {

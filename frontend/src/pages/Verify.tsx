@@ -188,7 +188,7 @@ export function Verify() {
       )}
 
       <p className="mt-4 text-center text-[12px] text-fog">
-        Your documents go straight to the verification provider and are never stored by Pacta. This
+        Your documents go straight to the verification provider and are never stored by PACTA. This
         protects the app; the on-chain contract is unchanged.
       </p>
     </div>

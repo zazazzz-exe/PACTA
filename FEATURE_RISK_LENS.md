@@ -1,4 +1,4 @@
-# PactAI — Feature Spec: AI Risk Lens (FEATURE_RISK_LENS.md)
+# PACTA — Feature Spec: AI Risk Lens (FEATURE_RISK_LENS.md)
 
 > An add-on feature. Build it **after** the core app and demo path work (PRD.md + DESIGN.md). It depends on the deployed contract and the design tokens already being in place.
 
@@ -7,7 +7,7 @@
 ## 0. How Claude Code should use this file
 
 - This adds one feature: an AI that reads a Provider's on-chain history and gives the Client a plain-language counterparty read plus a defensive milestone suggestion. It does not change anything else.
-- The Risk Lens is the "AI" in PactAI ("Pact" + "AI"): it is the AI layer over the on-chain escrow. Note: in code and on-chain, the Provider corresponds to the legacy `trader` field and identifiers, kept for ABI compatibility. The product language is Client and Provider.
+- The Risk Lens is the AI layer over the on-chain escrow. Note: in code and on-chain, the Provider corresponds to the legacy `trader` field and identifiers, kept for ABI compatibility. The product language is Client and Provider.
 - It introduces **one serverless endpoint** (`/api/risk-lens`) so the Anthropic API key stays server-side. Everything else is client code that reuses the existing contract client and design tokens.
 - Style every UI piece with the tokens from DESIGN.md (`accent`, `deadline`, `refund`, `slate`, etc.). No raw hex.
 - Respect the responsible-AI boundary in §2: this assesses **counterparty trustworthiness from on-chain history**, never financial or investment advice.
@@ -17,7 +17,7 @@
 
 ## 1. What it is
 
-When a Client is about to work with a Provider (the party who posts a security bond, delivers, and receives the tranches), PactAI reads that Provider's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* agreement more safely. With one tap, the Client can apply the suggested protection (milestone count) to the create form.
+When a Client is about to work with a Provider (the party who posts a security bond, delivers, and receives the tranches), PACTA reads that Provider's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* agreement more safely. With one tap, the Client can apply the suggested protection (milestone count) to the create form.
 
 It is the highest-leverage "uniquely yours" feature because a non-crypto user cannot interpret raw reputation counts, but they can act on "12 completed, but 2 recent refunds, and this deal is larger than anything they've handled. Start with 4 milestones."
 
@@ -30,9 +30,11 @@ The Risk Lens assesses the **Provider's behavioral / counterparty trustworthines
 - predict the Provider's performance or estimate profit,
 - guarantee outcomes.
 
-Its only recommendations are within PactAI's own mechanics (milestone count, bond size, duration). This keeps it consistent with PactAI's stated position ("does not provide financial or investment advice") and is enforced in the system prompt (§6).
+Its only recommendations are within PACTA's own mechanics (milestone count, bond size, duration). This keeps it consistent with PACTA's stated position ("does not provide financial or investment advice") and is enforced in the system prompt (§6).
 
 Privacy note: only public on-chain data is sent to the API. No keys, no secrets, nothing the user wouldn't already see on a block explorer.
+
+**Wallet-native composability:** Because the Risk Lens reads from on-chain wallet history (not a proprietary database), the same reputation signal is available to any dApp or integration that reads PACTA's contract. The trust layer is portable — it follows the wallet, not the UI.
 
 ---
 
@@ -186,7 +188,7 @@ export const config = { runtime: 'edge' };
 
 const MODEL = 'claude-haiku-4-5-20251001'; // fast + cheap; swap to the latest Haiku as needed
 
-const SYSTEM = `You are the Pacta Risk Lens, a counterparty-risk assistant inside Pacta — a non-custodial escrow protocol on Stellar. In Pacta an investor locks capital for an independent trader; the capital is released in EQUAL milestone tranches (each tranche = capital / number_of_milestones), and the trader posts a refundable security bond. If the trader fails by the deadline, the investor reclaims the unreleased capital plus the bond.
+const SYSTEM = `You are the PACTA Risk Lens, a counterparty-risk assistant inside PACTA — a non-custodial escrow protocol on Stellar. In PACTA an investor locks capital for an independent trader; the capital is released in EQUAL milestone tranches (each tranche = capital / number_of_milestones), and the trader posts a refundable security bond. If the trader fails by the deadline, the investor reclaims the unreleased capital plus the bond.
 
 Your job: help a non-expert investor judge how trustworthy a specific trader looks BASED ONLY on that trader's on-chain track record, and suggest how to structure THIS agreement to limit risk.
 
@@ -195,7 +197,7 @@ You receive a JSON object of already-computed, correct statistics. Do not recomp
 Strict boundaries:
 - Assess behavioral / counterparty risk from on-chain history only. Do NOT give investment advice, predict trading performance, or estimate profit. Never say whether the deal is a good investment — only how trustworthy the track record looks and how to protect against this counterparty.
 - Be honest and calibrated, not reassuring for its own sake. A clean, deep record is genuinely positive. Recent refunds, a thin or empty record, or a deal much larger than anything the trader has handled are genuine cautions. An address with no history is unproven and warrants caution, not a neutral rating.
-- The only levers you may recommend are Pacta's own mechanics: number of milestones, bond size relative to capital, and shorter duration. Because tranches are EQUAL, reduce first exposure by recommending MORE milestones. Set suggested_first_milestone_pct to approximately round(100 / suggested_milestones).
+- The only levers you may recommend are PACTA's own mechanics: number of milestones, bond size relative to capital, and shorter duration. Because tranches are EQUAL, reduce first exposure by recommending MORE milestones. Set suggested_first_milestone_pct to approximately round(100 / suggested_milestones).
 - Speak plainly to a first-time user who may be new to crypto and managing hard-earned savings. Short sentences. No jargon, no hype, no emoji.
 
 Output ONLY valid JSON, no markdown and no preamble, matching exactly:

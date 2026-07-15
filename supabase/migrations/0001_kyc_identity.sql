@@ -1,4 +1,4 @@
--- PactAI KYC identity layer — off-chain, server-mediated, minimal-PII.
+-- PACTA KYC identity layer — off-chain, server-mediated, minimal-PII.
 --
 -- Apply with: Supabase SQL editor, or `supabase db push`, or psql against the
 -- project. Every table has RLS enabled with NO permissive policies: only the

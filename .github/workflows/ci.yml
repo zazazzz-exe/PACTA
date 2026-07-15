@@ -1,6 +1,6 @@
 name: CI
 
-# Continuous integration for the Pacta monorepo: the Soroban escrow contract
+# Continuous integration for the PACTA monorepo: the Soroban escrow contract
 # (Rust) and the Vite/React frontend. Runs on every push and PR to main.
 # Continuous deployment is handled by Vercel, which auto-deploys main to
 # https://pacta-zarrah.vercel.app on a successful push.

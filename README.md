@@ -1,14 +1,14 @@
-# PactAI
+# PACTA
 
 > **Trust, written in code.**
 
 <p align="center">
-  <img alt="PactAI app" src="assets/pacta.png" width="200"/>
+  <img alt="PACTA app" src="assets/pacta.png" width="200"/>
 </p>
 
-PactAI is a non-custodial escrow protocol on **Stellar** and **Soroban** that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract. Whatever the deal is, funds are released in milestone tranches, protected by a Provider-posted security bond, refundable if the Provider fails to deliver, and provable on-chain. An AI Risk Lens reads a Provider's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
+PACTA is a non-custodial escrow protocol on **Stellar** and **Soroban** that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract. Whatever the deal is, funds are released in milestone tranches, protected by a Provider-posted security bond, refundable if the Provider fails to deliver, and provable on-chain. An AI Risk Lens reads a Provider's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
 
-It fits any two-party deal: freelance and milestone project payments, service contracts (design, development, consulting), custom or made-to-order goods, peer-to-peer marketplace deals, and cross-border entrusted funds (remittances) as just one example among many. (The name PactAI = "Pact" for the agreement, "AI" for the built-in risk lens.)
+It fits any two-party deal: freelance and milestone project payments, service contracts (design, development, consulting), custom or made-to-order goods, peer-to-peer marketplace deals, and cross-border entrusted funds (remittances) as just one example among many.
 
 <p>
   <a href="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml/badge.svg" /></a>
@@ -18,7 +18,7 @@ It fits any two-party deal: freelance and milestone project payments, service co
 </p>
 
 <p align="center">
-  <img alt="PactAI app" src="assets/dashboard.png" width="900" />
+  <img alt="PACTA app" src="assets/dashboard.png" width="900" />
 </p>
 
 ---
@@ -27,7 +27,7 @@ It fits any two-party deal: freelance and milestone project payments, service co
 
 | | |
 |---|---|
-| **Live app** | [PactAI](https://pacta-zarrah.vercel.app) |
+| **Live app** | [PACTA](https://pacta-zarrah.vercel.app) |
 | **Demo video** | [Google Drive](https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=sharing )|
 | **Smart contract (testnet)** | [View on Stellar Expert](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL) |
 | **GitHub** | [Repository](https://github.com/zazazzz-exe/PACTA.git) |
@@ -39,7 +39,7 @@ It fits any two-party deal: freelance and milestone project payments, service co
 - [The problem](#the-problem)
 - [The solution](#the-solution)
 - [Contract Addresses and Transactions](#Contract-addresses-and-transactions)
-- [How PactAI works](#how-pactai-works)
+- [How PACTA works](#how-pacta-works)
 - [Features](#features)
 - [The AI Risk Lens](#the-ai-risk-lens)
 - [Screenshots](#screenshots)
@@ -66,25 +66,25 @@ Every day, people put money behind agreements with someone they do not fully tru
 
 ## The solution
 
-PactAI fixes this not by asking people to trust harder, but by making trust enforceable. Instead of sending money directly to a Provider, the Client locks it in a Soroban escrow contract that:
+PACTA fixes this not by asking people to trust harder, but by making trust enforceable. Instead of sending money directly to a Provider, the Client locks it in a Soroban escrow contract that:
 
 - **Releases funds in milestone tranches** so only a portion is ever exposed at a time.
 - **Requires a security bond** the Provider posts as skin in the game.
 - **Refunds automatically** if the Provider fails to deliver by the deadline: the Client reclaims the unreleased funds plus the Provider's bond.
 - **Records every agreement on-chain**, building a portable reputation that turns anonymous Providers into accountable ones.
 
-PactAI does not give advice, take custody of anyone's profits, or guarantee outcomes. It is **trust infrastructure**.
+PACTA does not give advice, take custody of anyone's profits, or guarantee outcomes. It is **trust infrastructure**.
 
 ## Contract Addresses and Transactions
 
-- **PactAI Soroban contract (Stellar Testnet):**
+- **PACTA Soroban contract (Stellar Testnet):**
   `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
   · [view on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
 <p align="center">
-  <img alt="PactAI app" src="assets/contract.png" width="700" />
+  <img alt="PACTA app" src="assets/contract.png" width="700" />
 </p>
 
-## How PactAI works
+## How PACTA works
 
 ```
             create agreement
@@ -107,7 +107,7 @@ PactAI does not give advice, take custody of anyone's profits, or guarantee outc
             └───────────┘  reputation ✓      └───────────┘  reputation ⚠
 ```
 
-**The protection model, honestly stated:** a naive "lock all the money and trust the Provider" escrow is not actually safer, because once funds reach the Provider, code cannot claw them back. PactAI's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased funds and seizes the bond, the concrete on-chain penalty for a Provider who walks away.
+**The protection model, honestly stated:** a naive "lock all the money and trust the Provider" escrow is not actually safer, because once funds reach the Provider, code cannot claw them back. PACTA's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased funds and seizes the bond, the concrete on-chain penalty for a Provider who walks away.
 
 > On-chain, the two parties are stored as the legacy `investor` (the Client, who deposits funds and approves releases) and `trader` (the Provider, who posts the bond and delivers) fields, kept for compatibility with the deployed contract. The UI presents them as Client and Provider, and `profit_share_bps` is a legacy, informational field that is hidden in the UI.
 
@@ -123,7 +123,7 @@ PactAI does not give advice, take custody of anyone's profits, or guarantee outc
 
 ## The AI Risk Lens
 
-When a Client is about to work with a Provider, PactAI reads that Provider's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
+When a Client is about to work with a Provider, PACTA reads that Provider's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
 
 - All statistics (completed/refunded counts, volume, recency, deal-vs-history ratio) are computed deterministically in code, so the numbers are always correct.
 - An LLM (**Claude**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.

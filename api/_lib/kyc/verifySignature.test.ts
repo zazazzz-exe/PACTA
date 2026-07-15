@@ -6,7 +6,7 @@ import { verifyWalletSignature } from './verifySignature';
 describe('verifyWalletSignature', () => {
   const kp = Keypair.random();
   const addr = kp.publicKey();
-  const msg = `Pacta ownership\nAddress: ${addr}\nNonce: xyz789`;
+  const msg = `PACTA ownership\nAddress: ${addr}\nNonce: xyz789`;
 
   it('accepts a valid SEP-53 signature (Freighter)', () => {
     const encoded = Buffer.concat([

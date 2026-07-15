@@ -11,7 +11,7 @@ const NONCE_TTL_MS = 5 * 60 * 1000;
 
 function buildChallenge(address: string, nonce: string, issuedAt: string): string {
   return [
-    'Pacta wants to verify you own this wallet.',
+    'PACTA wants to verify you own this wallet.',
     `Address: ${address}`,
     `Nonce: ${nonce}`,
     `Issued: ${issuedAt}`,

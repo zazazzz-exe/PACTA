@@ -1,4 +1,4 @@
-// Deployed Pacta escrow on Stellar testnet (captured in Phase 2).
+// Deployed PACTA escrow on Stellar testnet (captured in Phase 2).
 // The contract is token-agnostic; the demo settles in the native XLM SAC.
 export const CONTRACT_ID = 'CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL';
 export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';

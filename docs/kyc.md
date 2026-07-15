@@ -1,4 +1,4 @@
-# PactAI KYC identity layer
+# PACTA KYC identity layer
 
 Off-chain, server-mediated wallet identity verification. It gates the **app UI**
 for money/commitment actions; it does **not** and cannot gate the frozen on-chain
