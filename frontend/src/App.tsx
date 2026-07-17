@@ -16,6 +16,7 @@ import { TraderProfile } from './pages/TraderProfile';
 import { Verify } from './pages/Verify';
 import { Home } from './pages/Home';
 import { Receive } from './pages/Receive';
+import { Send } from './pages/Send';
 import { ComingSoon } from './components/ComingSoon';
 import { BottomTabs } from './components/BottomTabs';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
@@ -148,7 +149,7 @@ export default function App() {
           {route.name === 'verify' && <Verify />}
           {route.name === 'home' && <Home />}
           {route.name === 'receive' && <Receive />}
-          {route.name === 'send' && <ComingSoon title="Send" />}
+          {route.name === 'send' && <Send />}
           {route.name === 'convert' && <ComingSoon title="Convert" />}
           {route.name === 'activity' && <ComingSoon title="Activity" />}
           {route.name === 'profile' && <Verify />}

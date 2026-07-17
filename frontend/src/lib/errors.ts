@@ -13,8 +13,59 @@ const FRIENDLY: Record<number, string> = {
   11: 'Release all milestones before completing.',
 };
 
+// Friendly text for known Horizon submitTransaction result_codes.
+const HORIZON_OP_FRIENDLY: Record<string, string> = {
+  op_no_destination: 'The recipient account does not exist yet on the network.',
+  op_no_trust: 'The recipient cannot receive this asset yet (they need a trustline for it).',
+  op_underfunded: 'You do not have enough balance to send this amount.',
+  op_line_full: 'The recipient cannot receive more of this asset right now.',
+};
+const HORIZON_TX_FRIENDLY: Record<string, string> = {
+  tx_insufficient_balance:
+    'Not enough balance to cover the amount plus the network fee and the minimum reserve.',
+  tx_bad_seq: 'That transaction was out of date. Please try again.',
+  tx_insufficient_fee: 'The network fee was too low. Please try again.',
+};
+
+// Safely read Horizon's `error.response.data.extras.result_codes` shape, if present.
+export function horizonResultCodes(
+  e: unknown
+): { transaction?: string; operations?: string[] } | null {
+  if (typeof e !== 'object' || e === null) return null;
+  const response = (e as Record<string, unknown>).response;
+  if (typeof response !== 'object' || response === null) return null;
+  const data = (response as Record<string, unknown>).data;
+  if (typeof data !== 'object' || data === null) return null;
+  const extras = (data as Record<string, unknown>).extras;
+  if (typeof extras !== 'object' || extras === null) return null;
+  const resultCodes = (extras as Record<string, unknown>).result_codes;
+  if (typeof resultCodes !== 'object' || resultCodes === null) return null;
+
+  const codes = resultCodes as { transaction?: unknown; operations?: unknown };
+  const transaction = typeof codes.transaction === 'string' ? codes.transaction : undefined;
+  const operations = Array.isArray(codes.operations)
+    ? codes.operations.filter((o): o is string => typeof o === 'string')
+    : undefined;
+
+  if (transaction === undefined && (operations === undefined || operations.length === 0)) {
+    return null;
+  }
+  return { transaction, operations };
+}
+
 // Surface a readable message from whatever the SDK/host threw.
 export function friendlyError(e: unknown): string {
+  const horizonCodes = horizonResultCodes(e);
+  if (horizonCodes) {
+    const op = horizonCodes.operations?.find((code) => code in HORIZON_OP_FRIENDLY);
+    if (op) return HORIZON_OP_FRIENDLY[op];
+    if (horizonCodes.transaction && HORIZON_TX_FRIENDLY[horizonCodes.transaction]) {
+      return HORIZON_TX_FRIENDLY[horizonCodes.transaction];
+    }
+    const fallbackCode = horizonCodes.operations?.[0] ?? horizonCodes.transaction;
+    return `Transaction failed (${fallbackCode}).`;
+  }
+
   const raw =
     typeof e === 'string'
       ? e
