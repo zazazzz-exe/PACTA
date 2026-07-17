@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 
 export type Route =
   | { name: 'landing' }
+  | { name: 'home' }
+  | { name: 'receive' }
+  | { name: 'convert' }
+  | { name: 'activity' }
+  | { name: 'profile' }
   | { name: 'dashboard' }
   | { name: 'create' }
   | { name: 'detail'; id: bigint }
@@ -21,6 +26,11 @@ export function parseHash(): Route {
   if (h === '/dashboard') return { name: 'dashboard' };
   if (h === '/create') return { name: 'create' };
   if (h === '/verify') return { name: 'verify' };
+  if (h === '/home') return { name: 'home' };
+  if (h === '/receive') return { name: 'receive' };
+  if (h === '/convert') return { name: 'convert' };
+  if (h === '/activity') return { name: 'activity' };
+  if (h === '/profile') return { name: 'profile' };
   return { name: 'landing' };
 }
 
