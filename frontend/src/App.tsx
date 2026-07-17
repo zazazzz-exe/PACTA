@@ -14,6 +14,7 @@ import { CreateAgreement } from './pages/CreateAgreement';
 import { AgreementDetail } from './pages/AgreementDetail';
 import { TraderProfile } from './pages/TraderProfile';
 import { Verify } from './pages/Verify';
+import { Profile } from './pages/Profile';
 import { Home } from './pages/Home';
 import { Receive } from './pages/Receive';
 import { Send } from './pages/Send';
@@ -153,7 +154,7 @@ export default function App() {
           {route.name === 'send' && <Send />}
           {route.name === 'convert' && <Convert />}
           {route.name === 'activity' && <Activity />}
-          {route.name === 'profile' && <Verify />}
+          {route.name === 'profile' && <Profile />}
         </PageTransition>
       </main>
 
