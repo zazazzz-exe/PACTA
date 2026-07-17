@@ -9,10 +9,13 @@ export function Receive() {
   const [qr, setQr] = useState<string>('');
 
   useEffect(() => {
+    let ignore = false;
+    setQr('');
     if (!address) return;
     QRCode.toDataURL(address, { margin: 1, width: 220 })
-      .then(setQr)
-      .catch(() => setQr(''));
+      .then((url) => { if (!ignore) setQr(url); })
+      .catch(() => { if (!ignore) setQr(''); });
+    return () => { ignore = true; };
   }, [address]);
 
   if (!address) {

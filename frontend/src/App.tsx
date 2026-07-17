@@ -14,11 +14,12 @@ import { CreateAgreement } from './pages/CreateAgreement';
 import { AgreementDetail } from './pages/AgreementDetail';
 import { TraderProfile } from './pages/TraderProfile';
 import { Verify } from './pages/Verify';
+import { Profile } from './pages/Profile';
 import { Home } from './pages/Home';
 import { Receive } from './pages/Receive';
 import { Send } from './pages/Send';
 import { Convert } from './pages/Convert';
-import { ComingSoon } from './components/ComingSoon';
+import { Activity } from './pages/Activity';
 import { BottomTabs } from './components/BottomTabs';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
@@ -152,8 +153,8 @@ export default function App() {
           {route.name === 'receive' && <Receive />}
           {route.name === 'send' && <Send />}
           {route.name === 'convert' && <Convert />}
-          {route.name === 'activity' && <ComingSoon title="Activity" />}
-          {route.name === 'profile' && <Verify />}
+          {route.name === 'activity' && <Activity />}
+          {route.name === 'profile' && <Profile />}
         </PageTransition>
       </main>
 

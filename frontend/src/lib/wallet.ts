@@ -9,19 +9,29 @@ import { NETWORK_PASSPHRASE } from './config';
 
 // Freighter only — the kit modal lists just Freighter (and an install prompt if
 // the extension is missing).
-export const kit = new StellarWalletsKit({
-  network: WalletNetwork.TESTNET,
-  selectedWalletId: FREIGHTER_ID,
-  modules: [new FreighterModule()],
-});
+//
+// Lazily constructed: the StellarWalletsKit constructor touches browser-only
+// globals (`window`), which is a hazard at module-import time in tests/SSR.
+// Construct it on first use instead of at module scope.
+let _kit: StellarWalletsKit | null = null;
+export function getKit(): StellarWalletsKit {
+  if (!_kit) {
+    _kit = new StellarWalletsKit({
+      network: WalletNetwork.TESTNET,
+      selectedWalletId: FREIGHTER_ID,
+      modules: [new FreighterModule()],
+    });
+  }
+  return _kit;
+}
 
 export async function connectWallet(): Promise<string> {
   return new Promise((resolve, reject) => {
-    kit.openModal({
+    getKit().openModal({
       onWalletSelected: async (option: ISupportedWallet) => {
         try {
-          kit.setWallet(option.id);
-          const { address } = await kit.getAddress();
+          getKit().setWallet(option.id);
+          const { address } = await getKit().getAddress();
           resolve(address);
         } catch (e) {
           reject(e);
@@ -39,7 +49,7 @@ export async function connectWallet(): Promise<string> {
 // as "do not block" rather than failing closed.
 export async function getWalletNetworkPassphrase(): Promise<string | null> {
   try {
-    const n = (await kit.getNetwork()) as { networkPassphrase?: string } | undefined;
+    const n = (await getKit().getNetwork()) as { networkPassphrase?: string } | undefined;
     return n?.networkPassphrase ?? null;
   } catch {
     return null;
@@ -51,7 +61,7 @@ export async function signTransaction(
   xdr: string,
   opts?: { networkPassphrase?: string; address?: string },
 ) {
-  const { signedTxXdr, signerAddress } = await kit.signTransaction(xdr, {
+  const { signedTxXdr, signerAddress } = await getKit().signTransaction(xdr, {
     networkPassphrase: opts?.networkPassphrase ?? NETWORK_PASSPHRASE,
     address: opts?.address,
   });
@@ -67,7 +77,7 @@ export async function signMessage(
   message: string,
   opts?: { address?: string },
 ): Promise<{ signedMessage: string; signerAddress?: string }> {
-  const res = (await kit.signMessage(message, {
+  const res = (await getKit().signMessage(message, {
     networkPassphrase: NETWORK_PASSPHRASE,
     address: opts?.address,
   })) as { signedMessage: unknown; signerAddress?: string };

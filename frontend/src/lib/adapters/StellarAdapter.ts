@@ -22,6 +22,7 @@ import {
   humanToBaseUnits,
 } from './ChainAdapter';
 import { assetFromId } from './stellarAssets';
+import { parseActivity, type RawPaymentRecord, type ActivityItem } from '../activity';
 import { signTransaction } from '../wallet';
 import { NETWORK_PASSPHRASE, txExplorerUrl } from '../config';
 import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
@@ -40,6 +41,25 @@ export class StellarAdapter implements ChainAdapter {
     } catch (e: unknown) {
       // A brand-new, unfunded account has no Horizon entry yet: show an empty
       // portfolio rather than an error.
+      if (e && typeof e === 'object' && 'response' in e) {
+        const status = (e as { response?: { status?: number } }).response?.status;
+        if (status === 404) return [];
+      }
+      throw e;
+    }
+  }
+
+  async getActivity(address: string, limit = 20): Promise<ActivityItem[]> {
+    try {
+      const page = await this.server
+        .payments()
+        .forAccount(address)
+        .order('desc')
+        .limit(limit)
+        .call();
+      return parseActivity(page.records as unknown as RawPaymentRecord[], address);
+    } catch (e: unknown) {
+      // Unfunded/brand-new account has no history yet.
       if (e && typeof e === 'object' && 'response' in e) {
         const status = (e as { response?: { status?: number } }).response?.status;
         if (status === 404) return [];
