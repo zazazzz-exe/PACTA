@@ -38,6 +38,16 @@ export interface AssetBalance {
   displayValue?: number;   // value in the user's display currency (computed in code, never by the model)
 }
 
+export interface ActivityItem {
+  id: string;
+  kind: 'sent' | 'received';
+  counterparty: string;
+  assetCode: string;
+  amount: string;          // human decimal string as Horizon returns it
+  createdAt: string;       // ISO timestamp
+  hash: string;            // transaction hash
+}
+
 export interface Quote {
   from: AssetId;
   to: AssetId;
@@ -72,6 +82,7 @@ export interface QuoteParams {
 export interface ChainAdapter {
   readonly chainId: string;              // "stellar:testnet"
   getBalances(address: string): Promise<AssetBalance[]>;
+  getActivity(address: string, limit?: number): Promise<ActivityItem[]>;
   send(params: SendParams): Promise<TxResult>;
   getQuote(params: QuoteParams): Promise<Quote>;
   swap(quote: Quote): Promise<TxResult>;
@@ -82,6 +93,7 @@ export interface ChainAdapter {
 ### Method contracts
 
 - **`getBalances(address)`** — returns every asset the account holds, including native XLM and each trustline, with both a human `amount` and raw `baseUnits`. `displayValue` is filled from a deterministic price lookup (`lib/prices.ts`); if a price is unknown, leave it `undefined` and the UI shows the asset amount only. Never invent a value.
+- **`getActivity(address, limit?)`** — returns the account's recent payment history (sent/received, newest first), mapped to a chain-agnostic `ActivityItem`. `StellarAdapter` reads Horizon's `payments().forAccount()` endpoint; the Soroban escrow has no history method, so protected-payment steps appear only as their underlying payments.
 - **`send(params)`** — builds a Stellar payment (or path-payment for a cross-asset direct send) and routes through `signAndSubmit`. This is the "Send now" path only. Takes `{ from, to, asset, amount }`, where `from` is the connected sender's address (the source account whose sequence number the tx uses).
 - **`getQuote(params)`** — strict-send path finding for Convert. Returns `minReceived` after `slippageBps`. If no path exists, throw a typed `NoRouteError` the UI can render as "no route for this pair".
 - **`swap(quote)`** — submits the path-payment described by `quote.raw`, through `signAndSubmit`. Re-quote if the quote is stale. The caller sets `quote.sender` (the source account) before calling `swap`; `getQuote` leaves it undefined because path finding does not need an account.

@@ -1,5 +1,7 @@
 // The one seam the wallet layer depends on. See docs/architecture/chain-adapter.md.
 
+import type { ActivityItem } from '../activity';
+
 export interface AssetId {
   code: string; // "XLM", "USDC", ...
   issuer?: string; // undefined for native XLM
@@ -46,6 +48,7 @@ export interface Quote {
 export interface ChainAdapter {
   readonly chainId: string;
   getBalances(address: string): Promise<AssetBalance[]>;
+  getActivity(address: string, limit?: number): Promise<ActivityItem[]>;
   send(params: SendParams): Promise<TxResult>;
   getQuote(params: QuoteParams): Promise<Quote>;
   swap(quote: Quote): Promise<TxResult>;
