@@ -103,6 +103,7 @@ export function Send() {
       setSentHash(res.hash);
     } catch (e) {
       setError(friendlyError(e));
+      setConfirming(false);
     } finally {
       setSending(false);
     }
@@ -163,7 +164,7 @@ export function Send() {
         </p>
       )}
 
-      {formError && amount !== '' && <p className="text-[13px] text-refund">{formError}</p>}
+      {formError && (to.trim() !== '' || amount !== '') && <p className="text-[13px] text-refund">{formError}</p>}
       {error && <p className="text-[13px] text-refund">{error}</p>}
 
       {/* The fork */}
@@ -213,7 +214,7 @@ export function Send() {
         confirmLabel="Send"
         busy={sending}
         onConfirm={doSendNow}
-        onCancel={() => setConfirming(false)}
+        onCancel={() => { setConfirming(false); setError(null); }}
       />
 
       <div className="flex items-center justify-center gap-1.5 pt-1 text-[12px] text-slate">
