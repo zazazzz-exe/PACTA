@@ -7,6 +7,7 @@ export type Route =
   | { name: 'convert' }
   | { name: 'activity' }
   | { name: 'profile' }
+  | { name: 'send' }
   | { name: 'dashboard' }
   | { name: 'create' }
   | { name: 'detail'; id: bigint }
@@ -31,6 +32,7 @@ export function parseHash(): Route {
   if (h === '/convert') return { name: 'convert' };
   if (h === '/activity') return { name: 'activity' };
   if (h === '/profile') return { name: 'profile' };
+  if (h === '/send') return { name: 'send' };
   return { name: 'landing' };
 }
 

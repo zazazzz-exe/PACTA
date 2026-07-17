@@ -14,6 +14,10 @@ import { CreateAgreement } from './pages/CreateAgreement';
 import { AgreementDetail } from './pages/AgreementDetail';
 import { TraderProfile } from './pages/TraderProfile';
 import { Verify } from './pages/Verify';
+import { Home } from './pages/Home';
+import { Receive } from './pages/Receive';
+import { ComingSoon } from './components/ComingSoon';
+import { BottomTabs } from './components/BottomTabs';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
 
@@ -129,7 +133,11 @@ export default function App() {
       <NetworkGuard />
       <LockNotice />
 
-      <main className={`relative z-10 flex-1 ${route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'}`}>
+      <main
+        className={`relative z-10 flex-1 ${
+          route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'
+        } ${address && route.name !== 'landing' ? 'pb-24' : ''}`}
+      >
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}
           {route.name === 'dashboard' && <Dashboard />}
@@ -137,6 +145,12 @@ export default function App() {
           {route.name === 'detail' && <AgreementDetail id={route.id} />}
           {route.name === 'trader' && <TraderProfile address={route.address} />}
           {route.name === 'verify' && <Verify />}
+          {route.name === 'home' && <Home />}
+          {route.name === 'receive' && <Receive />}
+          {route.name === 'send' && <ComingSoon title="Send" />}
+          {route.name === 'convert' && <ComingSoon title="Convert" />}
+          {route.name === 'activity' && <ComingSoon title="Activity" />}
+          {route.name === 'profile' && <Verify />}
         </PageTransition>
       </main>
 
@@ -206,6 +220,8 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {address && route.name !== 'landing' && <BottomTabs current={route.name} />}
     </div>
   );
 }
