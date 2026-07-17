@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { createAgreement } from '../lib/contract';
@@ -11,11 +11,15 @@ import { KycGate } from '../components/kyc/KycGate';
 import { RiskLens } from '../components/RiskLens';
 import { useRiskLens } from '../hooks/useRiskLens';
 import { useDebounce } from '../hooks/useDebounce';
+import { takePendingSend } from '../lib/pendingSend';
 
 export function CreateAgreement() {
   const { address, connect, kycStatus, kycLoading } = useWallet();
-  const [trader, setTrader] = useState('');
-  const [capital, setCapital] = useState('100');
+  // If arriving from the Send screen's "Send protected" option, prefill the
+  // recipient and amount. Consume-once so a later direct visit is not prefilled.
+  const prefill = useRef(takePendingSend()).current;
+  const [trader, setTrader] = useState(prefill?.trader ?? '');
+  const [capital, setCapital] = useState(prefill?.capital ?? '100');
   const [bond, setBond] = useState('20');
   const [milestones, setMilestones] = useState(4);
   const [share, setShare] = useState('20');
@@ -37,7 +41,7 @@ export function CreateAgreement() {
     return (
       <div className="mx-auto max-w-app">
         <div className="bg-paper border border-hairline rounded-card shadow-card p-8 text-center">
-          <p className="text-[14px] text-slate">Connect your wallet to create an agreement.</p>
+          <p className="text-[14px] text-slate">Connect your wallet to send a protected payment.</p>
           <Button className="mt-4" onClick={connect}>
             Connect wallet
           </Button>
@@ -96,17 +100,17 @@ export function CreateAgreement() {
     <div className="mx-auto max-w-app">
       <div className="flex items-center gap-2 mb-4">
         <button
-          onClick={() => navigate('/dashboard')}
-          aria-label="Back to dashboard"
+          onClick={() => navigate('/send')}
+          aria-label="Back to send"
           className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <ChevronLeft size={20} aria-hidden />
         </button>
-        <h1 className="text-[22px] font-medium tracking-tight text-ink">New agreement</h1>
+        <h1 className="text-[22px] font-medium tracking-tight text-ink">Send protected</h1>
       </div>
 
       <form className="space-y-4" onSubmit={onSubmit}>
-        <Field label="Provider address">
+        <Field label="Recipient address">
           <Input mono placeholder="G..." value={trader} onChange={(v) => setTrader(v.trim())} spellCheck={false} />
         </Field>
 
@@ -161,7 +165,7 @@ export function CreateAgreement() {
               <Loader2 size={18} className="animate-spin" aria-hidden /> Waiting for the network to confirm
             </>
           ) : (
-            'Create agreement'
+            'Create Pact'
           )}
         </Button>
       </form>
