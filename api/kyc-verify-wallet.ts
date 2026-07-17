@@ -3,6 +3,7 @@ import { json, isValidAddress, logError } from './_lib/http';
 import { issueSessionToken, sessionCookie } from './_lib/session';
 import { verifyWalletSignature } from './_lib/kyc/verifySignature';
 import { overLimit } from './_lib/ratelimit';
+import { resolveIdentity } from './_lib/kyc/identity';
 
 // Consume the ownership nonce, verify the signature, and — on success — issue a
 // session cookie. The nonce is consumed ATOMICALLY (single-use) before the
@@ -69,13 +70,8 @@ async function handler(req: Request): Promise<Response> {
       .upsert({ wallet_address: address }, { onConflict: 'wallet_address', ignoreDuplicates: true });
     if (upsertErr) throw upsertErr;
 
-    const { data: prof, error: readErr } = await supa
-      .from('kyc_profile')
-      .select('status')
-      .eq('wallet_address', address)
-      .maybeSingle();
-    if (readErr) throw readErr;
-    const kycStatus = prof?.status ?? 'unverified';
+    // Group-resolved status, so a linked wallet shows verified right on connect.
+    const kycStatus = (await resolveIdentity(supa, address)).status;
 
     await supa
       .from('kyc_event')

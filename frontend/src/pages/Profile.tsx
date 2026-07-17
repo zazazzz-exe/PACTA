@@ -1,15 +1,23 @@
-import { useEffect, useState } from 'react';
-import { ShieldCheck, ArrowUpRight } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { ShieldCheck, ArrowUpRight, Plus, Wallet, Loader2, X, BadgeCheck } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
-import { fetchKycStatus, type KycStatusRead } from '../lib/kycClient';
+import {
+  fetchKycStatus,
+  linkWallet,
+  unlinkWallet,
+  type KycStatusRead,
+  type LinkedWallet,
+} from '../lib/kycClient';
 import { getReputation, type Reputation } from '../lib/contract';
 import { Avatar } from '../components/Avatar';
 import { IdentityBadge } from '../components/kyc/IdentityBadge';
 import { CopyButton } from '../components/CopyButton';
 import { ConnectButton } from '../components/ConnectButton';
+import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Button } from '../components/Button';
 import { navigate } from '../lib/router';
 import { shortAddr, formatAmount, formatPhp } from '../lib/format';
+import { friendlyError } from '../lib/errors';
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
@@ -22,10 +30,26 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 export function Profile() {
-  const { address, kycStatus } = useWallet();
+  const { address, kycStatus, refreshKyc } = useWallet();
   const [kyc, setKyc] = useState<KycStatusRead | null>(null);
   const [rep, setRep] = useState<Reputation | null>(null);
   const [repLoading, setRepLoading] = useState(false);
+
+  // Linked-wallet management state.
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linking, setLinking] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [eraseTarget, setEraseTarget] = useState<LinkedWallet | null>(null);
+  const [busyAddr, setBusyAddr] = useState<string | null>(null);
+
+  const loadKyc = useCallback(async (isStale?: () => boolean) => {
+    try {
+      const k = await fetchKycStatus();
+      if (!isStale?.()) setKyc(k);
+    } catch {
+      if (!isStale?.()) setKyc(null);
+    }
+  }, []);
 
   // Stale-guard useEffect (mirrors useBalances): a fetch that resolves after
   // disconnect / address change must not clobber state for the new identity.
@@ -37,15 +61,47 @@ export function Profile() {
       return;
     }
     setRepLoading(true);
-    void fetchKycStatus()
-      .then((k) => { if (!ignore) setKyc(k); })
-      .catch(() => { if (!ignore) setKyc(null); });
+    void loadKyc(() => ignore);
     void getReputation(address, address)
       .then((r) => { if (!ignore) setRep(r); })
       .catch(() => { if (!ignore) setRep(null); })
       .finally(() => { if (!ignore) setRepLoading(false); });
     return () => { ignore = true; };
-  }, [address]);
+  }, [address, loadKyc]);
+
+  // Re-read status here and refresh the global gating status after a change.
+  const reload = useCallback(async () => {
+    await loadKyc();
+    await refreshKyc();
+  }, [loadKyc, refreshKyc]);
+
+  async function doLink() {
+    setLinking(true);
+    setActionError(null);
+    try {
+      await linkWallet();
+      setLinkOpen(false);
+      await reload();
+    } catch (e) {
+      setActionError(linkErrorMessage(e));
+    } finally {
+      setLinking(false);
+    }
+  }
+
+  async function doRemove(w: LinkedWallet, confirm: boolean) {
+    setBusyAddr(w.address);
+    setActionError(null);
+    try {
+      await unlinkWallet(w.address, confirm);
+      setEraseTarget(null);
+      await reload();
+    } catch (e) {
+      setActionError(friendlyError(e));
+    } finally {
+      setBusyAddr(null);
+    }
+  }
 
   if (!address) {
     return (
@@ -60,6 +116,7 @@ export function Profile() {
   }
 
   const verified = kycStatus === 'verified';
+  const linked = kyc?.linkedWallets ?? [];
 
   return (
     <div className="mx-auto max-w-app space-y-5 px-1">
@@ -97,6 +154,74 @@ export function Profile() {
         )}
       </div>
 
+      {/* Linked wallets (only meaningful once verified) */}
+      {verified && (
+        <div className="rounded-card border border-hairline bg-paper p-4">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Linked wallets</h2>
+          <p className="mt-1.5 text-[12px] text-slate">
+            Wallets that share this verified identity. Any of them can send protected payments as you.
+          </p>
+
+          <ul className="mt-3 space-y-2">
+            {linked.map((w) => (
+              <li key={w.address} className="flex items-center gap-2.5 rounded-control border border-hairline bg-canvas px-3 py-2.5">
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-pill bg-mist text-slate">
+                  <Wallet size={15} aria-hidden />
+                </span>
+                <span className="mono min-w-0 flex-1 truncate text-[13px] text-ink">{shortAddr(w.address)}</span>
+                {w.isVerifier && (
+                  <span className="inline-flex items-center gap-1 rounded-pill bg-accent-tint px-2 py-0.5 text-[11px] text-accent-deep">
+                    <BadgeCheck size={12} aria-hidden /> Verified
+                  </span>
+                )}
+                {w.isCurrent && <span className="text-[11px] text-slate">This wallet</span>}
+                <button
+                  onClick={() =>
+                    w.isVerifier || linked.length <= 1
+                      ? setEraseTarget(w)
+                      : void doRemove(w, false)
+                  }
+                  disabled={busyAddr === w.address}
+                  aria-label={`Remove ${shortAddr(w.address)}`}
+                  className="grid h-7 w-7 shrink-0 place-items-center rounded-pill text-slate hover:bg-mist hover:text-refund disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                >
+                  {busyAddr === w.address ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <X size={14} aria-hidden />}
+                </button>
+              </li>
+            ))}
+          </ul>
+
+          {linkOpen ? (
+            <div className="mt-3 rounded-control border border-accent/30 bg-accent-tint p-3">
+              <p className="text-[13px] text-ink">
+                In your wallet extension, switch to the account you want to link, then continue. You will sign one message to prove you own it. No new ID check is needed.
+              </p>
+              <div className="mt-3 flex gap-2">
+                <Button className="flex-1" disabled={linking} onClick={doLink}>
+                  {linking ? 'Linking...' : 'Continue'}
+                </Button>
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => { setLinkOpen(false); setActionError(null); }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => { setLinkOpen(true); setActionError(null); }}
+              className="mt-3 inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <Plus size={15} aria-hidden /> Link a wallet
+            </button>
+          )}
+
+          {actionError && <p className="mt-2 text-[13px] text-refund">{actionError}</p>}
+        </div>
+      )}
+
       {/* Reputation */}
       <div className="space-y-3">
         <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">On-chain reputation</h2>
@@ -118,6 +243,34 @@ export function Profile() {
           View my Pacts <ArrowUpRight size={14} aria-hidden />
         </button>
       </div>
+
+      {/* Confirm dialog for removing the verifier wallet / erasing the identity */}
+      <ConfirmDialog
+        open={eraseTarget !== null}
+        title="Erase verified identity?"
+        description={
+          <>
+            {shortAddr(eraseTarget?.address ?? '')} holds your verification. Removing it erases your
+            verified identity, and {linked.length > 1 ? `all ${linked.length} linked wallets` : 'this wallet'} will
+            become unverified. You can verify again later.
+          </>
+        }
+        confirmLabel="Erase identity"
+        variant="danger"
+        busy={busyAddr !== null}
+        onConfirm={() => eraseTarget && doRemove(eraseTarget, true)}
+        onCancel={() => setEraseTarget(null)}
+      />
     </div>
   );
+}
+
+// Map link-specific server errors to friendly copy.
+function linkErrorMessage(e: unknown): string {
+  const msg = e instanceof Error ? e.message : String(e);
+  if (/409/.test(msg)) return 'That wallet is already verified as a separate identity.';
+  if (/403/.test(msg)) return 'Verify this identity first before linking more wallets.';
+  if (/401/.test(msg)) return 'Could not prove ownership of that wallet. Make sure it is the active account, then try again.';
+  if (/400/.test(msg)) return 'That wallet cannot be linked (it may already be this wallet).';
+  return friendlyError(e);
 }

@@ -1,11 +1,13 @@
 import { db } from './_lib/db';
 import { json, logError } from './_lib/http';
 import { readSession } from './_lib/session';
+import { resolveIdentity } from './_lib/kyc/identity';
 
-// Right to erasure (PH Data Privacy Act). Nulls every PII-derived column, deletes
-// consent rows, and leaves a PII-free tombstone. No raw media ever existed here,
-// so there is nothing else to purge. Clearing gov_id_hash also frees the wallet
-// to verify again later.
+// Right to erasure (PH Data Privacy Act). Identity-wide: nulls every PII-derived
+// column on the identity's verifier row, deletes its consent rows, and leaves a
+// PII-free tombstone, so every linked wallet then reads unverified. No raw media
+// ever existed here, so there is nothing else to purge. Clearing gov_id_hash also
+// frees the identity to verify again later.
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
@@ -25,8 +27,13 @@ async function handler(req: Request): Promise<Response> {
     const supa = db();
     const nowIso = new Date().toISOString();
 
-    await supa.from('kyc_event').insert({ wallet_address: address, event_type: 'erasure_requested' });
-    await supa.from('kyc_consent').delete().eq('wallet_address', address);
+    // Erase the identity's verified data wherever it lives (the verifier row),
+    // falling back to the caller's own row when the identity is unverified.
+    const me = await resolveIdentity(supa, address);
+    const eraseTarget = me.verifierAddress ?? address;
+
+    await supa.from('kyc_event').insert({ wallet_address: eraseTarget, event_type: 'erasure_requested' });
+    await supa.from('kyc_consent').delete().eq('wallet_address', eraseTarget);
     const { error } = await supa
       .from('kyc_profile')
       .update({
@@ -42,10 +49,10 @@ async function handler(req: Request): Promise<Response> {
         first_verified_at: null,
         status_updated_at: nowIso,
       })
-      .eq('wallet_address', address);
+      .eq('wallet_address', eraseTarget);
     if (error) throw error;
 
-    await supa.from('kyc_event').insert({ wallet_address: address, event_type: 'erased' });
+    await supa.from('kyc_event').insert({ wallet_address: eraseTarget, event_type: 'erased' });
     return json({ status: 'erased' });
   } catch (e) {
     logError('kyc-erase', e);
