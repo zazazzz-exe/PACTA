@@ -1,8 +1,23 @@
 # PACTA KYC identity layer
 
-Off-chain, server-mediated wallet identity verification. It gates the **app UI**
-for money/commitment actions; it does **not** and cannot gate the frozen on-chain
-contract. Not part of the escrow, never holds funds.
+Off-chain, server-mediated wallet identity verification. It is a **wallet-level**
+gate: it gates the **app UI** for the wallet's **commitment actions** only; it
+does **not** and cannot gate the frozen on-chain contract. Not part of the
+escrow, never holds funds.
+
+PACTA is a wallet-first app. Everyday wallet use is open — viewing the portfolio,
+Receive, and reading the Risk Lens need no verification. **Send now** (a plain
+payment) and **Convert** are ordinary self-custodial moves of the user's **own**
+funds and are **not gated**. Verification is required only when a wallet makes a
+commitment action:
+
+- creating a Pact via **Send protected**,
+- posting a bond,
+- depositing capital,
+- releasing a milestone.
+
+Fund-returning actions (emergency refund, cancel, complete) are **never** gated,
+so a verified or unverified party can always recover funds.
 
 ## Flow
 
@@ -14,9 +29,11 @@ contract. Not part of the escrow, never holds funds.
    `POST /api/kyc-start-verification` (records consent, inits provider) →
    `POST /api/kyc-submit-media` (streams media to the provider, persists only the
    result). Async providers also call `POST /api/kyc-webhook`.
-3. **Gate**: creating an agreement and the additive money actions (post bond,
-   deposit, release) require `status = verified`. Fund-returning actions
-   (complete, refund, cancel) are never gated.
+3. **Gate**: the wallet's commitment actions — creating a Pact via "Send
+   protected", posting a bond, depositing capital, and releasing a milestone —
+   require `status = verified`. Send now, Convert, portfolio viewing, and Receive
+   are never gated. Fund-returning actions (complete, refund, cancel) are never
+   gated.
 
 ## Data stored (minimal)
 
@@ -113,8 +130,9 @@ Notes:
 2. Fill `.env` (copy from `.env.example`), keep `KYC_PROVIDER=mock`.
 3. `vercel dev` at the repo root (plain `vite dev` does not serve `/api/*`).
 4. Connect Freighter → sign the challenge → `/verify` → pick "Approve" → status
-   flips to `verified` and the money-action gates open. "Review" exercises the
-   pending/webhook path; "Reject" the rejected path.
+   flips to `verified` and the commitment-action gates (Send protected, bond,
+   deposit, release) open. "Review" exercises the pending/webhook path; "Reject"
+   the rejected path.
 
 ## Tests
 

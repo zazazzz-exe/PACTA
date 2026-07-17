@@ -1,6 +1,6 @@
 # PACTA — Animated Landing Hero (LANDING_HERO.md)
 
-> Drop-in animated hero for the landing page. Pure CSS animation (no new dependencies beyond `lucide-react`, which you already use), styled with the DESIGN.md tokens. It realizes the DESIGN.md §7.1 hero as a living escrow-flow loop: capital flows from the Client into the contract, it locks and counts up, then releases to the Provider in milestone tranches, with the Provider's security bond held underneath.
+> Drop-in animated hero for the landing page. Pure CSS animation (no new dependencies beyond `lucide-react`, which you already use), styled with the DESIGN.md tokens. It realizes the DESIGN.md §7.1 hero as a living Pact loop: money leaves the sender's wallet into the contract, locks and counts up, then releases to the recipient in staged tranches, with the recipient's security bond held underneath.
 
 To use: create the two files below, then render `<HeroFlow onConnect={...} />` as the landing hero. Or hand this whole file to Claude Code with the prompt in §3.
 
@@ -42,19 +42,19 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
       <div aria-hidden className="hf-drift2 pointer-events-none absolute -bottom-14 -left-10 h-44 w-44 rounded-full bg-accent-tint opacity-40" />
 
       <div className="relative mx-auto max-w-app-wide px-5 py-12 text-center">
-        <p className="mb-5 text-[13px] font-medium text-slate">PACTA</p>
+        <p className="mb-5 text-[13px] font-medium text-slate">PACTA · Trust, written in code.</p>
         <h1 className="mb-2.5 text-[26px] font-semibold leading-tight text-ink sm:text-[34px]">
-          Any handshake deal, written in code.
+          Your money is yours to move.
         </h1>
         <p className="mx-auto mb-8 max-w-[440px] text-[15px] leading-relaxed text-slate">
-          Turn any informal money agreement between two people into a secure, staged,
-          bond-protected on-chain contract. Funds release step by step, backed by the
-          Provider's bond, and provable on-chain.
+          Hold, send, receive, and convert on Stellar, from a wallet that never touches
+          your keys or your funds. And when a payment needs to be safe, send it as a Pact:
+          staged, bond-protected, and provable on-chain.
         </p>
 
         <div className="mb-9 flex justify-center">
           <div className="hf-band flex flex-shrink-0 items-center">
-            <Node icon={<Wallet size={20} />} label="Client" />
+            <Node icon={<Wallet size={20} />} label="Sender" />
 
             <Wire>
               <span className="hf-token hf-in-a" />
@@ -87,7 +87,7 @@ export function HeroFlow({ onConnect }: { onConnect?: () => void }) {
               <span className="hf-token hf-out-b" />
             </Wire>
 
-            <Node icon={<LineChart size={20} />} label="Provider" />
+            <Node icon={<LineChart size={20} />} label="Recipient" />
           </div>
         </div>
 

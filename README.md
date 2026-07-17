@@ -6,9 +6,9 @@
   <img alt="PACTA app" src="assets/pacta.png" width="200"/>
 </p>
 
-PACTA is a non-custodial escrow protocol on **Stellar** and **Soroban** that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract. Whatever the deal is, funds are released in milestone tranches, protected by a Provider-posted security bond, refundable if the Provider fails to deliver, and provable on-chain. An AI Risk Lens reads a Provider's on-chain history and tells a first-time user, in plain language, how trustworthy they look.
+PACTA is a **wallet-native money app** on **Stellar** and **Soroban**. You connect a wallet you already own, hold a multi-asset portfolio, and **send**, **receive**, and **convert** your money like any wallet. The difference: when a payment needs protection, you send it as a **Pact**, a staged, bond-protected on-chain escrow that releases in milestones, refunds if the recipient fails to deliver, and is provable on-chain. An AI Risk Lens reads the recipient's on-chain history and tells a first-time user, in plain language, how trustworthy they look, and a wallet-linked identity layer (KYC) binds each Pact to a verified person.
 
-It fits any two-party deal: freelance and milestone project payments, service contracts (design, development, consulting), custom or made-to-order goods, peer-to-peer marketplace deals, and cross-border entrusted funds (remittances) as just one example among many.
+PACTA is **non-custodial**: it never holds your keys or your funds. Balances are read from your own wallet, and every move is signed by you.
 
 <p>
   <a href="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/zazazzz-exe/PACTA/actions/workflows/ci.yml/badge.svg" /></a>
@@ -36,12 +36,14 @@ It fits any two-party deal: freelance and milestone project payments, service co
 
 ## Table of contents
 
+- [What PACTA is](#what-pacta-is)
 - [The problem](#the-problem)
 - [The solution](#the-solution)
 - [Contract Addresses and Transactions](#Contract-addresses-and-transactions)
 - [How PACTA works](#how-pacta-works)
 - [Features](#features)
 - [The AI Risk Lens](#the-ai-risk-lens)
+- [Identity and KYC](#identity-and-kyc)
 - [Screenshots](#screenshots)
 - [Architecture](#architecture)
 - [Tech stack](#tech-stack)
@@ -52,7 +54,6 @@ It fits any two-party deal: freelance and milestone project payments, service co
 - [CI/CD](#cicd)
 - [Monitoring and analytics](#monitoring-and-analytics)
 - [Production deployment](#production-deployment)
-- [User onboarding and feedback](#user-onboarding-and-feedback)
 - [Roadmap](#roadmap)
 - [License](#license)
 - [Submission checklist](#submission-checklist)
@@ -60,20 +61,31 @@ It fits any two-party deal: freelance and milestone project payments, service co
 
 ---
 
+## What PACTA is
+
+PACTA has two layers, and it helps to keep them straight:
+
+- **The wallet layer (the app you open).** A non-custodial money hub. It connects existing wallets (Freighter, xBull, Albedo, Lobstr, WalletConnect), shows your multi-asset portfolio, and lets you **Send**, **Receive**, and **Convert**. This is the front door.
+- **The protection layer (a feature inside Send).** When a payment needs protecting, you choose **Send protected** instead of **Send now**. That creates a **Pact**: the original PACTA escrow, with staged release, a security bond, deadline-gated refunds, on-chain reputation, the Risk Lens, and the KYC gate.
+
+The on-chain escrow contract is unchanged. Everything in the wallet layer is client-side plumbing on top of wallets you already control, with no new custody.
+
+---
+
 ## The problem
 
-Every day, people put money behind agreements with someone they do not fully trust: hiring a freelancer for a milestone project, commissioning a designer, developer, or consultant, ordering custom or made-to-order goods, closing a peer-to-peer marketplace deal, or sending entrusted funds across borders. These arrangements run entirely on trust: money sent over GCash, bank transfer, or crypto with no contract, no transparency, and no protection. When the other side disappears or misuses the funds, the payer usually loses everything and has no recourse. There is no accessible, low-cost tool that lets two ordinary people safely put money behind an agreement online.
+People in SEA already move money digitally every day, but the tools split into two camps and neither is enough on its own. **Wallets move money but offer zero protection**: the moment you pay a stranger for a deliverable (a freelance project, a service contract, a custom or made-to-order item, a peer-to-peer marketplace purchase, or funds entrusted across borders), you are back to pure trust, and if they disappear you usually lose everything. **Platforms offer protection but own your trust**: Fiverr and Upwork keep your reputation and take ~20%, PayPal Buyer Protection is unavailable for most PH service deals, and centralized escrow requires custody. There is no single place to **hold and move your money freely** and **protect a payment when it matters**, with a trust record you actually own.
 
 ## The solution
 
-PACTA fixes this not by asking people to trust harder, but by making trust enforceable. Instead of sending money directly to a Provider, the Client locks it in a Soroban escrow contract that:
+PACTA unifies both camps into one non-custodial app. It fixes the trust gap not by asking people to trust harder, but by making trust enforceable. You hold and move your assets like any wallet, and when it counts you send **protected**: instead of paying a recipient directly, the funds go into a Soroban escrow that
 
-- **Releases funds in milestone tranches** so only a portion is ever exposed at a time.
-- **Requires a security bond** the Provider posts as skin in the game.
-- **Refunds automatically** if the Provider fails to deliver by the deadline: the Client reclaims the unreleased funds plus the Provider's bond.
-- **Records every agreement on-chain**, building a portable reputation that turns anonymous Providers into accountable ones.
+- **releases in milestone tranches** so only a portion is ever exposed at a time,
+- **requires a security bond** the recipient posts as skin in the game,
+- **refunds automatically** if the recipient fails to deliver by the deadline (you reclaim the unreleased funds plus their bond), and
+- **records every Pact on-chain**, building a portable reputation that turns anonymous recipients into accountable ones.
 
-PACTA does not give advice, take custody of anyone's profits, or guarantee outcomes. It is **trust infrastructure**.
+PACTA does not give advice, take custody of anyone's funds, or guarantee outcomes. The wallet layer is convenience; the protection layer is **trust infrastructure**.
 
 ## Contract Addresses and Transactions
 
@@ -86,90 +98,126 @@ PACTA does not give advice, take custody of anyone's profits, or guarantee outco
 
 ## How PACTA works
 
+You open PACTA on **Wallet Home**: your portfolio total, your assets, and three actions.
+
 ```
-            create agreement
-                  │
-                  ▼
-            ┌───────────┐   cancel
-            │  Pending  │────────────▶ Cancelled   (deposits returned)
-            └───────────┘
-        post bond  +  deposit capital   (both required)
-                  │
-                  ▼
-            ┌───────────┐
-            │  Active   │
-            └───────────┘
-        release milestone × N           deadline passes, trader fails
-                  │                                │
-                  ▼                                ▼
-            ┌───────────┐                    ┌───────────┐
-            │ Completed │  bond → trader     │ Refunded  │  unreleased + bond → investor
-            └───────────┘  reputation ✓      └───────────┘  reputation ⚠
+        Connect wallet  →  Wallet Home (portfolio)
+                               │
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+       Receive              Convert                Send
+     address + QR        Stellar DEX /          ┌───────────────┐
+                         path payment           │  the fork     │
+                                                └───────┬───────┘
+                                          ┌─────────────┴─────────────┐
+                                          ▼                           ▼
+                                     Send now                    Send protected
+                                   plain payment                   = a Pact
+                                                                     │
+                                                                     ▼
+                                              Risk Lens read → set terms → KYC gate
+                                                                     │
+                                                                     ▼
+                                        create → bond → deposit → staged release
+                                                                     │
+                                             ┌───────────────────────┴───────────┐
+                                             ▼                                   ▼
+                                        Completed                            Refunded
+                                     bond → recipient                unreleased + bond → sender
+                                     reputation ✓                        reputation ⚠
 ```
 
-**The protection model, honestly stated:** a naive "lock all the money and trust the Provider" escrow is not actually safer, because once funds reach the Provider, code cannot claw them back. PACTA's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased funds and seizes the bond, the concrete on-chain penalty for a Provider who walks away.
+**The protection model, honestly stated:** a naive "lock all the money and trust the recipient" escrow is not actually safer, because once funds reach the recipient, code cannot claw them back. PACTA's protection comes from two mechanics that *are* enforceable on-chain: **staged release** (limiting exposure over time) and the **security bond** (collateralizing the released portion). The emergency refund returns the unreleased funds and seizes the bond, the concrete on-chain penalty for a recipient who walks away.
 
-> On-chain, the two parties are stored as the legacy `investor` (the Client, who deposits funds and approves releases) and `trader` (the Provider, who posts the bond and delivers) fields, kept for compatibility with the deployed contract. The UI presents them as Client and Provider, and `profit_share_bps` is a legacy, informational field that is hidden in the UI.
+> On-chain, the two parties are stored as the legacy `investor` (the sender / Client, who deposits funds and approves releases) and `trader` (the recipient / Provider, who posts the bond and delivers) fields, kept for compatibility with the deployed contract. The UI presents them as sender and recipient, and `profit_share_bps` is a legacy, informational field hidden in the UI.
 
 ## Features
 
-- **Non-custodial escrow** on Stellar/Soroban, with milestone-based fund release.
+**Wallet layer**
+- **Non-custodial multi-asset portfolio** read live from your connected wallet (XLM, USDC, EURC, other Stellar assets).
+- **Send / Receive** any Stellar asset to or from any address.
+- **Convert** between assets using Stellar's native DEX and path payments, on-chain and atomic.
+- **Wallet-native auth** (Freighter and others via Stellar Wallets Kit), no signup, no passwords, no key custody.
+
+**Protection layer (a Pact, inside Send)**
+- **Non-custodial escrow** on Soroban, with milestone-based fund release.
 - **Security bonds** and **deadline-gated emergency refunds**.
-- **On-chain reputation** per Provider (completed, refunded, total volume).
-- **AI Risk Lens** that interprets a Provider's on-chain history in plain language and suggests safer agreement terms.
-- **Wallet-native auth** (Freighter and others via Stellar Wallets Kit) — no signup, no passwords.
-- **Mobile-responsive UI** built mobile-first for the real user base.
+- **On-chain reputation** per recipient (completed, refunded, total volume).
+- **AI Risk Lens** that interprets a recipient's on-chain history in plain language and suggests safer terms.
+- **Wallet-linked identity (KYC)** gating the commitment actions.
+
+**Throughout**
+- **Mobile-first UI** with a bottom tab shell (Home · Convert · Pacts · Activity · Profile).
 - **Proper loading and error handling**: skeleton loaders, transaction-pending states, friendly contract-error messages, and graceful degradation when the AI endpoint is unavailable.
 
 ## The AI Risk Lens
 
-When a Client is about to work with a Provider, PACTA reads that Provider's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion they can apply with one tap.
+When you are about to **send protected** to a recipient, PACTA reads that recipient's on-chain track record and shows a short, plain-language risk read plus a defensive milestone suggestion you can apply with one tap.
 
 - All statistics (completed/refunded counts, volume, recency, deal-vs-history ratio) are computed deterministically in code, so the numbers are always correct.
-- An LLM (**Claude**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
-- It assesses **counterparty trustworthiness from on-chain history only** — never investment advice, never return predictions.
+- An LLM (**Gemini `gemini-2.5-flash`**, via a serverless function that keeps the API key server-side) only *interprets* those correct numbers into language a first-time user can act on.
+- It assesses **counterparty trustworthiness from on-chain history only**, never investment advice, never return predictions.
 
-A brand-new address with no history is flagged as unproven rather than green-lit, which doubles as a lightweight anti-Sybil signal.
+A brand-new address with no history is flagged as unproven rather than green-lit, which doubles as a lightweight anti-Sybil signal. The Risk Lens lives inside the Send-protected flow.
+
+## Identity and KYC
+
+A wallet-linked identity layer lets a user verify their real-world identity **once** (a government-ID check plus a liveness selfie through an external provider) and binds that verified identity to the wallet. Verification gates the **commitment actions** (creating a Pact, posting a bond, depositing, releasing), so both sides of a Pact can trust the counterparty is a verified person. Everyday wallet use (portfolio, Receive, Risk Lens) and self-custodial moves of your own funds (Send now, Convert) are not gated, and fund-returning actions (refund, cancel, complete) are never gated.
+
+It is a deliberate, documented exception to "no backend": off-chain, holds no funds, is not part of the escrow, and is server-mediated (Supabase behind `api/kyc-*.ts`). PII is minimized: raw ID images and selfies are streamed to the provider and never stored. Full detail in [`docs/kyc.md`](docs/kyc.md).
 
 ## Screenshots
 
-> <!-- TODO: add real screenshots to docs/screenshots/ and update these -->
+> <!-- TODO: add real wallet-first screenshots (Wallet Home, Send fork, Convert, Pact detail) to assets/ and update these -->
 
-| Product UI | Mobile responsive | Analytics / monitoring |
+| Wallet Home | Send fork / Pact | Mobile |
 |---|---|---|
-| ![UI](assets/dashboard.png) | ![Mobile](assets/mobile.jpg) | ![Analytics](assets/analytics.png) |
+| ![UI](assets/dashboard.png) | ![Pact](assets/analytics.png) | ![Mobile](assets/mobile.jpg) |
 
 ## Architecture
 
 ```
-┌───────────────────────────── Browser (SPA) ─────────────────────────────┐
-│  React + Vite + TypeScript + Tailwind                                    │
-│                                                                          │
-│   UI screens ──▶ generated TS contract bindings ──▶ Stellar Wallets Kit  │
-│        │                     │                              │ sign        │
-│        │ risk read           │ read / write                ▼             │
-│        ▼                     ▼                       Freighter / xBull    │
-│  /api/risk-lens        Soroban RPC (testnet) ──▶ PactaEscrow contract     │
-│  (serverless, Claude)                            + SAC token (XLM/USDC)   │
-└──────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────── Browser (SPA, mobile-first) ─────────────────────────┐
+│  React + Vite + TypeScript + Tailwind                                          │
+│                                                                                │
+│  Wallet surfaces:  Home · Send · Receive · Convert · Activity · Profile/KYC     │
+│                    Pacts (protected payments)                                   │
+│        │                                                                        │
+│        ▼                                                                        │
+│  ┌────────────────────────── ChainAdapter (interface) ───────────────────────┐ │
+│  │  getBalances · send · getQuote · swap · signAndSubmit                      │ │
+│  │  StellarAdapter (only impl this cycle;  EvmAdapter = later sub-project)    │ │
+│  └──────────┬────────────────┬──────────────────────────┬────────────────────┘ │
+│             │ read           │ pay / swap               │ send protected        │
+│             ▼                ▼                          ▼                        │
+│      Horizon / RPC     Stellar DEX /            PactaEscrow contract (Soroban)   │
+│      (balances)        path payments            via generated bindings          │
+│                                                                                │
+│  Signing → Stellar Wallets Kit → Freighter / xBull / …                          │
+│  Risk Lens → /api/risk-lens (Gemini)   ·   KYC → /api/kyc-* (Supabase)           │
+└──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**There is no traditional backend.** The Soroban contract is the source of truth and holds all state and funds. The only server-side code is one small serverless function (`/api/risk-lens`) that exists solely to keep the AI provider key off the client. Reads are free RPC simulations; writes are wallet-signed transactions.
+**There is no traditional backend for money.** The Soroban contract holds all escrow state and funds; the wallet layer never takes custody (balances are read from your own wallet, sends and swaps are standard signed Stellar operations). The only server-side code is two stateless concerns: the AI Risk Lens (`/api/risk-lens`, keeps the model key off the client) and the off-chain KYC identity layer (`/api/kyc-*`), neither of which holds funds.
 
-- **Smart contract** (`contracts/pacta-escrow`): the escrow logic, bonds, staged release, refunds, and reputation. See the [reference](#smart-contract-reference) below.
-- **Frontend** (`frontend/`): a Vite SPA. Wallet connection via Stellar Wallets Kit; contract calls via type-safe bindings generated by the Stellar CLI.
-- **Design system** (`DESIGN.md`): a "Calm Trust" core (warm neutrals, a single emerald accent, monospace for all on-chain data) with one dark "proof panel" as the signature element.
+- **Chain-adapter layer** (`frontend/src/lib/adapters/`): every wallet surface depends only on the `ChainAdapter` interface, never on the Stellar SDK directly. `StellarAdapter` is the only implementation this cycle; the seam is what keeps the multi-chain vision cheap later.
+- **Smart contract** (`contracts/pacta-escrow`): the escrow logic, bonds, staged release, refunds, and reputation. Frozen and unchanged by the wallet reframe. See the [reference](#smart-contract-reference).
+- **Frontend** (`frontend/`): a Vite SPA. Wallet connection via Stellar Wallets Kit; contract calls via type-safe generated bindings.
+- **Design system** (`DESIGN.md`): a "Calm Trust" core (warm neutrals, a single emerald accent, monospace for all on-chain data) with a dark "proof panel" reused as the on-chain receipt.
 
 ## Tech stack
 
 | Layer | Tech |
 |---|---|
-| Smart contract | Rust, `soroban-sdk`, Stellar CLI, deployed to Stellar **testnet** |
+| Smart contract | Rust, `soroban-sdk`, Stellar CLI, deployed to Stellar **testnet** (unchanged) |
 | Settlement asset | Stellar Asset Contract (native XLM SAC in demo; USDC SAC in production) |
+| Wallet layer | `ChainAdapter` interface + `StellarAdapter` (balances, send, convert) |
+| Convert | Stellar DEX / path payments (strict-send/strict-receive path finding) |
 | Frontend | Vite, React, TypeScript, Tailwind CSS |
 | Wallet | `@creit.tech/stellar-wallets-kit` (**Freighter**, xBull, Albedo, WalletConnect) |
 | Contract client | Generated TypeScript bindings (`stellar contract bindings typescript`) |
-| AI Risk Lens | Gemini via a serverless function |
+| AI Risk Lens | Gemini (`gemini-2.5-flash`) via a serverless function |
+| Identity / KYC | Supabase (Postgres) behind `api/kyc-*.ts`; pluggable provider (mock / Didit) |
 | Hosting | Vercel |
 | Monitoring | Vercel Analytics + Speed Insights, Sentry (error tracking) |
 
@@ -179,7 +227,7 @@ A brand-new address with no history is flagged as unproven rather than green-lit
 - **Contract ID:** `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`
 - **Explorer:** [Stellar Expert (testnet)](https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL)
 
-**Public interface:**
+**Public interface (frozen):**
 
 ```
 create_agreement(investor, trader, token, capital, bond, milestones, profit_share_bps, duration) -> u64
@@ -194,7 +242,7 @@ get_reputation(trader) -> Reputation
 get_count() -> u64
 ```
 
-Authorization is enforced on-chain with `require_auth` (the Client, stored as `investor`, for create/deposit/release/complete/refund/cancel; the Provider, stored as `trader`, for `post_bond`). Amounts are in the token's base units (7 decimals).
+Authorization is enforced on-chain with `require_auth` (the sender, stored as `investor`, for create/deposit/release/complete/refund/cancel; the recipient, stored as `trader`, for `post_bond`). Amounts are in the token's base units (7 decimals). The Send-protected flow calls this interface directly; the plain Send and Convert flows do not touch the contract.
 
 ## Getting started
 
@@ -208,13 +256,13 @@ Authorization is enforced on-chain with `require_auth` (the Client, stored as `i
 ### 1. Clone and install
 
 ```bash
-git clone [TODO: repo URL]
-cd pacta
+git clone https://github.com/zazazzz-exe/PACTA.git
+cd PACTA
 ```
 
 ### 2. Deploy the contract and generate bindings
 
-A one-command script builds, tests, deploys to testnet, resolves the token, and generates the TypeScript bindings:
+The contract is already deployed to testnet (see [reference](#smart-contract-reference)); you only need this to run your own instance. A one-command script builds, tests, deploys to testnet, resolves the token, and generates the TypeScript bindings:
 
 ```bash
 bash scripts/deploy.sh
@@ -236,8 +284,14 @@ npm run dev
 Create `frontend/.env` (and set the same in your hosting provider):
 
 ```bash
-# Risk Lens serverless function (server-side only — never exposed to the client)
+# Risk Lens serverless function (server-side only, never exposed to the client)
 GEMINI_API_KEY=your_key_here
+
+# KYC identity layer (server-side only; see docs/kyc.md and .env.example)
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+SESSION_JWT_SECRET=...
+KYC_PROVIDER=mock
 
 # Optional monitoring
 VITE_SENTRY_DSN=your_sentry_dsn
@@ -258,19 +312,22 @@ export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 pacta/
 ├── README.md
 ├── contracts/
-│   └── pacta-escrow/        # Soroban smart contract (Rust) + tests
+│   └── pacta-escrow/        # Soroban smart contract (Rust) + tests (frozen)
 ├── packages/
 │   └── pacta/               # generated TypeScript contract bindings
+├── api/                     # serverless: risk-lens.ts (Gemini) + kyc-*.ts (Supabase)
 ├── frontend/
-│   ├── src/
-│   │   ├── components/      # UI components, incl. ProofPanel, HeroFlow, RiskLens
-│   │   ├── pages/           # Landing, Dashboard, CreateAgreement, AgreementDetail
-│   │   ├── hooks/           # useWallet, useAgreements, useRiskLens
-│   │   └── lib/             # wallet, contract client, config, formatting
-│   └── api/
-│       └── risk-lens.ts     # serverless function for the AI Risk Lens
+│   └── src/
+│       ├── lib/
+│       │   └── adapters/    # ChainAdapter interface + StellarAdapter
+│       ├── components/      # BalanceHeader, SendFork, ConvertCard, PactCard, RiskLens, ProofPanel, kyc/
+│       ├── pages/           # Home, Send, Receive, Convert, Pacts, PactDetail, Activity, Profile
+│       └── hooks/           # useWallet, useBalances, useConvert, usePacts, useRiskLens
+├── docs/
+│   ├── kyc.md
+│   └── architecture/chain-adapter.md
 └── scripts/
-    └── deploy.sh            # one-command testnet deploy + bindings
+    └── deploy.sh            # one-command testnet deploy + bindings regen
 ```
 
 ## Testing
@@ -282,7 +339,7 @@ cd contracts/pacta-escrow
 cargo test
 ```
 
-All contract tests must pass before deployment (the deploy script gates on this).
+All contract tests must pass before deployment (the deploy script gates on this). The frontend is type-checked and built in CI.
 
 ## CI/CD
 
@@ -305,55 +362,27 @@ is shown by the CI badge at the top of this README.
 
 Production telemetry is integrated through Vercel and Sentry:
 
-- **Vercel Analytics + Speed Insights** for traffic and Core Web Vitals:
-
-  ```ts
-  import { Analytics } from '@vercel/analytics/react';
-  import { SpeedInsights } from '@vercel/speed-insights/react';
-  // rendered once near the app root
-  ```
-
+- **Vercel Analytics + Speed Insights** for traffic and Core Web Vitals.
 - **Sentry** for frontend error monitoring (initialized with `VITE_SENTRY_DSN`).
-- **Key product events** are tracked (wallet connected, agreement created, milestone released, refund issued) to understand real usage.
-
-> <!-- TODO: add a screenshot of your analytics/monitoring dashboard to docs/screenshots/analytics.png -->
+- **Key product events** are tracked (wallet connected, sent, converted, Pact created, milestone released, refund issued) to understand real usage.
 
 ## Production deployment
 
-The app is deployed to production on Vercel: **[https://pacta-zarrah.vercel.app](https://pacta-zarrah.vercel.app)**. The smart contract is live on Stellar testnet at `[TODO: CONTRACT_ID]`. Pushes to `main` trigger automatic redeploys.
-
-## User onboarding and feedback
-
-### Wallet interactions (proof)
-
-Real users onboarded and interacting on testnet:
-
-> <!-- TODO: replace these example rows with your real interactions. Link each tx to Stellar Expert. -->
-
-| # | Wallet address | Action | Transaction |
-|---|---|---|---|
-| 1 | `G…` | Created agreement | [tx](https://stellar.expert/explorer/testnet/tx/[hash]) |
-| 2 | `G…` | Posted bond | [tx](https://stellar.expert/explorer/testnet/tx/[hash]) |
-| 3 | `G…` | Deposited capital | [tx](https://stellar.expert/explorer/testnet/tx/[hash]) |
-| … | … | … | … |
-| 10 | `G…` | Emergency refund | [tx](https://stellar.expert/explorer/testnet/tx/[hash]) |
-
-### Feedback summary
-
-> <!-- TODO: fill in. Keep it short and concrete. -->
-
-- **How feedback was collected:** [e.g., short in-person interviews + a Google Form after testnet sessions]
-- **What we heard:** [2–4 sentences of themes — what resonated, what confused users, what they asked for]
-- **What we changed:** [1–2 concrete changes you made in response]
+The app is deployed to production on Vercel: **[https://pacta-zarrah.vercel.app](https://pacta-zarrah.vercel.app)**. The smart contract is live on Stellar testnet at `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL`. Pushes to `main` trigger automatic redeploys.
 
 ## Roadmap
 
-- Provider-initiated completion with a grace timer (fairness for both sides)
-- Dispute resolution / arbitration path (the contract reserves an admin role)
-- Identity-bound reputation (passkeys, proof-of-personhood) to harden against Sybil attacks
-- Passkey onboarding and voice input for non-crypto users
-- USDC settlement and a discoverable, reputation-ranked Provider directory
-- Shareable on-chain proof certificates for completed deals
+**This cycle (wallet-first, Stellar):**
+- Phase 1: chain-adapter layer + Wallet Home + Receive
+- Phase 2: the Send fork (Send now vs Send protected) with Risk Lens and KYC inside the protected path
+- Phase 3: Convert (Stellar DEX / path payments)
+- Phase 4: Activity feed, Profile/KYC, proof-panel receipts, polish
+
+**Later sub-projects:**
+- Fiat on/off-ramp via Stellar anchors (SEP-24): real cash-in/out to PHP and other currencies (needs a licensed anchor partner; the KYC layer is the on-ramp)
+- Cross-chain (`EvmAdapter` + EVM wallet connect + a bridge/swap provider), the payoff of the adapter layer; the Soroban escrow stays Stellar-only
+- Reputation deepening (weighted scoring) and a discoverable, reputation-ranked recipient directory
+- Dispute resolution / arbitration (the contract reserves an admin role)
 - Mainnet deployment and a professional security audit
 
 ## License
@@ -370,20 +399,21 @@ How this project meets the Level 4 requirements:
 |---|---|
 | Production-ready MVP | Live app (Vercel) + deployed contract (testnet) |
 | Stable frontend + contract architecture | [Architecture](#architecture), [contract reference](#smart-contract-reference) |
-| Mobile-responsive UI | Mobile-first build; see mobile screenshot |
-| Loading states + error handling | [Features](#features) — skeletons, tx-pending, contract-error messages, graceful AI fallback |
+| Mobile-responsive UI | Mobile-first build with a bottom tab shell |
+| Loading states + error handling | [Features](#features): skeletons, tx-pending, contract-error messages, graceful AI fallback |
 | Production deployment | [Live app](https://pacta-zarrah.vercel.app) |
-| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) + screenshot |
-| Optimized UX | "Calm Trust" design system (`DESIGN.md`), mobile-first |
-| Project structure + documentation | [Project structure](#project-structure) + this README |
-| Contract on Stellar testnet | `[CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]` |
+| Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) |
+| Optimized UX | "Calm Trust" design system (`DESIGN.md`), wallet-first, mobile-first |
+| Project structure + documentation | [Project structure](#project-structure) + this README + `PRD.md` |
+| Contract on Stellar testnet | `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL` |
 | 15+ meaningful commits | See the repository commit history |
-| Public GitHub repository | _[https://github.com/zazazzz-exe/PACTA.git]_ |
-| Live demo video | _[https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=drive_link]_ |
-| Contract deployment address | _[https://stellar.expert/explorer/testnet/contract/CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL]_ in [links](#-links) and [reference](#smart-contract-reference) |
+| Public GitHub repository | https://github.com/zazazzz-exe/PACTA.git |
+| Live demo video | https://drive.google.com/drive/folders/1BQ8HlM4eimoUGTmbB2HzL5LoTOqFO4pD?usp=drive_link |
+| Contract deployment address | in [links](#-links) and [reference](#smart-contract-reference) |
 
 ## Developer
 
-- **Zarrah Exekiel Valles** 
+- **Zarrah Exekiel Valles**
+- **Jecyn Vallirie Turbanos**
 
-Built for the Build on Stellar. Country: Philippines.
+Built for Build on Stellar. Country: Philippines.

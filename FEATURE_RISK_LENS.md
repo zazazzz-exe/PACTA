@@ -6,9 +6,9 @@
 
 ## 0. How Claude Code should use this file
 
-- This adds one feature: an AI that reads a Provider's on-chain history and gives the Client a plain-language counterparty read plus a defensive milestone suggestion. It does not change anything else.
-- The Risk Lens is the AI layer over the on-chain escrow. Note: in code and on-chain, the Provider corresponds to the legacy `trader` field and identifiers, kept for ABI compatibility. The product language is Client and Provider.
-- It introduces **one serverless endpoint** (`/api/risk-lens`) so the Anthropic API key stays server-side. Everything else is client code that reuses the existing contract client and design tokens.
+- This adds one feature: an AI that reads a recipient's on-chain history and gives the sender a plain-language counterparty read plus a defensive milestone suggestion. It does not change anything else.
+- The Risk Lens is the AI layer over the on-chain escrow (a **Pact** = a protected payment). Note: in code and on-chain, the recipient corresponds to the legacy `trader` field and identifiers, kept for ABI compatibility. The UI language is sender (Client) and recipient (Provider).
+- It introduces **one serverless endpoint** (`/api/risk-lens`) so the Gemini API key stays server-side. Everything else is client code that reuses the existing contract client and design tokens.
 - Style every UI piece with the tokens from DESIGN.md (`accent`, `deadline`, `refund`, `slate`, etc.). No raw hex.
 - Respect the responsible-AI boundary in §2: this assesses **counterparty trustworthiness from on-chain history**, never financial or investment advice.
 - Kickoff prompt is in §13.
@@ -17,7 +17,7 @@
 
 ## 1. What it is
 
-When a Client is about to work with a Provider (the party who posts a security bond, delivers, and receives the tranches), PACTA reads that Provider's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* agreement more safely. With one tap, the Client can apply the suggested protection (milestone count) to the create form.
+When a sender chooses **Send protected** (a Pact) and enters a recipient (the party who posts a security bond, delivers, and receives the tranches), PACTA reads that recipient's on-chain track record (completed deals, refunds, volume, recency, and how this deal compares to their history) and shows a short, plain-language read: a risk level, the specific signals behind it, and a concrete suggestion for how to structure *this* payment more safely. With one tap, the sender can apply the suggested protection (milestone count) to the Send-protected terms.
 
 It is the highest-leverage "uniquely yours" feature because a non-crypto user cannot interpret raw reputation counts, but they can act on "12 completed, but 2 recent refunds, and this deal is larger than anything they've handled. Start with 4 milestones."
 
@@ -25,9 +25,9 @@ It is the highest-leverage "uniquely yours" feature because a non-crypto user ca
 
 ## 2. Responsible-AI boundary (non-negotiable)
 
-The Risk Lens assesses the **Provider's behavioral / counterparty trustworthiness from on-chain history only.** It must never:
+The Risk Lens assesses the **recipient's behavioral / counterparty trustworthiness from on-chain history only.** It must never:
 - give financial or investment advice or tell the user whether to fund the deal,
-- predict the Provider's performance or estimate profit,
+- predict the recipient's performance or estimate profit,
 - guarantee outcomes.
 
 Its only recommendations are within PACTA's own mechanics (milestone count, bond size, duration). This keeps it consistent with PACTA's stated position ("does not provide financial or investment advice") and is enforced in the system prompt (§6).
@@ -41,10 +41,10 @@ Privacy note: only public on-chain data is sent to the API. No keys, no secrets,
 ## 3. Architecture / data flow
 
 ```
- Investor enters / views a trader address
+ Sender picks "Send protected" and enters a recipient address
         │
         ▼
- Client: fetch the trader's agreements from the contract
+ Client: fetch the recipient's agreements from the contract
    (get_count → get_agreement(i) loop, filter by trader)   ── prod: read from indexer/Supabase
         │
         ▼
@@ -54,7 +54,7 @@ Privacy note: only public on-chain data is sent to the API. No keys, no secrets,
  POST /api/risk-lens  { stats }
         │
         ▼
- Serverless: Claude (Haiku) interprets stats → returns RiskRead JSON   ── API key server-side
+ Serverless: Gemini (gemini-2.5-flash) interprets stats → returns RiskRead JSON   ── API key server-side
         │
         ▼
  Client: <RiskLens> renders read + "Apply suggested protection"
@@ -103,7 +103,7 @@ export interface TraderStats {
   largestDealXlm: number | null;
   refundsRecent: number;              // refunds whose deadline was within ~30 days (proxy, see §14)
   daysSinceLastActivity: number | null;
-  contemplatedCapitalXlm: number | null;   // the deal the investor is considering (create flow)
+  contemplatedCapitalXlm: number | null;   // the deal the sender is considering (Send-protected flow)
   dealVsLargestRatio: number | null;       // contemplated / largestDeal
 }
 
@@ -179,14 +179,14 @@ const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
 
 ---
 
-## 6. Serverless endpoint (Claude lives here)
+## 6. Serverless endpoint (Gemini lives here)
 
-`frontend/api/risk-lens.ts` (Vercel/edge style; for Netlify/Cloudflare/Supabase Edge, adapt the handler signature and how the env var is read). Confirm the model string and headers at https://docs.claude.com/en/api/overview.
+`api/risk-lens.ts` at the repo root (Vercel/edge style; for Netlify/Cloudflare/Supabase Edge, adapt the handler signature and how the env var is read). Confirm the model string and headers at https://ai.google.dev/gemini-api/docs.
 
 ```ts
 export const config = { runtime: 'edge' };
 
-const MODEL = 'claude-haiku-4-5-20251001'; // fast + cheap; swap to the latest Haiku as needed
+const MODEL = 'gemini-2.5-flash'; // fast + cheap; swap to the latest Flash as needed
 
 const SYSTEM = `You are the PACTA Risk Lens, a counterparty-risk assistant inside PACTA — a non-custodial escrow protocol on Stellar. In PACTA an investor locks capital for an independent trader; the capital is released in EQUAL milestone tranches (each tranche = capital / number_of_milestones), and the trader posts a refundable security bond. If the trader fails by the deadline, the investor reclaims the unreleased capital plus the bond.
 
@@ -217,26 +217,29 @@ export default async function handler(req: Request): Promise<Response> {
     const { stats } = await req.json();
     const user = `Trader on-chain statistics (already computed and correct):\n\n${JSON.stringify(stats, null, 2)}\n\nReturn the risk read as JSON.`;
 
-    const r = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
-        'anthropic-version': '2023-06-01',
+    const r = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-goog-api-key': process.env.GEMINI_API_KEY!,
+        },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: SYSTEM }] },
+          contents: [{ role: 'user', parts: [{ text: user }] }],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            maxOutputTokens: 700,
+          },
+        }),
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 700,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: user }],
-      }),
-    });
+    );
     if (!r.ok) return json({ error: 'upstream' }, 502);
 
     const data = await r.json();
-    const text = (data.content || [])
-      .filter((b: any) => b.type === 'text')
-      .map((b: any) => b.text)
+    const text = (data.candidates?.[0]?.content?.parts || [])
+      .map((p: any) => p.text)
       .join('');
     const parsed = JSON.parse(text.replace(/```json|```/g, '').trim());
     return json(parsed, 200);
@@ -253,7 +256,7 @@ function json(body: unknown, status: number): Response {
 }
 ```
 
-Set `ANTHROPIC_API_KEY` in the host's environment variables (never in client code or the repo).
+Set `GEMINI_API_KEY` in the host's environment variables (never in client code or the repo).
 
 ---
 
@@ -327,7 +330,7 @@ export function useRiskLens(trader: string | null, contemplatedCapital?: bigint)
 }
 ```
 
-> Debounce the Provider address upstream (call this hook with a value that updates ~600ms after the user stops typing) so it doesn't fire on every keystroke in the create form. The `trader` param name is the legacy on-chain identifier for the Provider.
+> Debounce the recipient address upstream (call this hook with a value that updates ~600ms after the user stops typing) so it doesn't fire on every keystroke in the Send-protected flow. The `trader` param name is the legacy on-chain identifier for the recipient.
 
 ---
 
@@ -368,7 +371,7 @@ export function RiskLens({
   if (error || !read) {
     return (
       <div className="bg-mist rounded-control p-4 text-[13px] text-slate">
-        Risk read unavailable right now. The trader's on-chain history is still shown above.
+        Risk read unavailable right now. The recipient's on-chain history is still shown above.
       </div>
     );
   }
@@ -412,7 +415,7 @@ export function RiskLens({
       )}
 
       <p className="text-[11px] text-fog mt-2.5">
-        Based on this trader's on-chain history. A signal, not a guarantee.
+        Based on this recipient's on-chain history. A signal, not a guarantee.
       </p>
     </div>
   );
@@ -423,19 +426,22 @@ export function RiskLens({
 
 ## 10. Placement
 
-1. **Create agreement (primary, highest value).** Once a valid Provider address is entered (debounced), render the lens above the summary card, passing the contemplated capital. Wire `onApply` to set the form's milestone count to `suggested_milestones`. Since the contract releases **equal** tranches, the defensive lever is milestone count, so applying the suggestion directly sets that field; the first-milestone percentage is informational (≈ 100 / milestones).
+The lens rides **inside the Send flow** (`frontend/src/pages/Send.tsx`), not on a standalone create page. It renders only once the sender has chosen **Send protected** (a Pact) and a valid recipient address is present. A plain **Send now** payment shows no lens.
+
+1. **Send-protected flow (primary, highest value).** Once the sender picks "Send protected" and a valid recipient address is entered (debounced), render the lens above the terms summary, passing the contemplated capital. Wire `onApply` to set the Send-protected milestone count to `suggested_milestones`. Since the contract releases **equal** tranches, the defensive lever is milestone count, so applying the suggestion directly sets that field; the first-milestone percentage is informational (≈ 100 / milestones).
 
    ```tsx
-   const lens = useRiskLens(debouncedTrader, capitalBaseUnits);
+   // in Send.tsx, only when mode === 'protected'
+   const lens = useRiskLens(debouncedRecipient, amountBaseUnits);
    <RiskLens
      read={lens.data} loading={lens.loading} error={lens.error}
      onApply={(milestones) => setMilestones(milestones)}
    />
    ```
 
-2. **Provider / reputation profile.** Render `<RiskLens read={lens.data} ... />` with `useRiskLens(traderAddress)` (no contemplated capital). This is the counterparty read a Client checks before agreeing to a deal.
+2. **Recipient / profile view.** Render `<RiskLens read={lens.data} ... />` with `useRiskLens(recipientAddress)` (no contemplated capital). This is the counterparty read a sender checks before committing to a Pact.
 
-3. **Agreement detail (optional).** For an `Active` agreement, show the lens as an ongoing read on the Provider counterparty.
+3. **Pact detail (optional).** For an `Active` Pact, show the lens as an ongoing read on the recipient counterparty.
 
 ---
 
@@ -443,14 +449,14 @@ export function RiskLens({
 
 - **Loading:** quiet "Reading on-chain history…" card with a spinner.
 - **No history:** no special client branch needed. `computeTraderStats` sets `hasHistory: false`, and the prompt treats a new/empty address as a caution (typically `elevated`, recommending more milestones). This doubles as your anti-Sybil cue: a brand-new address gets flagged, not green-lit.
-- **API error:** the component degrades to a neutral note and the raw reputation counts shown elsewhere remain. The core create/refund flow is **never** blocked by the lens.
+- **API error:** the component degrades to a neutral note and the raw reputation counts shown elsewhere remain. The core Send-protected / refund flow is **never** blocked by the lens.
 - **Caching:** results cache per `(trader, contemplatedCapital)` for the session.
 
 ---
 
 ## 12. Cost and performance
 
-- Haiku is fast and cheap; input is a small stats object and output is a small JSON. Each read is a fraction of a cent and returns in ~1–2s.
+- Gemini `gemini-2.5-flash` is fast and cheap; input is a small stats object and output is a small JSON. Each read is a fraction of a cent and returns in ~1–2s.
 - Debounce the address input (~600ms) and cache per key so a typing user triggers at most one call per distinct address.
 - If you make the endpoint public, add light rate limiting (per IP) and optionally cache reads server-side by `(trader, bucketedAmount)`.
 
@@ -458,7 +464,7 @@ export function RiskLens({
 
 ## 13. Demo beat
 
-In the create flow, paste a Provider who has a mixed record and enter a capital larger than their largest past deal. The lens returns something like: "Elevated. Strong volume, but 2 refunds in the last month and this deal is about 3x their largest. Spread it across 4 milestones." Tap **Apply suggested protection** and watch the milestone count update to 4. That single moment shows AI doing something no other team's UI does: translating raw on-chain history into a protective action a first-time user can take.
+In the Send-protected flow, paste a recipient who has a mixed record and enter an amount larger than their largest past deal. The lens returns something like: "Elevated. Strong volume, but 2 refunds in the last month and this deal is about 3x their largest. Spread it across 4 milestones." Tap **Apply suggested protection** and watch the milestone count update to 4. That single moment shows AI doing something no other team's UI does: translating raw on-chain history into a protective action a first-time user can take.
 
 ---
 
@@ -466,9 +472,9 @@ In the create flow, paste a Provider who has a mixed record and enter a capital 
 
 **Tasks:**
 1. Add `frontend/src/lib/riskStats.ts` (§5), `riskTypes.ts` (§7), and an `agreements.ts` wrapper around the §4 fetch helper.
-2. Add the serverless endpoint `frontend/api/risk-lens.ts` (§6). Set `ANTHROPIC_API_KEY` in the host env (document it in README, never commit it).
+2. Add the serverless endpoint `api/risk-lens.ts` at the repo root (§6). Set `GEMINI_API_KEY` in the host env (document it in README, never commit it).
 3. Add `useRiskLens` (§8) and `RiskLens` (§9), styled only with DESIGN.md tokens.
-4. Place the lens in the create flow with `onApply` wired to the milestone field (§10.1), and on the Provider profile (§10.2).
+4. Place the lens inside the Send-protected flow in `Send.tsx` with `onApply` wired to the milestone field (§10.1), and on the recipient profile (§10.2).
 5. Verify the responsible-AI boundary holds (§2): the read never gives financial or investment advice, only a counterparty-trust read and protective structuring.
 6. Confirm graceful degradation when the endpoint is unreachable (§11).
 
@@ -476,12 +482,12 @@ In the create flow, paste a Provider who has a mixed record and enter a capital 
 ```
 Read FEATURE_RISK_LENS.md in full. Implement the AI Risk Lens exactly as specced,
 as an add-on that changes nothing else in the app. Use the DESIGN.md tokens for all
-UI. Keep the Anthropic key server-side in /api/risk-lens (env var ANTHROPIC_API_KEY).
-The model does interpretation only — all counts come from computeTraderStats in code.
-Place the lens in the create flow (wire "Apply suggested protection" to the milestone
-field) and on the trader profile. Make sure the core flow still works if the endpoint
-is down. Show me the create flow with the lens active so I can test it with a sample
-trader address.
+UI. Keep the Gemini key server-side in /api/risk-lens (env var GEMINI_API_KEY).
+The model does interpretation only, all counts come from computeTraderStats in code.
+Place the lens inside the Send-protected flow (wire "Apply suggested protection" to the
+milestone field) and on the recipient profile. Make sure the core flow still works if
+the endpoint is down. Show me the Send-protected flow with the lens active so I can test
+it with a sample recipient address.
 ```
 
 ---
@@ -489,7 +495,7 @@ trader address.
 ## 15. Refinements (optional, post-hackathon)
 
 - **Precise recency:** the current refund-recency uses `deadline` as a proxy because the contract doesn't store when a status resolved. For exact timing, add `resolved_at: u64` to the `Agreement` struct (set it in `complete` and `emergency_refund`), update PRD.md §8, redeploy, and regenerate bindings. Alternatively, read the contract's events to timestamp resolutions.
-- **Forced schema:** if JSON parsing is ever flaky, harden by using tool-use (function calling) to force the response shape instead of instruct-and-parse. See https://docs.claude.com/en/api/overview.
+- **Forced schema:** if JSON parsing is ever flaky, harden by passing a `responseSchema` (structured output) in `generationConfig` to force the response shape instead of instruct-and-parse. See https://ai.google.dev/gemini-api/docs/structured-output.
 - **Indexer source:** swap §4's full enumeration for a Supabase query once the index exists, so the stats come from the database, not a full on-chain scan.
 - **Reputation depth:** as volume grows, weight recent behavior more heavily and surface trend (improving vs declining) as an additional signal.
 ```

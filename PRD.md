@@ -1,32 +1,46 @@
 # PACTA — Product Requirements Document (PRD)
 
 > **Tagline:** PACTA — Trust, written in code.
-> **One-liner:** PACTA is a non-custodial escrow protocol on Stellar and Soroban that turns any informal money agreement between two people into a secure, staged, bond-protected on-chain contract.
+> **One-liner:** PACTA is a wallet-native money app on Stellar and Soroban. You hold and move your assets from any wallet you already own, convert between currencies, and when a payment needs protection you send it as a Pact: a staged, bond-protected on-chain escrow with an AI counterparty read and identity verification built in.
 
-**Document status:** Build-ready. This PRD is written so it can be handed directly to Claude Code as the source of truth for an end-to-end build (smart contracts + frontend + deploy).
+**Document status:** Build-ready. This PRD is the source of truth for the wallet-first build (smart contracts + adapter layer + frontend + deploy). It can be handed directly to Claude Code.
 
-**Naming note:** The product is named **PACTA** everywhere in human-readable copy (headings, prose, taglines, UI). Code identifiers stay on the legacy name for ABI and package compatibility: the contract crate `pacta-escrow`, the struct `PactaEscrow`, the package dir `packages/pacta`, the deploy alias `pacta_escrow`, and the wasm `pacta_escrow.wasm` are unchanged. There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to PACTA (or, for code identifiers, keep the legacy `pacta` form).
+**Product framing (read first).** PACTA has two layers that must not be confused:
+> - **The wallet layer (the app the user opens).** A non-custodial money hub. PACTA never holds the user's keys. It connects existing wallets (Freighter, xBull, Albedo, Lobstr, WalletConnect), shows a multi-asset portfolio, and lets the user **Send**, **Receive**, and **Convert**. This is the front door and the default screen.
+> - **The protection layer (a feature inside Send).** The original PACTA escrow, unchanged. In the Send flow the user chooses **Send now** (a plain payment) or **Send protected** (a Pact: create → bond → staged release → refund, with the Risk Lens and KYC gate). Escrow is no longer the front door; it is the strongest thing the wallet can do.
+>
+> The on-chain escrow contract is **frozen and unchanged** by this reframe. Everything new (portfolio, send, receive, convert, the chain-adapter layer) is presentation and client-side plumbing on top of wallets the user already controls. See §7 for the architecture and §5 for the phased scope.
+
+**Naming note:** The product is named **PACTA** everywhere in human-readable copy (headings, prose, taglines, UI). A protected payment is a **Pact** in UI copy. Code identifiers stay on the legacy name for ABI and package compatibility: the contract crate `pacta-escrow`, the struct `PactaEscrow`, the package dir `packages/pacta`, the deploy alias `pacta_escrow`, and the wasm `pacta_escrow.wasm` are unchanged. On-chain the two parties remain `investor` (the sender/Client) and `trader` (the recipient/Provider). There is no "Katiwala." If any artifact, comment, or variable says Katiwala, rename it to PACTA (or, for code identifiers, keep the legacy `pacta` form).
 
 ---
 
 ## 1. Vision & problem
 
 ### 1.1 Problem
-Every day people hand money to someone they met online for a deal or a deliverable: a freelance project, a service contract, a custom or made-to-order item, a peer-to-peer marketplace purchase, or funds entrusted across borders. These arrangements are informal and run entirely on trust. Money is sent directly via bank transfer, GCash, or crypto with no enforceable agreement, no transparency, and no protection.
+People in SEA already move money digitally every day (GCash, Maya, bank transfer, crypto), but the tools split into two camps and neither is enough on its own:
 
-When the other party disappears, misuses the funds, or fails to deliver, the person who paid usually loses everything with little recourse. There is no accessible, low-cost tool that gives ordinary people a safe, transparent way to entrust money to someone else online.
+- **Wallets move money but offer zero protection.** They send funds instantly and irreversibly. The moment you pay a stranger for a deliverable (a freelance project, a service contract, a custom or made-to-order item, a peer-to-peer marketplace purchase, or funds entrusted across borders), you are back to pure trust. When the other party disappears, misuses the funds, or fails to deliver, you usually lose everything with little recourse.
+- **Platforms offer protection but own your trust.** On Fiverr or Upwork your reputation and dispute history belong to the platform; leave and it vanishes, and they take ~20%. PayPal Buyer Protection is unavailable for most PH service transactions. Centralized escrow requires custody (trusting yet another party).
 
-Existing solutions fail because trust is platform-owned, not user-owned. On Fiverr or Upwork, your reputation and dispute history belong to the platform; leave and it vanishes. On GCash or bank transfer, there is no protection layer at all. PayPal Buyer Protection is unavailable for most service transactions in the Philippines, and centralized escrow services require custody (trusting yet another party). None of these give the user sovereign, portable, verifiable trust that travels with them.
+So the everyday user has no single place that lets them **hold and move their money freely** *and* **protect a payment when it matters**, with a trust record they actually own. Holding, converting, sending, and protecting are scattered across apps that do not talk to each other, and none give the user sovereign, portable, verifiable trust that travels with them.
 
 ### 1.2 Solution
-PACTA is a non-custodial escrow protocol built on Stellar and powered by Soroban smart contracts. Instead of sending money directly to the other party, the Client locks funds in a programmable escrow agreement that enforces:
+PACTA is a **wallet-native money app** on Stellar, powered by Soroban. It unifies the two camps into one non-custodial app the user opens like any wallet:
 
-- **Staged fund release:** funds are released to the Provider in milestone tranches, not all at once, so exposure is limited and trust is earned progressively.
-- **Security bonds:** the Provider posts a refundable bond as skin-in-the-game. If they disappear, the bond compensates the Client.
-- **Deadline-protected emergency refunds:** if the Provider fails to deliver within the agreed window, the Client reclaims all unreleased funds plus the Provider's bond.
-- **On-chain reputation:** every completed and refunded agreement is recorded per Provider, so Clients can evaluate counterparties from verifiable history.
+**The wallet layer (everyday money).**
+- **Hold:** a multi-asset portfolio (XLM, USDC, EURC, and other Stellar assets) read live from the connected wallet. PACTA never takes custody; keys stay in the user's own wallet.
+- **Send / Receive:** move assets to any address, or receive to your own.
+- **Convert:** swap between assets using Stellar's native DEX and path payments.
 
-PACTA does **not** give investment advice, take custody of profits, or guarantee outcomes. It is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
+**The protection layer (a Pact, inside Send).** When a payment needs protection, the user picks **Send protected** instead of **Send now**. That routes into the original PACTA escrow, unchanged, which enforces:
+- **Staged fund release:** funds are released to the recipient in milestone tranches, not all at once, so exposure is limited and trust is earned progressively.
+- **Security bonds:** the recipient posts a refundable bond as skin-in-the-game. If they disappear, the bond compensates the sender.
+- **Deadline-protected emergency refunds:** if the recipient fails to deliver within the agreed window, the sender reclaims all unreleased funds plus the recipient's bond.
+- **On-chain reputation + AI Risk Lens:** every completed and refunded Pact is recorded per recipient, and a plain-language AI read interprets that history before you commit.
+- **Identity (KYC):** money and commitment actions can require a verified identity bound to the wallet.
+
+PACTA does **not** give investment advice, take custody of funds, or guarantee outcomes. The wallet layer is convenience; the protection layer is **trust infrastructure**: it makes private agreements safer, transparent, and enforceable.
 
 ### 1.3 Why this design is safe and honest (important for judges)
 A naive "lock all the money and trust the other party" escrow is not actually safer: the moment funds reach the Provider, code can't claw them back. PACTA's protection comes from two mechanics that *are* enforceable on-chain:
@@ -52,21 +66,23 @@ This positioning means PACTA is not "a platform with crypto payments." It is a *
 ## 2. Hackathon context
 
 - **Event:** Build on Stellar — APAC track.
-- **Primary track:** **Payment & Consumer Applications.** PACTA is a consumer-facing financial-protection app that helps everyday users safely coordinate money for any two-party deal or deliverable.
-- **Why it fits the track:** consumer protection for any informal money agreement; financial accessibility (anyone with a Stellar wallet); real-world SEA impact; an easy-to-use financial tool (connect wallet → create agreement → deposit → approve releases → refund).
+- **Primary track:** **Payment & Consumer Applications.** PACTA is a consumer-facing, wallet-native money app: hold, send, receive, and convert your assets, with one-tap protection (a Pact) when a payment needs it.
+- **Why it fits the track:** a real payments app anyone with a Stellar wallet can use; everyday money actions (send / receive / convert) plus consumer protection built into the send flow; financial accessibility and real-world SEA impact; an easy-to-use consumer tool (connect wallet → see balances → send now or send protected → convert).
 - **Team:**
   - Zarrah Exekiel Valles
   - Jecyn Vallirie Turbanos
 - **Country:** Philippines.
 
 ### 2.1 Track statement (for submission)
-> PACTA is a Payment & Consumer Application built on Stellar and powered by Soroban that protects everyday users by turning any informal money agreement between two people into a secure, programmable, transparent financial contract.
+> PACTA is a Payment & Consumer Application built on Stellar and powered by Soroban: a wallet-native money app where everyday users hold, send, receive, and convert their assets, and protect any payment with one tap by sending it as a Pact, a staged, bond-protected on-chain escrow with an AI counterparty read and verified identity.
 
 ---
 
 ## 3. Users & personas
 
-**Primary users (Clients):**
+Everyone who opens PACTA is a **wallet holder** first: they connect an existing Stellar wallet and use PACTA to hold, send, receive, and convert. The two roles below describe who each side becomes **when a payment is protected** (a Pact). On-chain these map to `investor` (the sender/Client) and `trader` (the recipient/Provider).
+
+**Primary users (Clients / senders):**
 - People paying or hiring someone online for a deliverable, with limited financial or legal protection.
 - First-time buyers of freelance work, services, or made-to-order goods.
 - People with limited financial knowledge who currently rely on pure trust.
@@ -108,36 +124,57 @@ PACTA's initial target is specific: **Filipino freelancers, OFWs, and informal o
 
 ## 4. Core user flows
 
-**Client flow:** Connect wallet → Create agreement (set Provider, funds, bond, milestones, duration) → Deposit funds → Approve milestone releases as trust builds → Either Complete (returns bond to the Provider) or Emergency Refund (reclaim unreleased funds + bond if the deadline passes).
+The wallet is the front door. Everything below starts from **connect wallet → Wallet Home** (portfolio + Send / Receive / Convert).
 
-**Provider flow:** Connect wallet → Review agreement → Post security bond → Receive milestone tranches as the Client approves them → Get the bond back on completion.
+**Everyday flows (wallet layer):**
+- **Receive:** Wallet Home → Receive → show address + QR (and an amount request, optionally).
+- **Send now:** Wallet Home → Send → pick recipient, asset, amount → choose **Send now** → confirm → sign → done (a plain payment).
+- **Convert:** Wallet Home → Convert → choose from-asset and to-asset → see a live quote (Stellar DEX / path payment) → confirm → sign → balances update.
 
-**Reputation flow:** Anyone can read a Provider's on-chain reputation (completed count, refunded count, total volume) before agreeing to work with them.
+**Protected flow (the Pact, a fork inside Send):**
+- **Send protected (sender / Client):** Wallet Home → Send → pick recipient, asset, amount → choose **Send protected** → the **Risk Lens** shows the recipient's on-chain trust read → set terms (bond, milestones, duration) → **KYC gate** if not yet verified → create the Pact and deposit funds → later, approve milestone releases as trust builds → either **Complete** (returns the bond to the recipient) or **Emergency Refund** (reclaim unreleased funds + bond once the deadline passes).
+- **Recipient / Provider:** sees the incoming Pact in Activity → reviews terms → posts the security bond → receives milestone tranches as the sender approves them → gets the bond back on completion.
+
+**Reputation flow:** Anywhere a recipient address appears (Risk Lens, Activity, profile), anyone can read that address's on-chain reputation (completed count, refunded count, total volume) before committing.
 
 ---
 
 ## 5. Scope
 
-### 5.1 MVP — must work live on testnet (this is the demo)
-- Wallet connect (Freighter via Stellar Wallets Kit).
-- `create_agreement`, `post_bond`, `deposit_capital`, `release_milestone`, `complete`, `emergency_refund`, `cancel`.
-- On-chain reputation read/write.
-- Frontend: connect, create agreement, agreement list, agreement detail with all actions, reputation badge.
-- Everything runs against a real deployed Soroban contract on Stellar testnet.
+The wallet-first product is built as a sequence of shippable phases. Phase 0 (this document set) reframes the product on paper; the frozen escrow contract does not change in any phase. Each build phase ends at a gate that must pass on testnet before the next begins.
 
-### 5.2 Stretch (if time remains)
-- Optional settlement on completion (legacy profit-share path via a `settle` call; the `profit_share_bps` field is informational and hidden in the UI).
-- Events feed / activity timeline read from contract events.
-- Mobile wallet support via WalletConnect (Stellar Wallets Kit handles this).
-- Polished multi-agreement dashboard.
+### 5.1 Phase 1 — Wallet Hub + chain-adapter layer (Stellar)
+- **Chain-adapter layer:** a `ChainAdapter` interface (`getBalances`, `send`, `getQuote`, `swap`, `signAndSubmit`) with one real `StellarAdapter` implementation over the existing wallet + bindings. All new screens talk to the adapter, never to the Stellar SDK directly. This is the one piece of "architect for later" that lets an `EvmAdapter` slot in during a later sub-project without touching the UI.
+- **Wallet Home:** total balance in a display currency, multi-asset list (XLM, USDC, EURC, other trustlines), primary actions Send / Receive / Convert.
+- **Receive:** address + QR.
+- **Navigation shell:** mobile-first bottom tabs (Home · Convert · Pacts · Activity · Profile).
+- **Gate:** connect any Stellar wallet → see real testnet balances → Receive works.
 
-### 5.3 Roadmap (slide only — do NOT build for the hackathon)
-- Dispute resolution / arbitration path (admin or multi-sig arbiter).
-- Weighted reputation scoring algorithm.
-- Multi-asset support, fiat on/off-ramp, KYC/identity attestations.
+### 5.2 Phase 2 — Send flow with the "Send protected" fork
+- Unified **Send** flow: recipient + asset + amount.
+- **Send now:** a plain payment via the adapter.
+- **Send protected (a Pact):** routes into the existing Soroban escrow (`create_agreement` → `post_bond` → `deposit_capital` → `release_milestone` → `complete` / `emergency_refund` / `cancel`). The **Risk Lens** rides inside this path; the **KYC gate** triggers on the commitment action.
+- On-chain reputation read/write (unchanged contract behavior).
+- **Gate:** both send paths work on testnet; "Send protected" creates a real on-chain agreement.
+
+### 5.3 Phase 3 — Convert (Stellar DEX)
+- **Convert** screen: from-asset → to-asset, live quote via path payments, execute the swap through the adapter.
+- **Gate:** a real on-chain XLM↔USDC swap completes on testnet.
+
+### 5.3a Phase 4 — Activity, Profile/KYC, polish
+- **Activity** feed (payments, swaps, Pacts) from on-chain data/events.
+- **Profile** tab: KYC status + on-chain reputation.
+- Re-skin the existing escrow detail screens under the wallet shell; the dark proof panel becomes the receipt view.
+- **Gate:** the full wallet-first demo click-path runs end to end on testnet.
+
+### 5.3b Later sub-projects (named now, NOT built for this cycle) — slide only
+- **Fiat on/off-ramp** (Stellar anchors, SEP-24): real cash-in/out to PHP and other currencies. Needs a licensed anchor partner and compliance; the KYC layer is the on-ramp for this.
+- **Cross-chain** (`EvmAdapter` + EVM wallet connect + a bridge/swap provider): the payoff of the adapter layer. The Soroban escrow stays Stellar-only regardless.
+- **Reputation deepening** (weighted scoring) + a discoverable, reputation-ranked recipient directory.
+- **Dispute resolution / arbitration** (the contract reserves an admin role).
 - Mainnet deployment + professional security audit.
 
-> **Scope discipline:** The protection story is fully told by create → bond → deposit → staged release → emergency refund + reputation. Resist adding anything that is not on the demo click-path until that path is solid.
+> **Scope discipline:** Phase 1 is the honest demo foundation; the protection story is fully told by Send protected → bond → staged release → emergency refund + reputation. Resist pulling any §5.3b item into the current cycle until the Phase 1–4 click-path is solid. "Convert to many currencies" in the current cycle means **crypto/stablecoin assets on Stellar**, not real fiat rails.
 
 ### 5.4 Success metrics
 
@@ -183,6 +220,18 @@ These metrics are readable directly from on-chain data (contract state + events)
 | Data fetching | TanStack Query (optional) or plain hooks | Plain `useState`/`useEffect` is fine for MVP. |
 | Numbers | `bigint` | `i128`/`u64` contract types map to `bigint` in bindings. Pass `1n`, `BigInt(amount)`, etc. |
 
+### 6.3 Wallet layer (new)
+| Component | Choice | Notes |
+|---|---|---|
+| Chain abstraction | **`ChainAdapter` interface** (custom, thin) | `getBalances`, `send`, `getQuote`, `swap`, `signAndSubmit`. UI depends only on this. One `StellarAdapter` now; an `EvmAdapter` is a later sub-project. See §7.2 and `docs/architecture/chain-adapter.md`. |
+| Balances | Horizon / RPC account read | Read the connected account's balances + trustlines via `@stellar/stellar-sdk` (Horizon) behind `StellarAdapter.getBalances`. |
+| Send (plain) | Payment / path-payment operation | Standard Stellar payment op, signed by the connected wallet via Stellar Wallets Kit. |
+| Convert (swap) | **Stellar DEX / path payments** | `getQuote` uses strict-send/strict-receive path finding; `swap` submits a path-payment. On-chain, atomic, no custody. |
+| Send protected | The frozen escrow (§8) | The Pact path calls the existing contract; no new on-chain code. |
+| Display value | Deterministic in code | Portfolio total shown in a chosen display currency from live prices; never invented by the model. |
+
+> **Multi-chain note.** The current cycle is Stellar-only. Multi-chain (Stellar + EVM) is the product vision and the reason the adapter layer exists, but EVM wallet connect and any bridge/swap provider are a **later sub-project** (§5.3b), not part of Phases 1–4. The Soroban escrow is Stellar-only permanently.
+
 ---
 
 ## 7. System architecture
@@ -213,6 +262,44 @@ These metrics are readable directly from on-chain data (contract state + events)
 ```
 
 **The escrow has no backend server.** The Soroban contract is the backend for the escrow: it holds the funds and enforces the agreement between the two parties. All escrow state lives on-chain. Reads are free RPC simulations; writes are wallet-signed transactions. (The optional AI Risk Lens in §17 adds one stateless serverless endpoint that only reads public on-chain stats; it is not part of the escrow and never holds funds.) A separate, optional **off-chain KYC identity layer** (Supabase behind `api/kyc-*.ts`) verifies wallet-holder identity and gates the app UI only; it never holds funds, is not part of the escrow, and does not change the contract. See `CLAUDE.md` "Identity / KYC layer" and `supabase/migrations/`.
+
+### 7.1 Wallet-layer architecture (the app the user opens)
+
+The wallet layer is a presentation + client-plumbing layer on top of wallets the user already controls. It adds **no custody and no new on-chain code**: balances are read from the chain, sends/converts are standard signed Stellar operations, and "Send protected" calls the frozen escrow.
+
+```
+┌──────────────────────── Browser (SPA, mobile-first) ────────────────────────┐
+│  React + Vite + Tailwind                                                     │
+│                                                                              │
+│  Wallet surfaces:  Home (portfolio) · Send · Receive · Convert · Activity    │
+│                    Profile/KYC · Pacts (protected payments)                  │
+│        │                                                                     │
+│        ▼                                                                      │
+│  ┌───────────────────────── ChainAdapter (interface) ─────────────────────┐ │
+│  │  getBalances · send · getQuote · swap · signAndSubmit                   │ │
+│  │  implemented by StellarAdapter  (EvmAdapter = later sub-project)        │ │
+│  └───────────┬───────────────┬───────────────────────┬────────────────────┘ │
+│              │ read          │ pay / swap            │ send protected        │
+│              ▼               ▼                       ▼                        │
+│      Horizon / RPC     Stellar DEX /          PactaEscrow contract (§8)       │
+│      (balances)        path payments          via generated bindings         │
+│                                                                              │
+│  Signing for every write path → Stellar Wallets Kit → Freighter / xBull …    │
+│  Risk Lens → /api/risk-lens (stateless)   ·   KYC → /api/kyc-* (Supabase)     │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 7.2 The chain-adapter layer (`ChainAdapter`)
+
+Every wallet surface depends only on the `ChainAdapter` interface, never on `@stellar/stellar-sdk` or the generated bindings directly. This is the single seam that keeps the multi-chain vision cheap later.
+
+- **`getBalances(address)` → `AssetBalance[]`** — the account's holdings + trustlines, with human amounts and display value.
+- **`send({ to, asset, amount })` → `TxResult`** — a plain payment (the "Send now" path).
+- **`getQuote({ from, to, amount })` → `Quote`** — a convert quote via path finding.
+- **`swap(quote)` → `TxResult`** — execute a convert (path payment).
+- **`signAndSubmit(tx)` → `TxResult`** — wallet-signed submission, shared by all write paths.
+
+The **protected send** path does not go through `send`/`swap`; it calls the frozen escrow through the existing bindings (`contract.ts`), so the Pact logic is untouched. `StellarAdapter` is the only implementation in Phases 1–4. The interface contract and rationale live in **`docs/architecture/chain-adapter.md`**.
 
 ---
 
@@ -921,9 +1008,11 @@ Run with `stellar contract build` then `cargo test` (or just `cargo test` from t
   - Wallet is reputation — on-chain history is your track record, portable to any app
   - Wallet is authority — only your signature moves funds
   - Nothing stored in browser, nothing stored on a server (for escrow)
-- One screen per action. No multi-step wizards.
-- The wallet **is** the login. No accounts, no passwords, no backend.
-- Optimistic but honest: show pending state while a tx is in flight; refetch agreement after confirmation.
+- **The wallet is the front door.** Wallet Home (portfolio + Send / Receive / Convert) is the default screen after connect. Escrow is reached through Send ("Send protected") and lives under the Pacts tab, never as the landing surface.
+- Keep each action to one screen. The only intentional branch is **Send** (choose Send now vs Send protected); avoid other multi-step wizards.
+- The wallet **is** the login. No accounts, no passwords, no backend for money; keys stay in the user's own wallet (no custody).
+- **Display value is computed, never invented.** Balances and portfolio totals come from live on-chain reads and prices in code; the AI touches only the Risk Lens text, never the numbers.
+- Optimistic but honest: show pending state while a tx is in flight; refetch balances / the affected Pact after confirmation.
 - Amounts shown to users are human (e.g. `1.50 XLM`); convert to/from base units (×/÷ 10,000,000) at the boundary.
 
 ### 9.2 Wallet integration
@@ -1030,17 +1119,28 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 > Note: generated method argument names match the Rust parameter names exactly. `i128`/`u64` are `bigint`; `u32` is `number`; `Address` is a `string`. Confirm exact method/option names in the generated `packages/pacta/README.md`.
 
 ### 9.4 Screens
-1. **Landing / Connect** — value prop, "Connect Wallet" button, short "how it works" (3 steps). After connect, show truncated address + network badge.
-2. **Dashboard** — list of agreements (iterate `get_count()` then `get_agreement(i)` for `i in 1..=count`). Each card: counterparty, funds, bond, status pill, milestone progress bar. Filter by "As client" / "As provider" using the connected address.
-3. **Create Agreement** — form: Provider address, funds, bond, milestones, duration. Validation (funds > 0, milestones ≥ 1). Submit → `create_agreement`. (`profit_share_bps` is legacy and hidden from the form; the call passes a default value.)
-4. **Agreement Detail** — full terms, status, milestone progress, and the action buttons valid for the connected role/state:
-   - Provider + Pending + not bonded → **Post Bond**
-   - Client + Pending + not deposited → **Deposit Funds**
-   - Client + Active + milestones remaining → **Release Milestone**
-   - Client + Active + all milestones released → **Complete**
-   - Client + Active + `now ≥ deadline` → **Emergency Refund**
-   - Client + Pending → **Cancel**
-5. **Reputation badge** — wherever a Provider address appears, show `✓ {completed}  ⚠ {refunded}  Σ {volume}` from `get_reputation`.
+
+The app is a **wallet first**. The default screen after connecting is Wallet Home, not an escrow dashboard. Navigation is a mobile-first bottom tab bar: **Home · Convert · Pacts · Activity · Profile**. Escrow is reached through the Send flow ("Send protected") and lives under the Pacts tab; it is never the front door.
+
+1. **Landing / Connect** — short value prop ("your money, protected when it matters"), "Connect Wallet" button, 3-step "how it works". After connect, route to Wallet Home.
+2. **Wallet Home (default tab)** — top: total portfolio value in a display currency + truncated address + `testnet` badge. Below: the primary actions **Send · Receive · Convert**, then the multi-asset list (each row: asset, balance in mono, display value) read via `ChainAdapter.getBalances`. A compact "recent activity" strip links to the Activity tab.
+3. **Receive** — the connected address as text + QR, copy button, optional amount request. No signing.
+4. **Send (the fork)** — step 1: recipient address, asset, amount (validate amount > 0, ≤ balance). Step 2: choose **Send now** or **Send protected**.
+   - **Send now** → confirmation dialog (amount, recipient, effect) → `ChainAdapter.send` → wallet signs → success with tx hash.
+   - **Send protected (a Pact)** → the **Risk Lens** renders the recipient's on-chain trust read (§17) → set terms (bond, milestones, duration; "Apply suggested protection" sets milestones) → **KYC gate** (§18) if the wallet is not verified → `create_agreement` then `deposit_capital` → the new Pact appears under Pacts. (`profit_share_bps` is legacy, hidden, passed as a default.)
+5. **Convert** — from-asset → to-asset selectors + amount; a live quote from `ChainAdapter.getQuote` (rate, minimum received, path); confirm → `ChainAdapter.swap` → wallet signs → balances refetch. Graceful "no route" and slippage handling.
+6. **Pacts (protected payments)** — list of the connected wallet's Pacts (iterate `get_count()` then `get_agreement(i)`), filterable "As sender" / "As recipient". Each card: counterparty, funds, bond, status pill, milestone progress bar. Tapping opens **Pact Detail**.
+7. **Pact Detail** — full terms, status, milestone progress, deadline countdown, and the action buttons valid for the connected role/state (unchanged escrow semantics):
+   - Recipient + Pending + not bonded → **Post Bond**
+   - Sender + Pending + not deposited → **Deposit Funds**
+   - Sender + Active + milestones remaining → **Release Milestone**
+   - Sender + Active + all milestones released → **Complete**
+   - Sender + Active + `now ≥ deadline` → **Emergency Refund**
+   - Sender + Pending → **Cancel**
+   The dark proof panel shows the on-chain receipt (contract ID, tx hashes, event log) for this Pact.
+8. **Activity** — a unified feed across payments, swaps, and Pact events, read from on-chain data / contract events, newest first, each row linking to Stellar Expert.
+9. **Profile / Verify** — connected address, **KYC status + identity badge** (§18), and the wallet's own on-chain **reputation** (`✓ {completed}  ⚠ {refunded}  Σ {volume}`). The verify flow lives here.
+10. **Reputation badge (component)** — wherever a recipient address appears (Risk Lens, Pacts, Activity, Profile), show `✓ {completed}  ⚠ {refunded}  Σ {volume}` from `get_reputation`.
 
 ### 9.5 State & UX details
 - After any write, poll/refetch the affected agreement (RPC may take a few seconds to reflect new state).
@@ -1053,7 +1153,7 @@ const { result: rep } = await contract.get_reputation({ trader: traderAddress })
 PACTA stays non-custodial: the wallet is the only login. There are **no accounts, no passwords, no backend, and no browser storage of secrets** (a password layer would add an attack surface and false security without protecting funds, which are gated by the wallet signature on-chain). The following additions harden the experience without changing that model or any contract call:
 
 - **Network guard.** On connect, read the wallet's network (best effort). If it is not the Stellar test network, show a persistent warning banner so the user does not sign against the wrong network. If the network cannot be determined, do not block.
-- **Confirm before signing.** Every fund-moving action (post bond, deposit, release, complete, emergency refund, cancel) opens a plain-language confirmation dialog stating the amount, the counterparty, and the effect before the wallet signature is requested. Nothing is signed blindly. Copy follows §12/DESIGN voice (sentence case, no jargon, names the effect the user controls).
+- **Confirm before signing.** Every fund-moving action (send now, convert, post bond, deposit, release, complete, emergency refund, cancel) opens a plain-language confirmation dialog stating the amount, the counterparty or the from/to assets, and the effect before the wallet signature is requested. Nothing is signed blindly. Copy follows §12/DESIGN voice (sentence case, no jargon, names the effect the user controls).
 - **Inactivity auto-lock.** After 15 minutes of no interaction the wallet is disconnected automatically (relevant on shared or mobile devices), with a dismissible notice explaining why. Any interaction resets the timer.
 - **Trust cues retained.** Persistent `testnet` badge, contract ID linked to Stellar Expert, and tx hashes linked on success.
 
@@ -1063,11 +1163,13 @@ These are functional-UX additions; the contract interface in §8.5 and the flows
 
 The app is **mobile-first** (many primary users are on phones) and also a comfortable desktop website. One implementation, fluid across breakpoints:
 
-- **Shell.** Header, content, and footer share a centered container that grows to a wide max width on desktop; screen padding stays comfortable from 360px up.
+- **Shell.** Mobile-first bottom tab bar (Home · Convert · Pacts · Activity · Profile) that becomes a side rail or top nav on desktop. Content shares a centered container that grows to a wide max width on desktop; screen padding stays comfortable from 360px up.
 - **Landing.** Single column on mobile; two-column hero (copy beside the proof panel) on desktop. "How it works" stacks on mobile, three across on wider screens.
-- **Dashboard.** Agreement cards are a one-column list on mobile, two columns at the small breakpoint, three at large.
-- **Agreement detail.** Single stacked column on mobile (amount, parties, milestones, deadline, actions, proof). On desktop it splits into a main column plus a sticky aside holding the actions and the proof panel.
-- **Create / provider profile.** Stay in a comfortably narrow centered column on all sizes (forms and profiles read better narrow).
+- **Wallet Home.** Balance header + action buttons full-width on mobile; the asset list is a one-column list on mobile, two columns at large. On desktop the recent-activity strip can sit beside the asset list.
+- **Send / Convert.** Comfortably narrow centered column on all sizes (money forms read better narrow); the Send fork (Send now vs Send protected) is a clear two-option choice, not a hidden toggle.
+- **Pacts list.** Pact cards are a one-column list on mobile, two columns at the small breakpoint, three at large.
+- **Pact detail.** Single stacked column on mobile (amount, parties, milestones, deadline, actions, proof). On desktop it splits into a main column plus a sticky aside holding the actions and the proof panel.
+- **Profile / Verify.** Stay in a comfortably narrow centered column on all sizes.
 - **Quality floor (DESIGN §10).** Tap targets stay at least 44px, every interactive element shows a visible focus ring, motion respects `prefers-reduced-motion`, and amounts use tabular mono with thousands separators.
 
 > Visual tokens, components, and exact styling live in **DESIGN.md** (which supersedes §12). This section captures only the behavioral/layout contract.
@@ -1098,26 +1200,46 @@ pacta/
     ├── tsconfig.json
     └── src/
         ├── main.tsx
-        ├── App.tsx
+        ├── App.tsx                 # tab-shell routing (Home · Convert · Pacts · Activity · Profile)
         ├── lib/
-        │   ├── wallet.ts           # §9.2
-        │   ├── contract.ts         # §9.3
+        │   ├── wallet.ts           # §9.2 (Stellar Wallets Kit)
+        │   ├── contract.ts         # §9.3 (frozen escrow bindings)
+        │   ├── adapters/
+        │   │   ├── ChainAdapter.ts # §7.2 interface (getBalances/send/getQuote/swap/signAndSubmit)
+        │   │   └── StellarAdapter.ts # the only impl this cycle; EvmAdapter = later sub-project
+        │   ├── prices.ts           # display-value lookup (deterministic)
         │   └── format.ts
         ├── hooks/
-        │   ├── useWallet.ts
-        │   └── useAgreements.ts
+        │   ├── useWallet.ts        # also exposes kycStatus (§18)
+        │   ├── useBalances.ts      # portfolio via ChainAdapter.getBalances
+        │   ├── useConvert.ts       # quote + swap
+        │   ├── usePacts.ts         # (was useAgreements) protected payments
+        │   └── useRiskLens.ts      # §17 (existing)
         ├── components/
         │   ├── ConnectButton.tsx
-        │   ├── AgreementCard.tsx
+        │   ├── BalanceHeader.tsx   # portfolio total + address + testnet badge
+        │   ├── AssetRow.tsx        # one holding
+        │   ├── SendFork.tsx        # Send now vs Send protected choice
+        │   ├── ConvertCard.tsx     # from/to + quote
+        │   ├── PactCard.tsx        # (was AgreementCard)
         │   ├── ReputationBadge.tsx
+        │   ├── RiskLens.tsx        # §17 (existing)
+        │   ├── kyc/                # §18 (existing): KycGate, IdentityBadge, ConsentStep, …
         │   ├── StatusPill.tsx
+        │   ├── ProofPanel.tsx      # on-chain receipt / signature element
         │   └── MilestoneBar.tsx
         └── pages/
             ├── Landing.tsx
-            ├── Dashboard.tsx
-            ├── CreateAgreement.tsx
-            └── AgreementDetail.tsx
+            ├── Home.tsx            # Wallet Home (default)
+            ├── Send.tsx            # the fork
+            ├── Receive.tsx
+            ├── Convert.tsx
+            ├── Pacts.tsx           # (was Dashboard) list of protected payments
+            ├── PactDetail.tsx      # (was AgreementDetail)
+            ├── Activity.tsx
+            └── Profile.tsx         # profile + Verify (KYC) + reputation
 ```
+> Files marked "(was …)" are renames of existing escrow screens, re-parented under the wallet shell. Risk Lens (§17) and KYC (§18) files already exist and are unchanged except for where they mount (Risk Lens now rides inside `Send.tsx`; KYC gates the Send-protected commitment).
 
 Workspace `Cargo.toml` (root):
 
@@ -1237,38 +1359,36 @@ PACTA protects people's money in real agreements, so it must look **trustworthy,
 - **Type:** a clean grotesque/sans for UI (Inter or similar); a monospace for addresses, amounts, IDs, and status codes — it reads as "verifiable / on-chain."
 - **Components:** generous spacing, hairline borders, subtle elevation, status pills, a clear milestone progress bar, and a live deadline countdown. No gradients-for-the-sake-of-it, no clutter.
 - **Trust cues everywhere:** show the contract ID (linked to Stellar Expert), tx hashes (linked), and reputation counts prominently. Make "your money is in a contract, here's the proof" the emotional core of the UI.
-- **Microcopy:** plain and reassuring. "Your funds are locked in the contract. Release them step by step. Get them back if the deadline passes." No jargon in the primary flow.
+- **Wallet surfaces (new).** Wallet Home leads with a large, calm **balance header** (portfolio total in mono, display currency, truncated address, `testnet` badge) and three obvious actions: Send, Receive, Convert. Asset rows are quiet and scannable (asset, mono balance, display value). The **Send fork** presents "Send now" and "Send protected" as two clearly labelled choices with a one-line explanation each, never a buried toggle. Protection is visually elevated (the accent + a small shield/lock cue) so the wallet's differentiator stays visible without shouting. The dark **proof panel** is reused as the receipt surface for sends, swaps, and Pacts.
+- **Microcopy:** plain and reassuring. "Send it now, or send it protected and release step by step." "Your funds stay in the contract until you release them." No jargon in the primary flow. A protected payment is a **Pact**.
 - **No em-dashes in UI copy.**
 
 ---
 
 ## 13. Demo script (the click-path judges will see)
 
-Set up beforehand: two browser profiles (or two wallets in Freighter) — **Client** and **Provider** — both funded on testnet. Use the native XLM SAC as the token. The contract is already deployed; bindings generated; app running.
+Set up beforehand: two browser profiles (or two wallets in Freighter) — **sender (Client)** and **recipient (Provider)** — both funded on testnet. Use the native XLM SAC as the settlement token. The contract is already deployed; bindings generated; app running.
 
-**Act 1 — The problem (15s, spoken):** "Every day people pay someone online for work or a deliverable with zero protection. When the other party vanishes, the money is gone. PACTA fixes that with code."
+**Act 1 — It's a wallet (15s):** Connect the sender's wallet. Land on **Wallet Home**: portfolio total, XLM/USDC balances, and the three actions Send · Receive · Convert. "PACTA is a wallet you already know how to use: hold your money, send it, receive it, convert it."
 
-**Act 2 — Create (Client):**
-1. Connect Client wallet.
-2. Create Agreement: Provider = Provider's address, funds = 100 XLM, bond = 20 XLM, **milestones = 4**, **duration = 60 seconds**.
-3. Sign. Show the new agreement on the dashboard in `Pending`.
+**Act 2 — Convert (20s):** Open **Convert**, quote XLM → USDC, show the live rate and minimum received, sign, watch balances update. "Native Stellar swap, no custody, a few seconds." (Optional; skip if time is tight.)
 
-**Act 3 — Fund it (both):**
-4. Switch to Provider → **Post Bond** (20 XLM). Sign.
-5. Switch to Client → **Deposit Funds** (100 XLM). Sign.
-6. Agreement flips to `Active`. Point out: "120 XLM is now held by the contract, not by either person. Here's the contract on Stellar Expert." Show the deadline countdown starting.
+**Act 3 — The twist: Send protected:** Open **Send**, enter the recipient, asset, and amount = 100 XLM. At the fork, choose **Send protected**. "Any wallet can send now. PACTA can also send *protected*."
 
-**Act 4 — Staged release (Client):**
-7. **Release Milestone** once → 25 XLM goes to the Provider. Progress bar 1/4. "The client only exposes a quarter at a time. Trust is earned, not assumed."
+**Act 4 — The Risk Lens (15s):** The **Risk Lens** reads the recipient's on-chain history and shows a plain-language trust read. "Before I commit, PACTA tells me how trustworthy this counterparty looks, from chain data only." Set terms: bond = 20 XLM, **milestones = 4**, **duration = 60 seconds**. (If the wallet is unverified, the **KYC gate** appears here.)
 
-**Act 5 — The save (Client):**
-8. Wait for the 60-second deadline to elapse (it will during the narration above). The **Emergency Refund** button activates.
-9. Click **Emergency Refund**. Sign. The Client receives 75 XLM unreleased funds **plus** the 20 XLM bond = 95 XLM back. Status → `Refunded`.
-10. Open the Provider's **reputation**: refunded count is now 1. "The bad actor is recorded forever. The next client will see this."
+**Act 5 — Create + fund the Pact:**
+1. Confirm → sign to create the Pact and deposit 100 XLM. It appears under **Pacts** in `Pending`.
+2. Switch to the recipient → open the incoming Pact → **Post Bond** (20 XLM). Sign.
+3. The Pact flips to `Active`. "120 XLM is now held by the contract, not by either person. Here's the proof panel and the contract on Stellar Expert." The deadline countdown starts.
 
-**Act 6 — The happy ending (optional, fresh agreement):** run a short agreement, release all milestones, **Complete** → bond returns to the Provider, reputation `completed` increments. "When the Provider delivers, they get their bond back and a verifiable track record that wins them future clients."
+**Act 6 — Staged release (sender):** **Release Milestone** once → 25 XLM goes to the recipient. Progress bar 1/4. "The sender only exposes a quarter at a time. Trust is earned, not assumed."
 
-**Close (10s):** "PACTA: informal trust, made enforceable. Built entirely on Stellar and Soroban. Trust, written in code."
+**Act 7 — The save (sender):** When the 60-second deadline elapses (it will during the narration above), **Emergency Refund** activates. Click it, sign. The sender receives 75 XLM unreleased **plus** the 20 XLM bond = 95 XLM back. Status → `Refunded`. Open the recipient's **reputation**: refunded count is now 1. "The bad actor is recorded forever. The next sender will see this."
+
+**Act 8 — The happy ending (optional, fresh Pact):** run a short Pact, release all milestones, **Complete** → bond returns to the recipient, reputation `completed` increments. "When the recipient delivers, they get their bond back and a verifiable track record that wins them future work."
+
+**Close (10s):** "PACTA: a wallet where your money is yours to move, and protected the moment it matters. Built entirely on Stellar and Soroban. Trust, written in code."
 
 ---
 
@@ -1297,7 +1417,11 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 | Live demo timing for refund | `duration = 60s`; deadline elapses naturally during narration. |
 | Rounding dust in milestone math | Last milestone sweeps the remainder (implemented). |
 | Judges question "is escrow really safer?" | Lead with the honest framing in §1.3: protection = staged exposure + bond collateral + recorded reputation, all enforceable on-chain. |
-| Scope creep | §5.3 items are slide-only. Freeze the contract interface (§8.5) before parallelizing. |
+| Scope creep | §5.3b items are slide-only. Freeze the contract interface (§8.5) before parallelizing. |
+| Multi-chain temptation pulls focus | Ship Phases 1–4 Stellar-only. EVM lives behind the `ChainAdapter` seam and is a later sub-project; do not wire EVM wallets or bridges this cycle. |
+| Convert has no path / thin liquidity on testnet | Use strict-send/strict-receive path finding; show "no route" and slippage honestly; fall back to XLM↔USDC which has reliable testnet paths for the demo. |
+| Wallet layer mistaken for custody | State plainly in UI and docs: PACTA never holds keys or funds; balances are read from the user's own wallet; every move is wallet-signed. |
+| "Convert to currencies" misread as fiat | The current cycle is crypto/stablecoin only; fiat on/off-ramp (SEP-24) is a named later sub-project needing a licensed anchor (§5.3b). |
 
 ### 15.1 Competitive landscape
 
@@ -1316,25 +1440,23 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 
 ## 16. Claude Code execution guide (copy this into CLAUDE.md)
 
-**Goal:** Build PACTA, a Soroban escrow dApp on Stellar testnet, per this PRD. No backend; the contract is the backend. The product name is "PACTA" everywhere in human-readable copy; code identifiers stay on the legacy `pacta` form (crate `pacta-escrow`, struct `PactaEscrow`, package `packages/pacta`, alias `pacta_escrow`, on-chain fields `investor`/`trader`). Never "Katiwala".
+**Goal:** Evolve PACTA into a **wallet-native money app** on Stellar testnet, per this PRD. The Soroban escrow contract is **already built, deployed, and frozen** (§8): do not modify, rename, or redeploy it. New work is the wallet layer (portfolio, send, receive, convert) and repositioning the existing escrow, Risk Lens, and KYC inside it. No backend for money; the contract is the backend for protection. The product name is "PACTA" everywhere in human-readable copy; a protected payment is a "Pact". Code identifiers stay on the legacy `pacta` form (crate `pacta-escrow`, struct `PactaEscrow`, package `packages/pacta`, alias `pacta_escrow`, on-chain fields `investor`/`trader`). Never "Katiwala".
 
-**Ordered tasks:**
-1. Scaffold the repo per §10 (workspace `Cargo.toml`, `contracts/pacta-escrow`, `frontend` Vite+React+TS+Tailwind).
-2. Write `contracts/pacta-escrow/src/lib.rs` exactly as §8.6 and `Cargo.toml` as in §8.6. Use the latest `soroban-sdk` that compiles (prefer v26; ensure Rust ≥ 1.91).
-3. Write `src/test.rs` per §8.7. Run `stellar contract build` then `cargo test`. **Do not proceed until all tests pass.**
-4. Follow §11 steps 1–4 to deploy to testnet; capture the contract ID.
-5. §11 step 5: get the native XLM SAC address (token).
-6. §11 step 7: generate TS bindings into `packages/pacta`; read its README for the exact client API.
-7. Build the frontend per §9 (wallet.ts, contract.ts, the four pages, components). Wire the deployed contract ID + token address via `src/lib/config.ts`.
-8. Apply the §12 design direction with Tailwind.
-9. Manually validate the entire §13 demo click-path on testnet.
-10. Write `README.md` (setup, deploy, run) and `scripts/deploy.sh` (one-command redeploy + bindings regen).
+**Ordered tasks (each phase is a GATE; see §5):**
+0. **Phase 0 — docs (this cycle's first move).** Reframe the doc set (PRD, README, DESIGN, FEATURE_RISK_LENS, docs/kyc, LANDING_HERO, CLAUDE) to wallet-first, keeping §8 byte-for-byte. Add `docs/architecture/chain-adapter.md`. Gate: docs reviewed and approved.
+1. **Phase 1 — adapter + Wallet Home.** Implement the `ChainAdapter` interface + `StellarAdapter` (§7.2) and the Wallet Home + Receive screens and the tab shell (§9.4). Gate: connect any Stellar wallet → real testnet balances → Receive works.
+2. **Phase 2 — Send fork.** Build the Send flow with Send now (`ChainAdapter.send`) vs Send protected (the frozen escrow: `create_agreement` → `deposit_capital`), with the Risk Lens (§17) inside the protected path and the KYC gate (§18) on the commitment. Gate: both paths work on testnet; Send protected creates a real agreement.
+3. **Phase 3 — Convert.** Build the Convert screen (`ChainAdapter.getQuote` / `swap` via path payments). Gate: a real XLM↔USDC swap completes on testnet.
+4. **Phase 4 — Activity + Profile/KYC + polish.** Activity feed, Profile/Verify + reputation, re-skin Pact detail under the shell with the proof panel receipt. Gate: full §13 click-path runs end to end.
 
 **Guardrails:**
+- **Do not touch the contract.** §8 (interface, impl, tests) is frozen; the wallet layer never needs a contract change.
+- All wallet surfaces depend only on the `ChainAdapter` interface, never on `@stellar/stellar-sdk` or the bindings directly (§7.2). The protected-send path is the one exception: it calls the escrow bindings.
+- Multi-chain / EVM and fiat on/off-ramp are later sub-projects (§5.3b); do not build them this cycle.
 - Map contract `Error` codes (§8.4) to friendly UI messages.
 - Convert human amounts to/from base units (×/÷ 1e7) at the UI boundary; pass `bigint` for `i128`/`u64`.
-- After every write, refetch the affected agreement before updating UI.
-- Keep the interface in §8.5 frozen; if you must change it, update this PRD first.
+- After every write, refetch the affected balances / Pact before updating UI.
+- Display values (portfolio totals, quotes) are computed in code from live reads; the AI touches only Risk Lens text.
 
 ---
 
@@ -1342,7 +1464,7 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **Clie
 
 An add-on that reads a Provider's on-chain track record and gives the Client a plain-language counterparty reputation read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
 
-**What it does.** When a Client enters a Provider address (create flow) or views a Provider profile, PACTA computes that Provider's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated deal compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* agreement more safely. "Apply suggested protection" sets the milestone count in the create form (more milestones = smaller equal tranches = less first-release exposure).
+**What it does.** When a sender chooses **Send protected** and enters the recipient (or views a recipient's profile), PACTA computes that recipient's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated payment compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* Pact more safely. "Apply suggested protection" sets the milestone count in the Send-protected terms (more milestones = smaller equal tranches = less first-release exposure).
 
 **Code does the arithmetic; the model only interprets.** All counts are computed deterministically in `frontend/src/lib/riskStats.ts` (`computeTraderStats`). The model never recomputes numbers — it turns correct stats into plain language and a recommendation. This keeps figures un-hallucinated.
 
@@ -1350,10 +1472,10 @@ An add-on that reads a Provider's on-chain track record and gives the Client a p
 
 **Architecture.**
 - The client app fetches the Provider's agreements (reuses the existing read path), computes `TraderStats`, and POSTs them to a serverless endpoint.
-- **Serverless endpoint `/api/risk-lens`** (Vercel Edge, file at repo root `api/risk-lens.ts`) calls the Anthropic API (Claude Haiku) and returns a `RiskRead` JSON. The endpoint is the only place the model is called.
-- **The `ANTHROPIC_API_KEY` is server-side only** (host env var; see `.env.example`). It never appears in client code, the repo, or the browser. Only public on-chain stats are sent to the API — nothing the user could not already read on a block explorer.
+- **Serverless endpoint `/api/risk-lens`** (Vercel Edge, file at repo root `api/risk-lens.ts`) calls the Gemini API (`gemini-2.5-flash`) and returns a `RiskRead` JSON. The endpoint is the only place the model is called.
+- **The `GEMINI_API_KEY` is server-side only** (host env var; see `.env.example`). It never appears in client code, the repo, or the browser. Only public on-chain stats are sent to the API, nothing the user could not already read on a block explorer.
 
-**Placement.** (1) Create agreement: lens renders above the summary card once a valid Provider address is entered; `onApply` sets the milestone field. (2) Provider profile: lens renders as the counterparty read before reaching out. Both are styled only with DESIGN.md tokens.
+**Placement (wallet-first).** (1) Send protected: the lens renders inside the Send flow once the sender picks "Send protected" and a valid recipient address is present, above the terms summary; `onApply` sets the milestone field. (2) Profile / recipient view: the lens renders as the counterparty read before reaching out. Both are styled only with DESIGN.md tokens. (Component file `RiskLens.tsx` is unchanged; only its mount point moves from the old create page into `Send.tsx`.)
 
 **Graceful degradation (required).** If the endpoint is unreachable or the key is unset, the lens shows a neutral "risk read unavailable" note and the raw reputation/history remains visible. The core create / fund / release / refund flow is never blocked by the lens.
 
@@ -1365,7 +1487,7 @@ An add-on that reads a Provider's on-chain track record and gives the Client a p
 
 ## 18. Identity & KYC verification (add-on feature — implemented)
 
-A wallet-linked identity layer. A user verifies their real-world identity **once** — a government ID document check plus a liveness/face match through an external identity provider — and that verified identity is then permanently associated with their wallet. On every later connect the app re-establishes that the wallet is verified and shows an identity badge. Verification gates the money and commitment actions in the app, so both sides of an agreement can trust that the counterparty is a **verified person**, not just an anonymous address. Like the AI Risk Lens (§17), it changes nothing in the core protocol: the frozen escrow contract (§8.5) is untouched. Operator/reference detail lives in **`docs/kyc.md`**; this section records what the feature is and how it is wired.
+A wallet-linked identity layer. A user verifies their real-world identity **once** — a government ID document check plus a liveness/face match through an external identity provider — and that verified identity is then permanently associated with their wallet. On every later connect the app re-establishes that the wallet is verified and shows an identity badge. Verification gates the **commitment actions** in the wallet (creating a Pact via Send protected, posting a bond, depositing capital, releasing a milestone), so both sides of a Pact can trust that the counterparty is a **verified person**, not just an anonymous address. Everyday wallet use (viewing the portfolio, Receive, and reading the Risk Lens) stays open; **Send now** and **Convert** are ordinary self-custodial moves of the user's own funds and are not gated. Like the AI Risk Lens (§17), it changes nothing in the core protocol: the frozen escrow contract (§8.5) is untouched. Operator/reference detail lives in **`docs/kyc.md`**; this section records what the feature is and how it is wired.
 
 ### 18.1 Why it matters (product + pitch framing)
 PACTA already makes the *money* safe (staged release, bonds, refunds). KYC makes the *counterparty* accountable. Anonymous escrow still lets a bad actor spin up a fresh wallet after every scam; binding a wallet to a verified government identity adds real-world consequences and Sybil resistance without sacrificing the non-custodial, wallet-first model. It also puts PACTA on a credible path to regulatory acceptance (a KYC'd P2P financial-protection app is deployable where an anonymous one is not), while keeping funds fully non-custodial and on-chain.
@@ -1464,7 +1586,7 @@ PACTA already makes the *money* safe (staged release, bonds, refunds). KYC makes
 - Cross-chain bridge exploration (EVM, other L1s) for broader reach
 
 ### Long-term vision
-PACTA becomes the **trust protocol that wallets integrate natively** — like how wallets integrated token swap, they integrate escrow. Every wallet has a "protected send" option powered by PACTA. The reputation layer becomes infrastructure, not just one app's feature.
+PACTA ships first as **its own wallet-native app** (this cycle): hold, send, receive, convert, and send protected. From that beachhead it becomes the **trust protocol that other wallets integrate natively** too, like how wallets integrated token swap, they integrate protected send. Every wallet gets a "protected send" option powered by PACTA, and the reputation layer becomes shared infrastructure, not just one app's feature. The `ChainAdapter` seam is what lets that protection travel across chains later.
 
 ---
 
