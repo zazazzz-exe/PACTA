@@ -1,5 +1,6 @@
 import { Wallet, ArrowLeftRight, ShieldCheck, Receipt, User } from 'lucide-react';
 import { navigate, type Route } from '../lib/router';
+import { tabForRoute } from '../lib/tabForRoute';
 
 type TabName = 'home' | 'convert' | 'dashboard' | 'activity' | 'profile';
 
@@ -12,6 +13,7 @@ const TABS: { name: TabName; label: string; path: string; icon: typeof Wallet }[
 ];
 
 export function BottomTabs({ current }: { current: Route['name'] }) {
+  const activeTab = tabForRoute(current);
   return (
     <nav
       aria-label="Primary"
@@ -19,7 +21,7 @@ export function BottomTabs({ current }: { current: Route['name'] }) {
     >
       <div className="mx-auto flex max-w-app items-stretch justify-between px-2">
         {TABS.map((t) => {
-          const active = current === t.name;
+          const active = activeTab === t.name;
           const Icon = t.icon;
           return (
             <button
