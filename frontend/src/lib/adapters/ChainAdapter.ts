@@ -19,6 +19,7 @@ export interface TxResult {
 }
 
 export interface SendParams {
+  from: string; // sender address (source account); needed to build the tx
   to: string;
   asset: AssetId;
   amount: string; // human

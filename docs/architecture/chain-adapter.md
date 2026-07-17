@@ -55,9 +55,10 @@ export interface TxResult {
 }
 
 export interface SendParams {
-  to: string;              // recipient address
+  from: string;             // sender address (source account); needed to build the tx
+  to: string;               // recipient address
   asset: AssetId;
-  amount: string;          // human
+  amount: string;           // human
 }
 
 export interface QuoteParams {
@@ -80,7 +81,7 @@ export interface ChainAdapter {
 ### Method contracts
 
 - **`getBalances(address)`** — returns every asset the account holds, including native XLM and each trustline, with both a human `amount` and raw `baseUnits`. `displayValue` is filled from a deterministic price lookup (`lib/prices.ts`); if a price is unknown, leave it `undefined` and the UI shows the asset amount only. Never invent a value.
-- **`send(params)`** — builds a Stellar payment (or path-payment for a cross-asset direct send) and routes through `signAndSubmit`. This is the "Send now" path only.
+- **`send(params)`** — builds a Stellar payment (or path-payment for a cross-asset direct send) and routes through `signAndSubmit`. This is the "Send now" path only. Takes `{ from, to, asset, amount }`, where `from` is the connected sender's address (the source account whose sequence number the tx uses).
 - **`getQuote(params)`** — strict-send path finding for Convert. Returns `minReceived` after `slippageBps`. If no path exists, throw a typed `NoRouteError` the UI can render as "no route for this pair".
 - **`swap(quote)`** — submits the path-payment described by `quote.raw`, through `signAndSubmit`. Re-quote if the quote is stale.
 - **`signAndSubmit(xdr)`** — the single signing chokepoint: hands the XDR to Stellar Wallets Kit for the user's signature, submits to RPC, and returns the hash + explorer URL. Every write path (send, swap) funnels here so confirmation UX and error mapping live in one place.
