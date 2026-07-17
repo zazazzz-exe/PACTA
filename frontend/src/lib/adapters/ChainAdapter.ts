@@ -40,6 +40,7 @@ export interface Quote {
   minReceived: string;
   path: AssetId[];
   raw: unknown;
+  sender?: string; // account performing the swap; the caller sets this before swap()
 }
 
 export interface ChainAdapter {
@@ -86,6 +87,18 @@ export function humanToBaseUnits(human: string): bigint {
   const combined = `${whole}${fracPadded}`.replace(/^0+(?=\d)/, '');
   const v = BigInt(combined || '0');
   return neg ? -v : v;
+}
+
+// Inverse of humanToBaseUnits. 1000000000n -> "100", 15000000n -> "1.5".
+// Trailing zeros trimmed; no floating point.
+export function baseUnitsToHuman(base: bigint): string {
+  const neg = base < 0n;
+  const v = neg ? -base : base;
+  const s = v.toString().padStart(DECIMALS + 1, '0');
+  const whole = s.slice(0, -DECIMALS);
+  const frac = s.slice(-DECIMALS).replace(/0+$/, '');
+  const out = frac ? `${whole}.${frac}` : whole;
+  return neg ? `-${out}` : out;
 }
 
 export function parseBalances(raw: RawBalanceLine[]): AssetBalance[] {

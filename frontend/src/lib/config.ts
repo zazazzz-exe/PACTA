@@ -34,3 +34,14 @@ export const PHP_RATES: Record<string, number> = {
   USDC: 56,
   EURC: 60,
 };
+
+// Circle USDC on Stellar testnet (confirmed against Circle/Stellar docs).
+export const USDC_TESTNET_ISSUER = 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
+
+// Assets offered as Convert destinations even when the user holds no balance/
+// trustline for them yet. XLM (native) plus testnet USDC. EURC is omitted until
+// its testnet issuer is confirmed.
+export const KNOWN_ASSETS: { code: string; issuer?: string }[] = [
+  { code: 'XLM' },
+  { code: 'USDC', issuer: USDC_TESTNET_ISSUER },
+];
