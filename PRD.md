@@ -164,6 +164,7 @@ The wallet-first product is built as a sequence of shippable phases. Phase 0 (th
 ### 5.3a Phase 4 — Activity, Profile/KYC, polish
 - **Activity** feed (payments, swaps, Pacts) from on-chain data/events.
 - **Profile** tab: KYC status + on-chain reputation.
+- **Linked identity across wallets** (multi-wallet KYC): one verified identity can own several wallet addresses, so a user who verifies once and then connects another wallet keeps their verified status, and logging in with any linked wallet resolves to the same identity. Linking a new wallet is never silent: the new wallet must sign a server nonce while the session is already authenticated as the verified identity (proof of control of both wallets), so a stranger's wallet can never inherit someone's KYC. Schema moves from verification-per-wallet to one identity → many linked wallets; adds a "Link wallet" action in Profile and an unlink flow. Stays inside the documented off-chain KYC exception (no funds, minimal PII). See `docs/kyc.md`.
 - Re-skin the existing escrow detail screens under the wallet shell; the dark proof panel becomes the receipt view.
 - **Gate:** the full wallet-first demo click-path runs end to end on testnet.
 

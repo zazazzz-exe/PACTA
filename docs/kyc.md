@@ -69,6 +69,34 @@ Basic per-address DB brakes: 5 nonce requests/min; block wallet verification
 after 10 failed signatures in 10 min. These are abuse brakes only — put the real
 DDoS/IP control at the edge (Vercel WAF / IP rate limits).
 
+## Roadmap: linked identity across wallets (Phase 4, not yet built)
+
+Today the model is **one verified identity per wallet** (`kyc_profile` is keyed by
+wallet address). A planned Phase 4 change makes one verified identity own
+**several** wallet addresses, so a user who verifies once keeps their status when
+they connect another wallet, and logging in with any linked wallet resolves to
+the same identity.
+
+Design constraints for that change:
+
+- **Linking is never silent.** A wallet cannot inherit an identity just by
+  connecting. To attach a new wallet, the session must already be authenticated
+  as the verified identity, and the **new** wallet must sign an ownership nonce
+  (the same challenge as connect). Only proof of control of **both** wallets links
+  them, so a stranger's wallet can never absorb someone else's KYC.
+- **Schema.** Introduce an identity row that owns many wallet addresses (e.g. an
+  `identity` table plus an `identity_wallet` join, or a nullable `identity_id` on
+  `kyc_profile`); `status`/PII stay on the identity, not the wallet. Ownership
+  nonces and the audit log stay per wallet.
+- **UI.** A "Link wallet" action and an unlink flow in **Profile**; unlinking the
+  last wallet or the verifying wallet needs an explicit rule (documented at build
+  time).
+- Stays inside this off-chain KYC exception: no funds, minimal PII, gates only the
+  app UI. The frozen contract is unaffected.
+
+This is scoped in `PRD.md` §5.3a and will be brainstormed into its own spec + plan
+before any code.
+
 ## Environment
 
 Server-only (Vercel env, or `.env` for `vercel dev`): `SUPABASE_URL`,
