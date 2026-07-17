@@ -6,6 +6,10 @@ export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2H
 export const RPC_URL = 'https://soroban-testnet.stellar.org';
 export const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 
+// Horizon (classic Stellar API) for reading account balances. Separate from the
+// Soroban RPC_URL used for contract calls.
+export const HORIZON_URL = 'https://horizon-testnet.stellar.org';
+
 // Read-only simulations still need an existing, funded source account (the RPC
 // loads its entry for the sequence number). When no wallet is connected we fall
 // back to the contract admin, which is funded and always exists on testnet.
@@ -22,3 +26,11 @@ export const PHP_PER_XLM = 22;
 export const STELLAR_EXPERT = 'https://stellar.expert/explorer/testnet';
 export const contractExplorerUrl = () => `${STELLAR_EXPERT}/contract/${CONTRACT_ID}`;
 export const txExplorerUrl = (hash: string) => `${STELLAR_EXPERT}/tx/${hash}`;
+
+// Static, display-only PHP rates by asset code (approximate; never used in a
+// contract call). Unknown assets show their amount only, no peso estimate.
+export const PHP_RATES: Record<string, number> = {
+  XLM: PHP_PER_XLM, // reuse the existing anchor (22)
+  USDC: 56,
+  EURC: 60,
+};

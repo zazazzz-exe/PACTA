@@ -11,6 +11,7 @@ import App from './App';
 import { TourProvider } from './components/Tour';
 import { WalletContext, type WalletState } from './hooks/useWallet';
 import { connectWallet, getWalletNetworkPassphrase, kit } from './lib/wallet';
+import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
 import { NETWORK_PASSPHRASE } from './lib/config';
@@ -49,6 +50,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
     try {
       const addr = await connectWallet();
       setAddress(addr);
+      navigate('/home');
       setNetwork(await getWalletNetworkPassphrase());
       // Prove wallet ownership for the KYC layer, then load status. A failure
       // here (backend not configured, or the user declines the signature) must
