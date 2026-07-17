@@ -22,3 +22,11 @@ export const PHP_PER_XLM = 22;
 export const STELLAR_EXPERT = 'https://stellar.expert/explorer/testnet';
 export const contractExplorerUrl = () => `${STELLAR_EXPERT}/contract/${CONTRACT_ID}`;
 export const txExplorerUrl = (hash: string) => `${STELLAR_EXPERT}/tx/${hash}`;
+
+// Static, display-only PHP rates by asset code (approximate; never used in a
+// contract call). Unknown assets show their amount only, no peso estimate.
+export const PHP_RATES: Record<string, number> = {
+  XLM: PHP_PER_XLM, // reuse the existing anchor (22)
+  USDC: 56,
+  EURC: 60,
+};
