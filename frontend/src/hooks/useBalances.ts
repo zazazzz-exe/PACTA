@@ -9,24 +9,31 @@ export function useBalances(address: string | null) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isStale?: () => boolean) => {
     if (!address) {
       setBalances([]);
+      setError(null);
+      setLoading(false);
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      setBalances(await adapter.getBalances(address));
+      const result = await adapter.getBalances(address);
+      if (!isStale?.()) setBalances(result);
     } catch (e) {
-      setError(friendlyError(e));
+      if (!isStale?.()) setError(friendlyError(e));
     } finally {
-      setLoading(false);
+      if (!isStale?.()) setLoading(false);
     }
   }, [address]);
 
   useEffect(() => {
-    void load();
+    let ignore = false;
+    void load(() => ignore);
+    return () => {
+      ignore = true;
+    };
   }, [load]);
 
   return {

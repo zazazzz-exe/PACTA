@@ -81,6 +81,7 @@ export default function App() {
     start(route.name === 'dashboard' ? dashboardSteps : landingSteps);
 
   const key = routeKey(route);
+  const showTabs = address && route.name !== 'landing';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -136,7 +137,7 @@ export default function App() {
       <main
         className={`relative z-10 flex-1 ${
           route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'
-        } ${address && route.name !== 'landing' ? 'pb-24' : ''}`}
+        } ${showTabs ? 'pb-24' : ''}`}
       >
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}
@@ -221,7 +222,7 @@ export default function App() {
         </div>
       </footer>
 
-      {address && route.name !== 'landing' && <BottomTabs current={route.name} />}
+      {showTabs && <BottomTabs current={route.name} />}
     </div>
   );
 }
