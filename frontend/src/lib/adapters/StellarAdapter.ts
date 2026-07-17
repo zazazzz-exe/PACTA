@@ -1,4 +1,12 @@
-import { Horizon, TransactionBuilder, Operation, BASE_FEE } from '@stellar/stellar-sdk';
+import {
+  Horizon,
+  TransactionBuilder,
+  Operation,
+  BASE_FEE,
+  Asset,
+  Account,
+  Transaction,
+} from '@stellar/stellar-sdk';
 import { HORIZON_URL } from '../config';
 import { withDisplayValues } from '../prices';
 import {
@@ -10,11 +18,13 @@ import {
   type TxResult,
   parseBalances,
   type RawBalanceLine,
-  NotImplementedError,
+  NoRouteError,
+  humanToBaseUnits,
 } from './ChainAdapter';
 import { assetFromId } from './stellarAssets';
 import { signTransaction } from '../wallet';
 import { NETWORK_PASSPHRASE, txExplorerUrl } from '../config';
+import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
 
 export class StellarAdapter implements ChainAdapter {
   readonly chainId = 'stellar:testnet';
@@ -58,12 +68,37 @@ export class StellarAdapter implements ChainAdapter {
     return this.signAndSubmit(tx.toXDR());
   }
 
-  // Implemented in later phases; declared now to satisfy the seam.
-  async getQuote(_params: QuoteParams): Promise<Quote> {
-    throw new NotImplementedError('getQuote'); // Phase 3
+  async getQuote({ from, to, amount, slippageBps }: QuoteParams): Promise<Quote> {
+    const bps = slippageBps ?? DEFAULT_SLIPPAGE_BPS;
+    const res = await this.server
+      .strictSendPaths(assetFromId(from), amount, [assetFromId(to)])
+      .call();
+    const records = res.records as unknown as PathRecord[];
+    if (records.length === 0) throw new NoRouteError();
+    // Choose the path that yields the most of the destination asset.
+    const best = records.reduce((a, b) =>
+      humanToBaseUnits(b.destination_amount) > humanToBaseUnits(a.destination_amount) ? b : a,
+    );
+    return buildQuote(from, to, amount, best, bps);
   }
-  async swap(_quote: Quote): Promise<TxResult> {
-    throw new NotImplementedError('swap'); // Phase 3
+
+  async swap(quote: Quote): Promise<TxResult> {
+    const sender = quote.sender;
+    if (!sender) throw new Error('swap requires quote.sender (the source account)');
+    const account = await this.server.loadAccount(sender);
+    // Authoritative trustline check from the freshly loaded account.
+    const held = parseBalances(account.balances as unknown as RawBalanceLine[]);
+    const addTrust = !hasTrustline(held, quote.to);
+    const tx = buildConvertTx(account, {
+      sendAsset: assetFromId(quote.from),
+      sendAmount: quote.amountIn,
+      destination: sender, // self-swap: receive into the same account
+      destAsset: assetFromId(quote.to),
+      destMin: quote.minReceived,
+      path: quote.path.map(assetFromId),
+      addTrust,
+    });
+    return this.signAndSubmit(tx.toXDR());
   }
 
   async signAndSubmit(xdr: string): Promise<TxResult> {
@@ -74,6 +109,41 @@ export class StellarAdapter implements ChainAdapter {
     const resp = await this.server.submitTransaction(signed);
     return { hash: resp.hash, explorerUrl: txExplorerUrl(resp.hash), status: 'success' };
   }
+}
+
+// Pure: builds the Convert transaction (one path-payment, optionally preceded by
+// a changeTrust op). Exported so the operation shape is unit-testable without a
+// network round-trip. Signing happens via signAndSubmit, never here.
+export function buildConvertTx(
+  account: Account,
+  opts: {
+    sendAsset: Asset;
+    sendAmount: string;
+    destination: string;
+    destAsset: Asset;
+    destMin: string;
+    path: Asset[];
+    addTrust: boolean;
+  },
+): Transaction {
+  const b = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: NETWORK_PASSPHRASE,
+  });
+  if (opts.addTrust) {
+    b.addOperation(Operation.changeTrust({ asset: opts.destAsset }));
+  }
+  b.addOperation(
+    Operation.pathPaymentStrictSend({
+      sendAsset: opts.sendAsset,
+      sendAmount: opts.sendAmount,
+      destination: opts.destination,
+      destAsset: opts.destAsset,
+      destMin: opts.destMin,
+      path: opts.path,
+    }),
+  );
+  return b.setTimeout(180).build();
 }
 
 // The single adapter the wallet layer imports. Swapping in an EvmAdapter later

@@ -19,6 +19,15 @@ const HORIZON_OP_FRIENDLY: Record<string, string> = {
   op_no_trust: 'The recipient cannot receive this asset yet (they need a trustline for it).',
   op_underfunded: 'You do not have enough balance to send this amount.',
   op_line_full: 'The recipient cannot receive more of this asset right now.',
+  op_too_few_offers:
+    'There are not enough offers on the network to convert this amount right now. Try a smaller amount.',
+  op_under_dest_min:
+    'The price moved past your slippage limit. Get a fresh quote and try again.',
+  op_over_source_max:
+    'The price moved past your limit. Get a fresh quote and try again.',
+  op_no_issuer: 'The destination asset issuer was not found on the network.',
+  op_low_reserve:
+    'You need a little more XLM to add this asset (each asset needs a small reserve).',
 };
 const HORIZON_TX_FRIENDLY: Record<string, string> = {
   tx_insufficient_balance:

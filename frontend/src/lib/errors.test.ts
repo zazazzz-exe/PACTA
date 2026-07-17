@@ -69,4 +69,16 @@ describe('friendlyError - Horizon result_codes', () => {
   it('passes through a plain string', () => {
     expect(friendlyError('Something went wrong')).toBe('Something went wrong');
   });
+
+  it('maps path-payment op codes', () => {
+    expect(
+      friendlyError({ response: { data: { extras: { result_codes: { operations: ['op_too_few_offers'] } } } } }),
+    ).toMatch(/not enough offers/i);
+    expect(
+      friendlyError({ response: { data: { extras: { result_codes: { operations: ['op_under_dest_min'] } } } } }),
+    ).toMatch(/slippage limit/i);
+    expect(
+      friendlyError({ response: { data: { extras: { result_codes: { operations: ['op_low_reserve'] } } } } }),
+    ).toMatch(/little more XLM/i);
+  });
 });
