@@ -2,12 +2,16 @@ import { describe, it, expect, vi } from 'vitest';
 import { Account, Asset } from '@stellar/stellar-sdk';
 
 // StellarAdapter.ts imports signTransaction from '../wallet' for its signing
-// chokepoint. wallet.ts eagerly constructs a StellarWalletsKit at module scope,
-// which touches browser-only globals and a CJS bundle that Vitest's Node
-// environment cannot load. buildConvertTx is a pure function that never
-// touches signing, so stub the module out to keep this test a network-free,
-// browser-free unit test of the transaction shape. (vi.mock calls are hoisted
-// above imports by Vitest, so this runs before StellarAdapter.ts is loaded.)
+// chokepoint. wallet.ts now lazily constructs the StellarWalletsKit (no more
+// module-scope `new StellarWalletsKit(...)`), but merely importing wallet.ts
+// still pulls in `@creit.tech/stellar-wallets-kit`'s FreighterModule, which in
+// turn imports `@stellar/freighter-api`. That package does not provide a named
+// `getAddress` export under Vitest's Node/ESM interop, so importing wallet.ts
+// still throws in this test environment regardless of lazy init. buildConvertTx
+// is a pure function that never touches signing, so stub the module out to keep
+// this test a network-free, browser-free unit test of the transaction shape.
+// (vi.mock calls are hoisted above imports by Vitest, so this runs before
+// StellarAdapter.ts is loaded.)
 vi.mock('../wallet', () => ({
   signTransaction: vi.fn(),
 }));

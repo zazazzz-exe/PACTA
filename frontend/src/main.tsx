@@ -10,7 +10,7 @@ import './index.css';
 import App from './App';
 import { TourProvider } from './components/Tour';
 import { WalletContext, type WalletState } from './hooks/useWallet';
-import { connectWallet, getWalletNetworkPassphrase, kit } from './lib/wallet';
+import { connectWallet, getWalletNetworkPassphrase, getKit } from './lib/wallet';
 import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
@@ -34,7 +34,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
 
   const disconnect = useCallback(() => {
     try {
-      void kit.disconnect();
+      void getKit().disconnect();
     } catch {
       /* noop */
     }

@@ -58,10 +58,10 @@ export function Convert() {
   const reqId = useRef(0);
   useEffect(() => {
     setQuote(null);
+    setError(null);
     if (!from || !to || !validAmount) return;
     const id = ++reqId.current;
     setQuoting(true);
-    setError(null);
     const t = setTimeout(async () => {
       try {
         const q = await adapter.getQuote({ from: from.asset, to, amount });
