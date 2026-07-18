@@ -44,6 +44,14 @@ export async function connectWallet(): Promise<string> {
   });
 }
 
+// Read the wallet extension's currently-active account address. Used by the
+// "link a wallet" flow: the user switches their extension to the account they
+// want to link, and this reads whichever account is active.
+export async function getWalletAddress(): Promise<string> {
+  const { address } = await getKit().getAddress();
+  return address;
+}
+
 // Best-effort read of the wallet's current network passphrase. Returns null if
 // the connected wallet/module does not expose it, so callers can treat unknown
 // as "do not block" rather than failing closed.

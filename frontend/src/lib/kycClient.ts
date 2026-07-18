@@ -1,4 +1,4 @@
-import { signMessage } from './wallet';
+import { signMessage, getWalletAddress } from './wallet';
 import { CONSENT_VERSION } from './consent';
 
 // Same-origin client for the KYC endpoints (mirrors the useRiskLens fetch
@@ -15,6 +15,13 @@ export type KycStatus =
 
 export type ProviderMode = 'capture' | 'hosted';
 
+// A wallet on the connected identity (Phase 4b linked identity).
+export interface LinkedWallet {
+  address: string;
+  isVerifier: boolean; // holds the identity's verification
+  isCurrent: boolean; // the wallet you are connected as right now
+}
+
 export interface KycStatusRead {
   kycStatus: KycStatus;
   maskedName: string | null;
@@ -23,6 +30,7 @@ export interface KycStatusRead {
   docExpiry: string | null;
   updatedAt: string | null;
   providerMode: ProviderMode;
+  linkedWallets?: LinkedWallet[];
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
@@ -92,7 +100,31 @@ export async function submitMedia(
   return res.json() as Promise<{ status: KycStatus }>;
 }
 
-// Right to erasure: remove the stored identity data for the connected wallet.
+// Right to erasure: remove the stored identity data for the connected identity.
 export async function eraseKyc(): Promise<{ status: KycStatus }> {
   return postJson('/api/kyc-erase', { confirm: true });
+}
+
+// Link the wallet extension's currently-active account to the connected,
+// verified identity. The user first switches their extension to the account they
+// want to link; this reads that address, proves ownership of it with a fresh
+// signature, and posts to kyc-link-wallet (authenticated by the current, already
+// verified session). No re-verification is needed.
+export async function linkWallet(): Promise<{ linked: boolean; wallets: LinkedWallet[] }> {
+  const address = await getWalletAddress();
+  const { nonce, challenge } = await postJson<{ nonce: string; challenge: string }>(
+    '/api/kyc-request-nonce',
+    { address },
+  );
+  const { signedMessage } = await signMessage(challenge, { address });
+  return postJson('/api/kyc-link-wallet', { address, nonce, signedMessage });
+}
+
+// Remove a wallet from the connected identity. Removing the verifier wallet (or
+// your only wallet) erases the identity's verified data and needs confirm=true.
+export async function unlinkWallet(
+  address: string,
+  confirm = false,
+): Promise<{ unlinked?: boolean; erased?: boolean; wallets?: LinkedWallet[] }> {
+  return postJson('/api/kyc-unlink-wallet', { address, confirm });
 }

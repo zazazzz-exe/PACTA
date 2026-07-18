@@ -2,10 +2,12 @@ import { db } from './_lib/db';
 import { json, logError } from './_lib/http';
 import { readSession } from './_lib/session';
 import { getProvider } from './_lib/kyc';
+import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
 
 // Return the connected wallet's KYC status. Session-authed: the address comes
 // from the signed cookie, never from the request body, so a caller can only ever
-// read their own status. Poll this while status is 'pending'.
+// read their own status. Status is resolved across the wallet's linked-identity
+// group (verified if any linked wallet is verified). Poll this while 'pending'.
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return json({ error: 'method' }, 405);
@@ -15,21 +17,18 @@ async function handler(req: Request): Promise<Response> {
 
   try {
     const supa = db();
-    const { data, error } = await supa
-      .from('kyc_profile')
-      .select('status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at')
-      .eq('wallet_address', address)
-      .maybeSingle();
-    if (error) throw error;
+    const resolved = await resolveIdentity(supa, address);
     return json({
-      kycStatus: data?.status ?? 'unverified',
-      maskedName: data?.masked_name ?? null,
-      docType: data?.doc_type ?? null,
-      docCountry: data?.doc_country ?? null,
-      docExpiry: data?.doc_expiry ?? null,
-      updatedAt: data?.status_updated_at ?? null,
+      kycStatus: resolved.status,
+      maskedName: resolved.maskedName,
+      docType: resolved.docType,
+      docCountry: resolved.docCountry,
+      docExpiry: resolved.docExpiry,
+      updatedAt: resolved.updatedAt,
       // 'capture' = document/liveness captured in-app; 'hosted' = redirect flow.
       providerMode: getProvider().capture ? 'capture' : 'hosted',
+      // The wallets on this identity, so Profile can render/manage them.
+      linkedWallets: linkedWalletsFrom(resolved, address),
     });
   } catch (e) {
     logError('kyc-status', e);
