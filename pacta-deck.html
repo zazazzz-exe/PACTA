@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PACTA — Pitch Deck</title>
+<style>
+  :root{
+    --bg0:#06201a; --bg1:#0A3328; --bg2:#0a4a3c;
+    --ink:#EAF3EF; --dim:#B7D0C7; --faint:#84A79A;
+    --accent:#0B7A63; --mint:#34E3B0; --amber:#F2B442;
+    --card:rgba(255,255,255,.05); --line:rgba(255,255,255,.12);
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink); overflow:hidden;
+    background:
+      radial-gradient(80% 60% at 75% 10%, rgba(52,227,176,.16), transparent 55%),
+      radial-gradient(70% 60% at 20% 90%, rgba(11,122,99,.35), transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1) 55%,var(--bg2));
+  }
+  .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;display:none;
+    padding:min(9vh,84px) min(9vw,110px);
+    flex-direction:column;justify-content:center;
+    opacity:0;transition:opacity .45s ease, transform .45s ease;transform:translateY(14px);
+  }
+  .slide.on{display:flex;opacity:1;transform:none}
+  .slide.center{align-items:center;text-align:center}
+
+  .eyebrow{font-family:var(--mono);font-size:clamp(12px,1.3vw,15px);letter-spacing:.14em;text-transform:uppercase;color:var(--mint);margin-bottom:20px}
+  h1{font-size:clamp(38px,6.6vw,88px);line-height:1.02;letter-spacing:-.03em;text-wrap:balance;font-weight:800}
+  h2{font-size:clamp(30px,4.6vw,60px);line-height:1.05;letter-spacing:-.02em;text-wrap:balance;font-weight:800;margin-bottom:8px}
+  .lead{font-size:clamp(17px,2.1vw,26px);line-height:1.5;color:var(--dim);max-width:60ch;margin-top:18px}
+  .accent{color:var(--mint)}
+  .amber{color:var(--amber)}
+
+  .grid{display:grid;gap:18px;margin-top:34px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 22px}
+  .card h3{font-size:clamp(17px,1.9vw,22px);letter-spacing:-.01em;margin-bottom:7px;display:flex;align-items:center;gap:9px}
+  .card p{font-size:clamp(13px,1.35vw,16px);line-height:1.5;color:var(--dim)}
+  .card .num{font-family:var(--mono);font-size:12px;color:var(--faint)}
+  .ic{width:30px;height:30px;border-radius:9px;background:rgba(52,227,176,.14);color:var(--mint);display:grid;place-items:center;flex-shrink:0}
+
+  ul.big{margin-top:26px;list-style:none;display:flex;flex-direction:column;gap:14px;max-width:64ch}
+  ul.big li{font-size:clamp(16px,1.9vw,23px);line-height:1.4;color:var(--ink);display:flex;gap:14px;align-items:baseline}
+  ul.big li b{color:var(--mint)}
+  ul.big li::before{content:"";width:9px;height:9px;border-radius:999px;background:var(--mint);flex-shrink:0;transform:translateY(-2px)}
+
+  .stats{display:flex;gap:min(6vw,64px);margin-top:40px;flex-wrap:wrap}
+  .stat b{display:block;font-family:var(--mono);font-size:clamp(30px,4.4vw,58px);color:var(--mint);letter-spacing:-.02em}
+  .stat span{font-size:clamp(12px,1.3vw,15px);color:var(--dim)}
+
+  .flow{display:flex;align-items:center;gap:14px;margin-top:40px;flex-wrap:wrap;justify-content:center}
+  .node{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px;text-align:center;min-width:150px}
+  .node .k{font-family:var(--mono);font-size:12px;color:var(--faint)} .node .v{font-size:clamp(15px,1.7vw,20px);margin-top:4px}
+  .arrow{color:var(--mint);font-size:26px}
+  .node.vault{background:#0B0F0E;border-color:#233029;color:var(--mint)}
+
+  .compare{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+  .compare .col{border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--card)}
+  .compare .col.win{border-color:var(--mint);background:rgba(52,227,176,.08)}
+  .compare .col h4{font-size:15px;margin-bottom:10px;color:var(--dim)} .compare .col.win h4{color:var(--mint)}
+  .compare .col p{font-size:clamp(13px,1.3vw,15px);line-height:1.5;color:var(--dim)}
+
+  .check{color:var(--mint)}
+  .list2{columns:2;column-gap:34px;margin-top:26px;max-width:70ch}
+  .list2 div{font-size:clamp(14px,1.5vw,18px);line-height:1.35;padding:8px 0;break-inside:avoid;display:flex;gap:10px}
+  .list2 .check{flex-shrink:0}
+
+  .footer{position:fixed;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:14px min(9vw,110px);font-family:var(--mono);font-size:12px;color:var(--faint);pointer-events:none}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--sans);font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+  .brand .dot{width:24px;height:24px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--mint));display:grid;place-items:center;color:#06201a;font-weight:900;font-size:13px}
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--mint);transition:width .35s ease;z-index:5}
+
+  .nav{position:fixed;bottom:14px;right:min(9vw,110px);display:flex;gap:8px;z-index:6}
+  .nav button{width:38px;height:38px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);cursor:pointer;font-size:16px;display:grid;place-items:center;pointer-events:auto}
+  .nav button:hover{background:rgba(52,227,176,.16);border-color:var(--mint)}
+  .nav button:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .hint{position:fixed;bottom:16px;left:min(9vw,110px);font-family:var(--mono);font-size:11px;color:var(--faint);z-index:6}
+
+  @media (prefers-reduced-motion:reduce){.slide{transition:none}}
+  @media (max-width:640px){.slide{padding:60px 26px}.g3,.g4,.compare,.list2{grid-template-columns:1fr;columns:1}}
+</style>
+</head>
+<body>
+<div class="progress" id="prog"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 TITLE -->
+  <section class="slide center">
+    <div class="eyebrow">Payment &amp; Consumer Applications · Stellar</div>
+    <h1>Simplify every payment.<br><span class="accent">Protect the ones that matter.</span></h1>
+    <p class="lead">PACTA is a non-custodial money wallet on Stellar that keeps working even when the signal drops.</p>
+  </section>
+
+  <!-- 2 PROBLEM -->
+  <section class="slide">
+    <div class="eyebrow">The problem</div>
+    <h2>Sending money to people you don't fully trust is scary.</h2>
+    <ul class="big">
+      <li><b>Pay and pray.</b> Freelancers and sellers demand payment up front — buyers get burned when the work never comes.</li>
+      <li><b>Fragile remittance.</b> For OFW families, fees are high, custody is opaque, and the connection is unreliable.</li>
+      <li><b>Crypto is unfriendly.</b> Wallets speak jargon, assume constant signal, and offer no protection when a deal goes wrong.</li>
+    </ul>
+  </section>
+
+  <!-- 3 AUDIENCE -->
+  <section class="slide">
+    <div class="eyebrow">Who it's for</div>
+    <h2>Money that moves the way real people need it to.</h2>
+    <div class="grid g3">
+      <div class="card"><h3><span class="ic">◎</span>OFWs &amp; families</h3><p>Sending and receiving across borders, often on a spotty connection.</p></div>
+      <div class="card"><h3><span class="ic">◎</span>Everyday payers</h3><p>Paying freelancers, online sellers, and small providers they don't fully know.</p></div>
+      <div class="card"><h3><span class="ic">◎</span>Self-custody seekers</h3><p>Their keys, their funds — without the complexity.</p></div>
+    </div>
+  </section>
+
+  <!-- 4 MEET PACTA -->
+  <section class="slide center">
+    <div class="eyebrow">Meet PACTA</div>
+    <h2>Every other wallet lets you send money.<br><span class="accent">PACTA lets you send money you can get back.</span></h2>
+    <div class="stats" style="justify-content:center">
+      <div class="stat"><b>0</b><span>custody — your keys, your funds</span></div>
+      <div class="stat"><b>~3s</b><span>settlement on Stellar</span></div>
+      <div class="stat"><b>1</b><span>tap to protect a payment</span></div>
+    </div>
+  </section>
+
+  <!-- 5 WALLET LAYER -->
+  <section class="slide">
+    <div class="eyebrow">The wallet layer · the front door</div>
+    <h2>One wallet, everything money.</h2>
+    <div class="grid g4">
+      <div class="card"><h3>Hold</h3><p>A multi-asset portfolio with live peso values. Keys never leave your wallet.</p></div>
+      <div class="card"><h3>Send</h3><p>Pay anyone on Stellar in seconds — now, or protected.</p></div>
+      <div class="card"><h3>Receive</h3><p>Your address or QR. Get paid from any Stellar wallet.</p></div>
+      <div class="card"><h3>Convert</h3><p>Swap assets on the Stellar DEX at the best on-chain rate.</p></div>
+    </div>
+    <p class="lead">Non-custodial by design — PACTA never holds your keys or your funds.</p>
+  </section>
+
+  <!-- 6 PACT -->
+  <section class="slide">
+    <div class="eyebrow">The protection layer · a Pact</div>
+    <h2>Send protected: money that protects itself.</h2>
+    <div class="flow">
+      <div class="node"><div class="k">You</div><div class="v">Your wallet</div></div>
+      <div class="arrow">→</div>
+      <div class="node vault"><div class="k">protected</div><div class="v mono">smart contract</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="k">Delivered</div><div class="v">Recipient</div></div>
+    </div>
+    <ul class="big" style="margin-top:28px">
+      <li><b>Locked in code</b> — funds sit in a Soroban contract, not with PACTA.</li>
+      <li><b>Backed by a bond</b> — the recipient stakes a security bond; walk away, and it's yours.</li>
+      <li><b>Released in milestones · refundable</b> — pay as work lands; reclaim it after the deadline if it doesn't.</li>
+    </ul>
+  </section>
+
+  <!-- 7 RISK LENS -->
+  <section class="slide">
+    <div class="eyebrow">Differentiator · AI Risk Lens</div>
+    <h2>Know who you're paying — before you pay.</h2>
+    <p class="lead">Before you commit to a Pact, PACTA reads your counterparty's <span class="accent">real on-chain history</span> — completed vs. refunded deals, volume, track record — and turns it into a plain-language risk read with suggested milestones.</p>
+    <p class="lead" style="color:var(--faint)">The numbers are computed deterministically on-chain. The AI only translates correct numbers into human language — it never invents data.</p>
+  </section>
+
+  <!-- 8 LINKED IDENTITY -->
+  <section class="slide">
+    <div class="eyebrow">Differentiator · Linked identity</div>
+    <h2>Verify once. Use any of your wallets.</h2>
+    <ul class="big">
+      <li>Verify your identity <b>once</b>, then link your other wallets by signing with them.</li>
+      <li>Any linked wallet counts as the same verified you — <b>no re-doing KYC.</b></li>
+      <li>Linking is never silent: a new wallet must <b>prove it's yours</b>, so no stranger can inherit your status.</li>
+    </ul>
+    <p class="lead" style="color:var(--faint)">Off-chain, minimal personal data, never holds funds, erasable on request.</p>
+  </section>
+
+  <!-- 9 OFFLINE (HERO) -->
+  <section class="slide center">
+    <div class="eyebrow amber" style="color:var(--amber)">The edge · works offline</div>
+    <h2>A wallet that works<br>when the signal doesn't.</h2>
+    <div class="flow">
+      <div class="node"><div class="k">1 · Offline</div><div class="v">You're in a dead zone</div></div>
+      <div class="arrow" style="color:var(--amber)">→</div>
+      <div class="node" style="border-color:var(--amber)"><div class="k" style="color:var(--amber)">2 · Queued</div><div class="v">Payment waits, not lost</div></div>
+      <div class="arrow">→</div>
+      <div class="node vault"><div class="k">3 · Reconnect</div><div class="v mono">Auto-delivered</div></div>
+    </div>
+    <p class="lead" style="max-width:64ch">Queue a payment with no signal; it sends itself the moment you reconnect. Built for where remittance actually happens.</p>
+  </section>
+
+  <!-- 10 DEMO MODE -->
+  <section class="slide">
+    <div class="eyebrow">The edge · reliable anywhere</div>
+    <h2>One tap. Zero network. Nothing to break.</h2>
+    <p class="lead">Demo mode runs the whole app on seeded data with simulated transactions and no network at all — a bulletproof live demo, and a proof-of-concept for a fully offline-first experience.</p>
+    <p class="lead" style="color:var(--faint)">Honest framing: real settlement is always on Stellar. The offline outbox defers and completes on reconnect; demo mode is a presentation layer. The low-connectivity value is real.</p>
+  </section>
+
+  <!-- 11 HOW IT WORKS -->
+  <section class="slide">
+    <div class="eyebrow">How it works</div>
+    <h2>Connect, and your money is ready to move.</h2>
+    <div class="grid g3">
+      <div class="card"><span class="num">01</span><h3>Connect</h3><p>Your wallet is your login. No passwords, no sign-up.</p></div>
+      <div class="card"><span class="num">02</span><h3>Send or protect</h3><p>Send now, or Send protected to create a Pact with a bond and milestones.</p></div>
+      <div class="card"><span class="num">03</span><h3>Release &amp; prove</h3><p>Release as work lands, or refund after the deadline. Every step is on-chain.</p></div>
+    </div>
+  </section>
+
+  <!-- 12 ARCHITECTURE -->
+  <section class="slide">
+    <div class="eyebrow">Architecture</div>
+    <h2>Non-custodial, and built to scale.</h2>
+    <ul class="big">
+      <li><b>The contract is the backend.</b> A deployed Soroban smart contract governs protection — PACTA holds nothing.</li>
+      <li><b>One clean seam.</b> Every screen depends only on a <span class="accent">ChainAdapter</span> interface — never the Stellar SDK. A future EVM chain is one new adapter, zero screen changes.</li>
+      <li><b>Proven.</b> That same seam is how demo mode swaps in a mock adapter — the multi-chain story isn't hand-waving.</li>
+    </ul>
+  </section>
+
+  <!-- 13 WHY DIFFERENT -->
+  <section class="slide">
+    <div class="eyebrow">Why not just use another wallet?</div>
+    <h2>Self-custody plus protection.</h2>
+    <div class="compare">
+      <div class="col"><h4>Fintech (GCash, Wise)</h4><p>Custodial — you trust <i>them</i> with your money. No self-custody, no on-chain proof.</p></div>
+      <div class="col"><h4>Crypto wallets (Freighter, Lobstr)</h4><p>Self-custody, but every payment is send-and-pray — irreversible the second you hit send.</p></div>
+      <div class="col win"><h4>PACTA</h4><p>Self-custody <i>and</i> protection: escrowed, refundable payments, an AI risk read, portable identity — and it works offline.</p></div>
+    </div>
+  </section>
+
+  <!-- 14 WHAT'S BUILT -->
+  <section class="slide">
+    <div class="eyebrow">Status · live on Stellar testnet</div>
+    <h2>A working, end-to-end app.</h2>
+    <div class="list2">
+      <div><span class="check">✓</span> Wallet hub — connect, portfolio, receive</div>
+      <div><span class="check">✓</span> Send now vs. Send protected (a Pact)</div>
+      <div><span class="check">✓</span> Convert on the Stellar DEX</div>
+      <div><span class="check">✓</span> AI Risk Lens on counterparties</div>
+      <div><span class="check">✓</span> Activity feed &amp; on-chain reputation</div>
+      <div><span class="check">✓</span> Linked identity across wallets</div>
+      <div><span class="check">✓</span> Offline outbox + demo mode</div>
+      <div><span class="check">✓</span> Polished, plain-language mobile UX</div>
+    </div>
+  </section>
+
+  <!-- 15 ROADMAP -->
+  <section class="slide">
+    <div class="eyebrow">Roadmap</div>
+    <h2>From demo to daily driver.</h2>
+    <div class="grid g4">
+      <div class="card"><h3>Fiat ramp</h3><p>Cash in/out to PHP via Stellar anchors. The KYC layer is the on-ramp.</p></div>
+      <div class="card"><h3>Cross-chain</h3><p>An EVM adapter behind the same seam — the payoff of the architecture.</p></div>
+      <div class="card"><h3>Offline-first</h3><p>Installable app, cached balances, real deferred signing.</p></div>
+      <div class="card"><h3>Mainnet</h3><p>Dispute resolution, a security audit, and launch.</p></div>
+    </div>
+  </section>
+
+  <!-- 16 CLOSE -->
+  <section class="slide center">
+    <div class="eyebrow">Live on Stellar testnet</div>
+    <h1>Your money is <span class="accent">yours</span> to move.</h1>
+    <p class="lead">Self-custody. Protected payments. An AI you can verify. And a wallet that works even when the signal doesn't.</p>
+    <p class="lead mono" style="color:var(--mint);font-size:16px;margin-top:26px">PACTA — trust, written in code.</p>
+  </section>
+
+</div>
+
+<div class="footer">
+  <div class="brand"><span class="dot">P</span>PACTA</div>
+  <div><span id="cur">1</span> / <span id="tot">16</span></div>
+</div>
+<div class="hint">← → or Space to navigate</div>
+<div class="nav"><button id="prev" aria-label="Previous slide">‹</button><button id="next" aria-label="Next slide">›</button></div>
+
+<script>
+"use strict";
+const slides=[...document.querySelectorAll(".slide")];
+let i=0;
+const cur=document.getElementById("cur"), tot=document.getElementById("tot"), prog=document.getElementById("prog");
+tot.textContent=slides.length;
+function show(n){
+  i=Math.max(0,Math.min(slides.length-1,n));
+  slides.forEach((s,k)=>s.classList.toggle("on",k===i));
+  cur.textContent=i+1;
+  prog.style.width=((i+1)/slides.length*100)+"%";
+  location.hash=i+1;
+}
+function next(){show(i+1)} function prev(){show(i-1)}
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+addEventListener("keydown",e=>{
+  if(["ArrowRight","PageDown"," "].includes(e.key)){e.preventDefault();next();}
+  else if(["ArrowLeft","PageUp"].includes(e.key)){e.preventDefault();prev();}
+  else if(e.key==="Home"){show(0)} else if(e.key==="End"){show(slides.length-1)}
+});
+// tap right/left half to navigate (touch/click), but not on buttons
+document.getElementById("deck").addEventListener("click",e=>{
+  if(e.target.closest("button")) return;
+  (e.clientX > innerWidth/2 ? next : prev)();
+});
+show(parseInt(location.hash.replace("#",""))-1 || 0);
+</script>
+</body>
+</html>
