@@ -15,6 +15,8 @@ import {
   Boxes,
   Clock,
   CheckCircle2,
+  TrendingUp,
+  BadgeCheck,
 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useTour } from '../components/Tour';
@@ -31,21 +33,25 @@ const CAPABILITIES = [
     icon: Wallet,
     title: 'Hold',
     body: 'A multi-asset portfolio with live peso values. Your keys and funds never leave your wallet.',
+    tint: 'bg-gradient-to-br from-accent to-accent-deep text-white',
   },
   {
     icon: Send,
     title: 'Send',
     body: 'Pay anyone on Stellar in seconds. Send now, or send protected when it matters.',
+    tint: 'bg-gradient-to-br from-deadline to-deadline-deep text-white',
   },
   {
     icon: QrCode,
     title: 'Receive',
     body: 'Share your address or QR and get paid from any Stellar wallet.',
+    tint: 'bg-signal text-carbon',
   },
   {
     icon: Repeat,
     title: 'Convert',
     body: 'Swap one asset for another on the Stellar DEX, at the best on-chain rate.',
+    tint: 'bg-gradient-to-br from-accent-deep to-accent text-white',
   },
 ] as const;
 
@@ -182,34 +188,65 @@ export function Landing() {
                 </span>
               ))}
             </div>
+
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 lg:justify-start">
+              <span className="text-[12px] font-medium text-fog">Works with</span>
+              {['Freighter', 'xBull', 'Hana'].map((w) => (
+                <span
+                  key={w}
+                  className="inline-flex items-center gap-1.5 rounded-pill bg-mist px-3 py-1 text-[12px] font-medium text-slate"
+                >
+                  <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden />
+                  {w}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Right — the wallet, on a phone */}
+          {/* Right — the wallet, on a 3D-tilted phone */}
           <div data-tour="proof" className="relative">
-            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] bg-gradient-to-br from-accent-tint via-canvas to-accent-tint/70 p-6 shadow-card sm:p-10">
-              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-accent/25" aria-hidden />
-              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-signal/20" aria-hidden />
-              <div className="mesh-dots pointer-events-none absolute inset-0 opacity-30" aria-hidden />
+            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] border border-accent/20 bg-gradient-to-br from-accent-tint via-canvas to-accent/10 p-6 shadow-pop sm:p-10">
+              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-accent/30" aria-hidden />
+              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-signal/25" aria-hidden />
+              <div className="glow-orb absolute right-10 bottom-4 h-28 w-28 bg-deadline/20" aria-hidden />
+              <div className="mesh-dots pointer-events-none absolute inset-0 opacity-40" aria-hidden />
 
-              <div className="relative flex justify-center">
-                <div className="float-card-enter">
+              <div className="relative flex justify-center py-2">
+                <div className="phone-3d">
                   <PhoneMockup size="lg" variant="light" float>
                     <WalletPreview />
                   </PhoneMockup>
                 </div>
               </div>
 
-              {/* Floating life */}
-              <div className="float-card-a absolute right-1 top-10 z-20 hidden sm:block">
+              {/* Floating life — varied colors */}
+              <div className="float-card-c absolute -left-2 top-16 z-20 hidden sm:block">
+                <div className="float-card-enter flex items-center gap-2.5 rounded-card border border-grid bg-carbon px-3 py-2 shadow-pop">
+                  <span className="grid h-8 w-8 place-items-center rounded-control bg-onyx text-signal">
+                    <TrendingUp size={15} aria-hidden />
+                  </span>
+                  <div>
+                    <p className="mono text-[13px] font-semibold leading-none text-signal">+12.4%</p>
+                    <p className="mt-0.5 text-[9px] text-panel-muted">this month</p>
+                  </div>
+                </div>
+              </div>
+              <div className="float-card-a absolute right-0 top-9 z-20 hidden sm:block">
                 <div className="float-card-enter float-card-enter-2 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
                   <CheckCircle2 size={14} className="text-accent" aria-hidden />
                   <span className="text-[11px] font-medium text-ink">Received 75 XLM</span>
                 </div>
               </div>
-              <div className="float-card-b absolute bottom-12 left-1 z-20 hidden sm:block">
+              <div className="float-card-b absolute bottom-16 left-0 z-20 hidden sm:block">
                 <div className="float-card-enter float-card-enter-3 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
                   <Repeat size={14} className="text-accent-deep" aria-hidden />
                   <span className="text-[11px] font-medium text-ink">XLM to USDC</span>
+                </div>
+              </div>
+              <div className="float-card-a absolute -right-1 bottom-9 z-20 hidden sm:block">
+                <div className="float-card-enter float-card-enter-3 flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1.5 shadow-pop">
+                  <BadgeCheck size={14} className="text-white" aria-hidden />
+                  <span className="text-[11px] font-medium text-white">Verified</span>
                 </div>
               </div>
             </div>
@@ -218,7 +255,7 @@ export function Landing() {
       </section>
 
       {/* ── One wallet, everything money ── */}
-      <section className="landing-section-green relative px-5 py-16 sm:px-8 lg:py-24" data-tour="how">
+      <section className="landing-section-green relative px-5 py-14 sm:px-8 sm:py-16" data-tour="how">
         <div className="mesh-dots pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-6xl">
           <Reveal>
@@ -233,12 +270,12 @@ export function Landing() {
             </p>
           </Reveal>
 
-          <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {CAPABILITIES.map(({ icon: Icon, title, body }, i) => (
+          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {CAPABILITIES.map(({ icon: Icon, title, body, tint }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
-                  <div className="group step-card h-full rounded-card border border-accent/20 bg-paper/95 p-6 shadow-card">
-                    <div className="icon-pop grid h-12 w-12 place-items-center rounded-control bg-accent-tint text-accent">
+                  <div className="group step-card h-full rounded-card border border-accent/20 bg-paper p-6 shadow-card">
+                    <div className={`icon-pop grid h-12 w-12 place-items-center rounded-control shadow-card ${tint}`}>
                       <Icon size={24} aria-hidden />
                     </div>
                     <h3 className="mt-4 text-[18px] font-medium text-ink">{title}</h3>
@@ -252,7 +289,7 @@ export function Landing() {
       </section>
 
       {/* ── Send protected (a Pact) ── */}
-      <section className="landing-section-mint relative px-5 py-16 sm:px-8 lg:py-24">
+      <section className="landing-section-mint relative px-5 py-14 sm:px-8 sm:py-16">
         <div className="relative mx-auto max-w-6xl">
           <Reveal>
             <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-accent">
@@ -267,7 +304,7 @@ export function Landing() {
             </p>
           </Reveal>
 
-          <ul className="mt-12 grid gap-5 sm:grid-cols-2">
+          <ul className="mt-10 grid gap-5 sm:grid-cols-2">
             {PROTECT.map(({ icon: Icon, title, body }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
@@ -294,28 +331,37 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Trust you can verify ── */}
-      <section className="relative px-5 py-16 sm:px-8 lg:py-24">
+      {/* ── Trust you can verify (dark) ── */}
+      <section className="relative overflow-hidden bg-carbon px-5 py-14 sm:px-8 sm:py-16">
+        <div className="proof-grid" aria-hidden />
+        <div
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              'radial-gradient(circle at 82% 18%, rgba(52,227,176,0.16), transparent 45%), radial-gradient(circle at 12% 90%, rgba(11,122,99,0.28), transparent 45%)',
+          }}
+          aria-hidden
+        />
         <div className="relative mx-auto max-w-6xl">
           <Reveal>
-            <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-accent">
+            <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-signal">
               Why PACTA
             </p>
-            <h2 className="mt-2 text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
+            <h2 className="mt-2 text-center text-[28px] font-semibold tracking-tight text-panel-ink sm:text-[36px]">
               Trust you can verify
             </h2>
           </Reveal>
 
-          <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {TRUST.map(({ icon: Icon, title, body }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
-                  <div className="group step-card h-full rounded-card border border-hairline bg-paper p-6 shadow-card">
-                    <div className="icon-pop grid h-11 w-11 place-items-center rounded-control bg-mist text-accent">
+                  <div className="group step-card h-full rounded-card border border-grid bg-onyx p-6">
+                    <div className="icon-pop grid h-11 w-11 place-items-center rounded-control bg-grid text-signal">
                       <Icon size={22} aria-hidden />
                     </div>
-                    <h3 className="mt-4 text-[16px] font-medium text-ink">{title}</h3>
-                    <p className="mt-2 text-[13.5px] leading-relaxed text-slate">{body}</p>
+                    <h3 className="mt-4 text-[16px] font-medium text-panel-ink">{title}</h3>
+                    <p className="mt-2 text-[13.5px] leading-relaxed text-panel-muted">{body}</p>
                   </div>
                 </Reveal>
               </li>
@@ -325,7 +371,7 @@ export function Landing() {
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="px-5 py-16 sm:px-8 lg:pb-24">
+      <section className="px-5 py-14 sm:px-8 sm:py-16">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <div className="landing-hero-panel relative overflow-hidden rounded-[24px] px-6 py-14 text-center shadow-pop sm:px-12 sm:py-20">

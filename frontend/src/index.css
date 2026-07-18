@@ -313,3 +313,18 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .landing-hero-panel {
   background: linear-gradient(145deg, var(--color-accent-deep) 0%, var(--color-hero-navy) 40%, var(--color-accent) 100%);
 }
+
+/* Hero phone — subtle 3D tilt with depth; straightens toward the viewer on
+   hover. The inner phone still floats (composed child transform). */
+.phone-3d {
+  transform: perspective(1500px) rotateY(-16deg) rotateX(7deg) rotateZ(-1deg);
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 26px 44px rgba(10, 90, 73, 0.32));
+  will-change: transform;
+}
+.phone-3d:hover {
+  transform: perspective(1500px) rotateY(-7deg) rotateX(3deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .phone-3d { transform: perspective(1500px) rotateY(-11deg) rotateX(5deg); }
+}
