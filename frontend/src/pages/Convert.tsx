@@ -49,6 +49,14 @@ export function Convert() {
     return toOptions.find((a) => assetKey(a) === toKey) ?? toOptions[0];
   }, [toOptions, toKey]);
 
+  // Your balance of the destination asset (if you hold it), used for display and
+  // to enable the flip (you can only send an asset you actually hold).
+  const toBalance = useMemo(
+    () => (to ? balances.find((b) => sameAsset(b.asset, to)) : undefined),
+    [balances, to],
+  );
+  const toHeld = !!toBalance;
+
   const amountNum = Number(amount);
   const maxNum = from ? Number(from.amount) : 0;
   const overBalance = amountNum > maxNum;
@@ -131,6 +139,19 @@ export function Convert() {
   const needTrust = to ? !hasTrustline(balances, to) : false;
   const ready = !!from && !!to && !!quote && validAmount && !quoting && !sameAsset(from.asset, to);
 
+  // Swap the from/to assets. Only possible when you hold the current "to" asset
+  // (it becomes the new "from").
+  function flip() {
+    if (!from || !to || !toHeld) return;
+    const newFrom = assetKey(to);
+    const newTo = keyOf(from);
+    setFromKey(newFrom);
+    setToKey(newTo);
+    setAmount('');
+    setQuote(null);
+    setError(null);
+  }
+
   async function doSwap() {
     if (!quote || !address) return;
     setSwapping(true);
@@ -152,14 +173,22 @@ export function Convert() {
     <div className="mx-auto max-w-app space-y-5 px-1">
       <h1 className="text-[22px] font-semibold tracking-tight text-ink">Convert</h1>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <span className="mb-1.5 block text-[13px] text-slate">From</span>
+      {/* From / To with a one-tap flip */}
+      <div className="space-y-2">
+        <div className="rounded-card border border-hairline bg-paper p-3.5">
+          <div className="flex items-center justify-between text-[12px] text-slate">
+            <span>From</span>
+            {from && (
+              <span>
+                Balance: <span className="mono text-ink">{from.amount}</span> {from.asset.code}
+              </span>
+            )}
+          </div>
           <select
             value={from ? keyOf(from) : ''}
             onChange={(e) => setFromKey(e.target.value)}
             disabled={loading || balances.length === 0}
-            className="h-12 w-full rounded-control border border-hairline bg-paper px-3 text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
+            className="mt-1 h-9 w-full bg-transparent text-[16px] font-medium text-ink focus:outline-none"
           >
             {balances.map((b) => (
               <option key={keyOf(b)} value={keyOf(b)}>
@@ -167,14 +196,34 @@ export function Convert() {
               </option>
             ))}
           </select>
-        </label>
-        <label className="block">
-          <span className="mb-1.5 block text-[13px] text-slate">To</span>
+        </div>
+
+        <div className="relative flex justify-center">
+          <button
+            onClick={flip}
+            disabled={!toHeld}
+            aria-label="Swap from and to"
+            title={toHeld ? 'Swap from and to' : 'You need a balance of the destination asset to flip'}
+            className="-my-4 grid h-9 w-9 place-items-center rounded-pill border border-hairline bg-paper text-slate shadow-card transition hover:border-accent/40 hover:text-accent disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <ArrowDownUp size={16} aria-hidden />
+          </button>
+        </div>
+
+        <div className="rounded-card border border-hairline bg-paper p-3.5">
+          <div className="flex items-center justify-between text-[12px] text-slate">
+            <span>To</span>
+            {toBalance && (
+              <span>
+                Balance: <span className="mono text-ink">{toBalance.amount}</span> {to?.code}
+              </span>
+            )}
+          </div>
           <select
             value={to ? assetKey(to) : ''}
             onChange={(e) => setToKey(e.target.value)}
             disabled={!from || toOptions.length === 0}
-            className="h-12 w-full rounded-control border border-hairline bg-paper px-3 text-ink focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
+            className="mt-1 h-9 w-full bg-transparent text-[16px] font-medium text-ink focus:outline-none"
           >
             {toOptions.map((a) => (
               <option key={assetKey(a)} value={assetKey(a)}>
@@ -182,7 +231,7 @@ export function Convert() {
               </option>
             ))}
           </select>
-        </label>
+        </div>
       </div>
 
       <label className="block">
@@ -197,11 +246,6 @@ export function Convert() {
           className="mono h-12 w-full rounded-control border border-hairline bg-paper px-3.5 text-ink placeholder:text-fog focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/15"
         />
       </label>
-      {from && (
-        <p className="-mt-2 text-[12px] text-slate">
-          Balance: <span className="mono">{from.amount}</span> {from.asset.code}
-        </p>
-      )}
 
       {overBalance && <p className="text-[13px] text-refund">Amount is more than your balance.</p>}
 

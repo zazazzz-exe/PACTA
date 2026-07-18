@@ -2,10 +2,17 @@ import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useActivity } from '../hooks/useActivity';
 import type { ActivityItem } from '../lib/activity';
-import { timeAgo } from '../lib/activity';
+import { timeAgo, groupByDay } from '../lib/activity';
 import { shortAddr } from '../lib/format';
 import { txExplorerUrl } from '../lib/config';
 import { ConnectButton } from '../components/ConnectButton';
+
+// A small colored asset chip, matching the wallet's asset styling.
+function assetTone(code: string): string {
+  if (code === 'XLM') return 'bg-accent text-white';
+  if (code === 'USDC') return 'bg-accent-deep text-white';
+  return 'bg-mist text-slate';
+}
 
 function Row({ item, now }: { item: ActivityItem; now: number }) {
   const received = item.kind === 'received';
@@ -16,12 +23,19 @@ function Row({ item, now }: { item: ActivityItem; now: number }) {
       rel="noreferrer"
       className="flex items-center gap-3 rounded-card border border-hairline bg-paper p-3.5 transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
-      <span
-        className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill ${
-          received ? 'bg-accent-tint text-accent-deep' : 'bg-mist text-slate'
-        }`}
-      >
-        {received ? <ArrowDownLeft size={18} aria-hidden /> : <ArrowUpRight size={18} aria-hidden />}
+      <span className="relative shrink-0">
+        <span
+          className={`grid h-9 w-9 place-items-center rounded-pill text-[11px] font-semibold ${assetTone(item.assetCode)}`}
+        >
+          {item.assetCode.slice(0, 2)}
+        </span>
+        <span
+          className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-pill border-2 border-paper ${
+            received ? 'bg-accent text-white' : 'bg-slate text-white'
+          }`}
+        >
+          {received ? <ArrowDownLeft size={9} aria-hidden /> : <ArrowUpRight size={9} aria-hidden />}
+        </span>
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium text-ink">
@@ -46,6 +60,7 @@ export function Activity() {
   const { address } = useWallet();
   const { items, loading, error } = useActivity(address);
   const now = Date.now();
+  const groups = groupByDay(items, now);
 
   if (!address) {
     return (
@@ -81,13 +96,18 @@ export function Activity() {
         </div>
       )}
 
-      {items.length > 0 && (
-        <div className="space-y-3">
-          {items.map((it) => (
-            <Row key={it.id} item={it} now={now} />
-          ))}
+      {groups.map((group) => (
+        <div key={group.label}>
+          <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-wider text-slate">
+            {group.label}
+          </h2>
+          <div className="space-y-2.5">
+            {group.items.map((it) => (
+              <Row key={it.id} item={it} now={now} />
+            ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }

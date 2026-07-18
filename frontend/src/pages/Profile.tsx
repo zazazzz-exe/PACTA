@@ -119,7 +119,7 @@ export function Profile() {
   const linked = kyc?.linkedWallets ?? [];
 
   return (
-    <div className="mx-auto max-w-app space-y-5 px-1">
+    <div className="mx-auto max-w-app space-y-4 px-1">
       <h1 className="text-[22px] font-semibold tracking-tight text-ink">Profile</h1>
 
       {/* Identity */}
@@ -157,7 +157,12 @@ export function Profile() {
       {/* Linked wallets (only meaningful once verified) */}
       {verified && (
         <div className="rounded-card border border-hairline bg-paper p-4">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Linked wallets</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Linked wallets</h2>
+            <span className="rounded-pill bg-accent-tint px-2 py-0.5 text-[11px] font-semibold text-accent-deep">
+              {linked.length}
+            </span>
+          </div>
           <p className="mt-1.5 text-[12px] text-slate">
             Wallets that share this verified identity. Any of them can send protected payments as you.
           </p>

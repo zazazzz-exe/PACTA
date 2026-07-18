@@ -84,6 +84,37 @@ export function parseActivity(records: RawPaymentRecord[], address: string): Act
   return out;
 }
 
+export interface ActivityGroup {
+  label: string;
+  items: ActivityItem[];
+}
+
+function dayStart(ms: number): number {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+// Bucket newest-first items into Today / Yesterday / Earlier, preserving order.
+// nowMs is passed in so callers control "now".
+export function groupByDay(items: ActivityItem[], nowMs: number): ActivityGroup[] {
+  const order = ['Today', 'Yesterday', 'Earlier'];
+  const buckets = new Map<string, ActivityItem[]>();
+  const today = dayStart(nowMs);
+  for (const it of items) {
+    const t = Date.parse(it.createdAt);
+    let label = 'Earlier';
+    if (!Number.isNaN(t)) {
+      const days = Math.round((today - dayStart(t)) / 86_400_000);
+      label = days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : 'Earlier';
+    }
+    const arr = buckets.get(label);
+    if (arr) arr.push(it);
+    else buckets.set(label, [it]);
+  }
+  return order.filter((l) => buckets.has(l)).map((label) => ({ label, items: buckets.get(label)! }));
+}
+
 // Compact "time ago" from an ISO timestamp relative to nowMs (passed in for
 // deterministic tests). e.g. "just now", "5m", "3h", "2d", or a date.
 export function timeAgo(iso: string, nowMs: number): string {
