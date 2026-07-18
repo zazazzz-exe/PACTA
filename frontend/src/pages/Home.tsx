@@ -83,8 +83,15 @@ export function Home() {
         )}
 
         {!loading && !error && balances.length === 0 && (
-          <div className="rounded-card border border-hairline bg-paper px-4 py-8 text-center text-[14px] text-slate">
-            No assets yet. Receive some XLM to get started.
+          <div className="rounded-card border border-hairline bg-paper px-4 py-8 text-center">
+            <p className="text-[14px] text-slate">No assets yet. Add some XLM to get started.</p>
+            <button
+              onClick={() => navigate('/receive')}
+              className="mt-3 inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-[13px] font-medium text-white transition hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            >
+              <ArrowDown size={15} aria-hidden />
+              Receive XLM
+            </button>
           </div>
         )}
 
