@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PACTA — Interactive Demo</title>
+<style>
+  :root{
+    --canvas:#F4F2EC; --paper:#FFFFFF; --mist:#F8F6F1;
+    --ink:#1A201D; --slate:#586059; --fog:#8C918A;
+    --hair:#E6E2D8; --hair2:#D8D3C6;
+    --accent:#0B7A63; --accent-deep:#0A5A49; --tint:#E2F2EC;
+    --amber:#C77D11; --amber-deep:#8A560A; --amber-tint:#FAEED6;
+    --refund:#B43A2C; --refund-tint:#F8E8E4;
+    --carbon:#0B0F0E; --onyx:#121916; --grid:#233029; --signal:#34E3B0; --panel-muted:#7C8B85;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:var(--sans); color:var(--ink);
+    background:
+      radial-gradient(90% 70% at 50% 0%, rgba(52,227,176,.14), transparent 60%),
+      linear-gradient(160deg,#0A3328 0%, #0B7A63 55%, #0A5A49 100%);
+    display:flex; align-items:center; justify-content:center; gap:40px; flex-wrap:wrap;
+    padding:32px 16px; -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-color-scheme: dark){
+    body{ background:
+      radial-gradient(90% 70% at 50% 0%, rgba(52,227,176,.10), transparent 60%),
+      linear-gradient(160deg,#06201a 0%, #0a4a3c 55%, #072e26 100%); }
+  }
+  .mono{font-family:var(--mono); font-variant-numeric:tabular-nums}
+
+  /* ---------- side rail (pitch aid) ---------- */
+  .rail{max-width:300px; color:#EAF3EF}
+  .rail h1{font-size:26px; margin:0 0 4px; letter-spacing:-.02em; text-wrap:balance}
+  .rail .tag{color:var(--signal); font-weight:600; font-size:13px; letter-spacing:.02em}
+  .rail p{font-size:14px; line-height:1.55; color:#CFE3DC; margin:14px 0}
+  .rail ol{margin:14px 0 0; padding-left:0; list-style:none; counter-reset:s}
+  .rail li{counter-increment:s; font-size:13px; line-height:1.4; color:#DDECE6; padding:8px 0 8px 34px; position:relative; border-top:1px solid rgba(255,255,255,.08)}
+  .rail li::before{content:counter(s); position:absolute; left:0; top:7px; width:22px; height:22px; border-radius:999px; background:rgba(52,227,176,.16); color:var(--signal); font-family:var(--mono); font-size:11px; display:grid; place-items:center}
+  .rail .hint{margin-top:16px; font-size:12px; color:#A9C6BC}
+  .rail kbd{font-family:var(--mono); background:rgba(255,255,255,.12); border-radius:6px; padding:1px 6px; font-size:11px}
+
+  /* ---------- phone ---------- */
+  .phone{
+    width:390px; height:812px; border-radius:44px; background:#0c1210;
+    padding:12px; box-shadow:0 40px 80px rgba(8,40,32,.5), 0 4px 0 rgba(255,255,255,.04) inset;
+    flex-shrink:0;
+  }
+  .screen{width:100%; height:100%; border-radius:34px; overflow:hidden; background:var(--canvas); display:flex; flex-direction:column; position:relative}
+
+  .appbar{display:flex; align-items:center; gap:8px; padding:14px 16px 10px; background:var(--canvas)}
+  .brand{display:flex; align-items:center; gap:8px; font-weight:700; letter-spacing:-.01em}
+  .brand .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-deep));display:grid;place-items:center;color:#fff;font-size:14px;font-weight:800}
+  .net{margin-left:2px;font-family:var(--mono);font-size:11px;color:var(--slate);display:inline-flex;align-items:center;gap:5px}
+  .net i{width:6px;height:6px;border-radius:999px;background:var(--accent);animation:pulse 1.8s ease-in-out infinite}
+  .netbtn{margin-left:auto;border:1px solid var(--hair2);background:var(--paper);color:var(--slate);font-family:var(--sans);font-weight:600;font-size:11px;border-radius:999px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .netbtn.off{background:var(--amber-tint);border-color:transparent;color:var(--amber-deep)}
+  .netbtn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .banner{font-size:12.5px;font-weight:600;padding:8px 16px;display:flex;align-items:center;gap:8px;border-top:1px solid transparent;animation:fade .25s ease both}
+  .banner.warn{background:var(--amber-tint);color:var(--amber-deep)}
+  .banner.good{background:var(--tint);color:var(--accent-deep)}
+
+  .content{flex:1;overflow-y:auto;padding:6px 16px 20px}
+  .content::-webkit-scrollbar{width:0}
+  h2.page{font-size:22px;letter-spacing:-.02em;margin:8px 2px 14px}
+  .muted{color:var(--slate)} .fog{color:var(--fog)}
+
+  .balance{border-radius:18px;background:linear-gradient(150deg,var(--accent),var(--accent-deep));color:#fff;padding:18px;box-shadow:0 6px 16px rgba(10,90,73,.25)}
+  .balance .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.72)}
+  .balance .big{font-family:var(--mono);font-size:30px;font-weight:700;margin-top:4px}
+  .balance .sub{font-size:11px;color:rgba(255,255,255,.72);margin-top:4px}
+
+  .qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+  .qa button{background:var(--paper);border:1px solid var(--hair);border-radius:16px;padding:12px 4px;display:flex;flex-direction:column;align-items:center;gap:7px;font-family:var(--sans);font-size:12px;font-weight:600;color:var(--ink);cursor:pointer;transition:.15s}
+  .qa button:hover{border-color:rgba(11,122,99,.35);background:var(--tint)}
+  .qa .ic{width:38px;height:38px;border-radius:999px;background:var(--accent);color:#fff;display:grid;place-items:center}
+  .qa button:nth-child(2) .ic{background:var(--accent-deep)}
+  .qa button:nth-child(3) .ic{background:var(--amber)}
+
+  .sect{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--slate);margin:20px 2px 8px}
+  .card{background:var(--paper);border:1px solid var(--hair);border-radius:16px;padding:14px}
+  .row{display:flex;align-items:center;gap:12px}
+  .asset+.asset{margin-top:8px}
+  .chip{width:34px;height:34px;border-radius:999px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;font-weight:700;flex-shrink:0}
+  .chip.xlm{background:var(--accent);color:#fff} .chip.usdc{background:var(--accent-deep);color:#fff}
+  .grow{flex:1;min-width:0}
+  .a-code{font-size:14px;font-weight:600} .a-amt{font-family:var(--mono);font-size:11px;color:var(--fog)}
+  .a-php{font-family:var(--mono);font-size:14px;font-weight:600}
+
+  label.f{display:block;margin-top:12px}
+  label.f>span{display:block;font-size:12px;color:var(--slate);margin-bottom:6px}
+  input.f,select.f{width:100%;height:48px;border:1px solid var(--hair);border-radius:12px;background:var(--paper);padding:0 14px;font-family:var(--mono);font-size:15px;color:var(--ink)}
+  input.f:focus,select.f:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(11,122,99,.15)}
+  select.f{font-family:var(--sans);font-weight:600}
+
+  .btn{width:100%;height:50px;border:none;border-radius:14px;background:var(--accent);color:#fff;font-family:var(--sans);font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:.15s}
+  .btn:hover{background:var(--accent-deep)} .btn:disabled{opacity:.5;cursor:not-allowed}
+  .btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--hair2)} .btn.ghost:hover{background:var(--tint)}
+  .btn.amber{background:var(--amber)} .btn.amber:hover{background:var(--amber-deep)}
+  .btn.warnline{background:transparent;color:var(--refund);border:1px solid rgba(180,58,44,.4)}
+  .btn.sm{height:40px;font-size:13px;width:auto;padding:0 16px}
+  .btnrow{display:flex;gap:10px;margin-top:14px}
+  .btnrow .btn{flex:1}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
+  .pill.active{background:var(--tint);color:var(--accent-deep)} .pill.pending{background:var(--amber-tint);color:var(--amber-deep)}
+  .pill.done{background:#E7EEEA;color:var(--accent-deep)} .pill.queued{background:var(--amber-tint);color:var(--amber-deep)}
+
+  .bar{height:8px;border-radius:999px;background:var(--mist);overflow:hidden;display:flex;margin-top:8px}
+  .bar>i{background:var(--accent);height:100%}
+
+  .receipt{text-align:center;padding:26px 8px}
+  .receipt .big-ic{width:66px;height:66px;border-radius:999px;display:grid;place-items:center;margin:0 auto 14px}
+  .receipt.good .big-ic{background:var(--accent);color:#fff} .receipt.queue .big-ic{background:var(--amber-tint);color:var(--amber-deep)}
+  .receipt h3{font-size:22px;margin:0} .receipt p{color:var(--slate);font-size:14px;margin:6px 0 0;line-height:1.5}
+
+  .verified{display:inline-flex;align-items:center;gap:6px;background:var(--tint);color:var(--accent-deep);border-radius:999px;padding:5px 11px;font-size:12px;font-weight:700}
+  .wallet{display:flex;align-items:center;gap:10px;border:1px solid var(--hair);border-radius:12px;padding:10px 12px;background:var(--mist)}
+  .wallet+.wallet{margin-top:8px}
+  .stat{background:var(--paper);border:1px solid var(--hair);border-radius:14px;padding:12px;text-align:center}
+  .stat b{font-family:var(--mono);font-size:19px;display:block} .stat span{font-size:11px;color:var(--slate)}
+
+  .lens{border:1px solid rgba(11,122,99,.25);background:var(--tint);border-radius:14px;padding:12px}
+  .lens .h{display:flex;align-items:center;gap:7px;font-weight:700;font-size:13px;color:var(--accent-deep)}
+  .lens ul{margin:8px 0 0;padding-left:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+  .lens li{font-size:12px;color:var(--slate);display:flex;gap:7px}
+  .lens li i{width:6px;height:6px;border-radius:999px;background:var(--accent);margin-top:6px;flex-shrink:0}
+
+  /* proof panel — the one dark surface */
+  .proof{background:var(--carbon);border:1px solid var(--grid);border-radius:16px;padding:14px;color:var(--panel-muted);position:relative;overflow:hidden;margin-top:14px}
+  .proof .pl{display:flex;align-items:center;gap:6px;color:var(--signal);font-family:var(--mono);font-size:11px}
+  .proof .pv{font-family:var(--mono);font-size:24px;color:var(--signal);margin-top:8px;font-weight:600}
+  .proof .pm{font-family:var(--mono);font-size:10px;margin-top:8px;word-break:break-all}
+
+  .empty{text-align:center;color:var(--slate);font-size:14px;padding:28px 10px;border:1px solid var(--hair);border-radius:16px;background:var(--paper)}
+
+  .tabbar{display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-top:1px solid var(--hair)}
+  .tabbar button{flex:1;background:none;border:none;padding:9px 0 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--sans);font-size:10px;font-weight:600;color:var(--fog);cursor:pointer}
+  .tabbar button.on{color:var(--accent)}
+  .tabbar svg{width:22px;height:22px}
+
+  .queuedrow{border:1px dashed var(--amber);background:var(--amber-tint)}
+  .sep{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);margin:16px 2px 8px}
+
+  .back{background:none;border:none;color:var(--slate);font-family:var(--sans);font-weight:600;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:8px 0;margin-bottom:2px}
+  a.link{color:var(--accent-deep);font-size:13px;text-decoration:none;font-weight:600}
+  .fadein{animation:fade .25s ease both}
+
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+  @media (max-width:760px){.rail{display:none}.phone{transform:scale(.92);transform-origin:top}}
+</style>
+</head>
+<body>
+  <aside class="rail">
+    <div class="tag">Interactive demo · Payment &amp; Consumer</div>
+    <h1>PACTA</h1>
+    <p><b>Simplify every payment. Protect the ones that matter.</b> A non-custodial wallet on Stellar that keeps working when the signal drops.</p>
+    <ol>
+      <li>Explore the wallet: balance, Send, Receive, Convert.</li>
+      <li>Tap <b>Online</b> in the app header to go <b>Offline</b>.</li>
+      <li>Send a payment — it gets <b>queued</b>, not lost.</li>
+      <li>Tap <b>Offline</b> to reconnect — watch it <b>auto-deliver</b>.</li>
+      <li>Open <b>Pacts</b> to release a protected payment.</li>
+    </ol>
+    <p class="hint">Everything here is a self-contained, seeded demo — no network, no accounts. This is what a low-connectivity user experiences.</p>
+  </aside>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="appbar">
+        <div class="brand"><span class="dot">P</span>PACTA</div>
+        <span class="net"><i></i>testnet</span>
+        <button class="netbtn" id="netbtn" onclick="toggleOffline()"></button>
+      </div>
+      <div id="banner"></div>
+      <div class="content" id="content"></div>
+      <nav class="tabbar" id="tabbar"></nav>
+    </div>
+  </div>
+
+<script>
+"use strict";
+const R = 22, RU = 56;            // ₱ per XLM / per USDC
+const CP = "GDCOP…76GI";          // demo counterparty (short)
+const peso = n => "₱" + Math.round(n).toLocaleString();
+const f7 = n => Number(n).toLocaleString(undefined,{maximumFractionDigits:4});
+const fakeHash = () => "demo" + Math.random().toString(16).slice(2,14) + "…" + Math.random().toString(16).slice(2,6);
+const now = () => Date.now();
+
+let S = {
+  tab:"home", screen:null, offline:false, delivering:false, justDelivered:0,
+  balances:[{code:"XLM",amount:1935.2,rate:R,cls:"xlm"},{code:"USDC",amount:120,rate:RU,cls:"usdc"}],
+  activity:[
+    {kind:"in", code:"XLM", amt:250, who:CP, t:now()-6*6e4},
+    {kind:"out",code:"USDC",amt:30,  who:"GBBD…LA5", t:now()-95*6e4},
+    {kind:"in", code:"XLM", amt:500, who:CP, t:now()-27*36e5},
+    {kind:"out",code:"XLM", amt:75,  who:"GBBD…LA5", t:now()-74*36e5},
+  ],
+  outbox:[],
+  pacts:[
+    {id:1, role:"pay", who:CP, capital:100, bond:20, milestones:4, released:1, status:"active"},
+    {id:2, role:"pay", who:CP, capital:50,  bond:10, milestones:2, released:0, status:"pending"},
+    {id:3, role:"get", who:CP, capital:200, bond:40, milestones:3, released:3, status:"done"},
+  ],
+  linked:["GCO4…43PS","GA5Z…KZVN"],
+  // send form
+  to:"", amt:"", asset:"XLM",
+  // convert form
+  cfrom:"XLM", cto:"USDC", camt:"",
+};
+
+const el = id => document.getElementById(id);
+const totalPhp = () => S.balances.reduce((s,b)=>s+b.amount*b.rate,0);
+const bal = code => S.balances.find(b=>b.code===code);
+const timeAgo = t => { const s=(now()-t)/1000; if(s<60)return"just now"; const m=s/60; if(m<60)return Math.floor(m)+"m"; const h=m/60; if(h<24)return Math.floor(h)+"h"; return Math.floor(h/24)+"d"; };
+
+function toggleOffline(){ S.offline=!S.offline; render(); }
+
+/* ---------- SEND ---------- */
+function openSend(){ S.screen="send"; S.to=""; S.amt=""; render(); }
+function doSend(){
+  const b = bal(S.asset); const amt = Number(S.amt);
+  if(!(amt>0) || amt>b.amount) return;
+  if(S.offline){
+    S.outbox.push({id:"q"+now(), to:S.to||CP, code:S.asset, amt});
+    S.screen="queued"; render(); return;
+  }
+  settle(S.asset, amt, S.to||CP);
+  S.screen="sent"; render();
+}
+function settle(code, amt, who){
+  bal(code).amount -= amt;
+  S.activity.unshift({kind:"out", code, amt, who, t:now(), hash:fakeHash()});
+}
+
+/* ---------- reconnect flush ---------- */
+function flush(){
+  if(!S.outbox.length) return;
+  S.delivering=true; render();
+  const items=[...S.outbox];
+  setTimeout(()=>{
+    items.forEach(i=>settle(i.code,i.amt,i.to));
+    S.outbox=[]; S.delivering=false; S.justDelivered=items.length; render();
+    setTimeout(()=>{ S.justDelivered=0; render(); }, 3500);
+  }, 1400);
+}
+
+/* ---------- CONVERT ---------- */
+function doConvert(){
+  const b=bal(S.cfrom), amt=Number(S.camt);
+  if(!(amt>0)||amt>b.amount) return;
+  const rate=(S.cfrom==="XLM"?R:RU)/(S.cto==="XLM"?R:RU);
+  const out=amt*rate;
+  b.amount-=amt; let t=bal(S.cto); if(!t){ t={code:S.cto,amount:0,rate:S.cto==="XLM"?R:RU,cls:S.cto.toLowerCase()}; S.balances.push(t);} t.amount+=out;
+  S.activity.unshift({kind:"in",code:S.cto,amt:out,who:"DEX",t:now(),hash:fakeHash()});
+  S.screen="converted"; S.convOut=out; render();
+}
+function flipConvert(){ const a=S.cfrom; S.cfrom=S.cto; S.cto=a; S.camt=""; render(); }
+
+/* ---------- PACTS ---------- */
+function release(id){
+  const p=S.pacts.find(x=>x.id===id); if(!p) return;
+  if(p.released<p.milestones){ p.released++; if(p.released>=p.milestones) p.status="active"; render(); }
+}
+function fund(id){ const p=S.pacts.find(x=>x.id===id); if(p){ p.status="active"; p.released=0; render(); } }
+
+/* ---------- link wallet ---------- */
+function linkWallet(){ const pool=["GBBD…LA5","GDEM…O2AB"]; const nx=pool[S.linked.length%pool.length]; if(!S.linked.includes(nx))S.linked.push(nx); render(); }
+
+/* ================= RENDER ================= */
+function render(){
+  // net button
+  const nb=el("netbtn");
+  nb.className="netbtn"+(S.offline?" off":"");
+  nb.innerHTML = S.offline ? icon("cloudoff")+"Offline" : icon("cloud")+"Online";
+
+  // banner
+  let ban="";
+  if(S.delivering) ban=`<div class="banner good">${icon("spin")} Delivering queued payments…</div>`;
+  else if(S.justDelivered) ban=`<div class="banner good">${icon("check")} Delivered ${S.justDelivered} queued payment${S.justDelivered>1?"s":""}.</div>`;
+  else if(S.offline && S.outbox.length) ban=`<div class="banner warn">${icon("cloudoff")} You're offline. ${S.outbox.length} payment${S.outbox.length>1?"s":""} queued — sending on reconnect.</div>`;
+  else if(S.offline) ban=`<div class="banner warn">${icon("cloudoff")} You're offline. Payments will queue and send when you reconnect.</div>`;
+  el("banner").innerHTML=ban;
+
+  el("content").innerHTML = `<div class="fadein" key="${S.tab}${S.screen}">${screenHTML()}</div>`;
+  el("tabbar").innerHTML = tabs();
+}
+
+function screenHTML(){
+  if(S.screen==="send")   return sendForm();
+  if(S.screen==="sent")   return receipt("good","Sent", `${f7(S.amt)} ${S.asset} to <span class="mono">${S.to||CP}</span>`, true);
+  if(S.screen==="queued") return receipt("queue","Queued", `${f7(S.amt)} ${S.asset} to <span class="mono">${S.to||CP}</span> will send automatically when you're back online.`, false);
+  if(S.screen==="convert")   return convertForm();
+  if(S.screen==="converted") return receipt("good","Converted", `${f7(S.camt)} ${S.cfrom} to about ${f7(S.convOut)} ${S.cto}`, true);
+  if(S.screen && S.screen.startsWith("pact:")) return pactDetail(+S.screen.split(":")[1]);
+  // tabs
+  if(S.tab==="home")     return home();
+  if(S.tab==="convert")  return convertForm();
+  if(S.tab==="pacts")    return pactsList();
+  if(S.tab==="activity") return activityList();
+  if(S.tab==="profile")  return profile();
+  return home();
+}
+
+function home(){
+  return `
+  <h2 class="page">Your wallet</h2>
+  <div class="balance">
+    <div class="lbl">Total balance</div>
+    <div class="big">${peso(totalPhp())}</div>
+    <div class="sub">≈ ${f7(bal("XLM").amount)} XLM</div>
+  </div>
+  <div class="qa">
+    <button onclick="openSend()"><span class="ic">${icon("up")}</span>Send</button>
+    <button onclick="go('receive')"><span class="ic">${icon("down")}</span>Receive</button>
+    <button onclick="go('convert')"><span class="ic">${icon("swap")}</span>Convert</button>
+  </div>
+  <div class="sect">Assets</div>
+  ${S.balances.map(b=>`
+    <div class="card asset row">
+      <span class="chip ${b.cls}">${b.code.slice(0,2)}</span>
+      <span class="grow"><span class="a-code">${b.code}</span><br><span class="a-amt">${f7(b.amount)}</span></span>
+      <span class="a-php">${peso(b.amount*b.rate)}</span>
+    </div>`).join("")}
+  ${S.offline?`<p class="muted" style="font-size:12px;margin-top:14px">${icon("cloudoff")} Offline — balances shown are your last synced amounts.</p>`:""}`;
+}
+
+function sendForm(){
+  const b=bal(S.asset), amt=Number(S.amt), over=amt>b.amount;
+  const ready=amt>0 && !over;
+  return `
+  <button class="back" onclick="go('home')">${icon("chev")} Back</button>
+  <h2 class="page">${S.offline?"Queue payment":"Send"}</h2>
+  <label class="f"><span>Recipient address</span>
+    <input class="f" placeholder="G…" value="${S.to}" oninput="S.to=this.value"></label>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <label class="f"><span>Asset</span>
+      <select class="f" onchange="S.asset=this.value;render()">
+        ${S.balances.map(x=>`<option ${x.code===S.asset?"selected":""}>${x.code}</option>`).join("")}
+      </select></label>
+    <label class="f"><span>Amount</span>
+      <input class="f" type="number" placeholder="0.0" value="${S.amt}" oninput="S.amt=this.value;render()"></label>
+  </div>
+  <p class="a-amt" style="margin:8px 2px 0">Balance: <span class="mono">${f7(b.amount)}</span> ${b.code}</p>
+  ${over?`<p style="color:var(--refund);font-size:13px;margin:8px 2px">Amount is more than your balance.</p>`:""}
+  <div style="margin-top:16px">
+    <button class="btn ${S.offline?"amber":""}" ${ready?"":"disabled"} onclick="doSend()">
+      ${S.offline?icon("cloudoff")+"Queue payment":icon("up")+"Send now"}
+    </button>
+    <p class="muted" style="font-size:12px;text-align:center;margin-top:8px">
+      ${S.offline?"Queued while offline, delivered when you reconnect.":"Pays directly on Stellar in seconds."}
+    </p>
+  </div>`;
+}
+
+function convertForm(){
+  const b=bal(S.cfrom), amt=Number(S.camt), over=amt>(b?b.amount:0);
+  const rate=(S.cfrom==="XLM"?R:RU)/(S.cto==="XLM"?R:RU), out=amt>0?amt*rate:0, min=out*0.995;
+  const ready=amt>0 && !over && S.cfrom!==S.cto;
+  const opts=c=>["XLM","USDC","EURC"].filter(x=>x!==(c==="from"?S.cto:S.cfrom)).map(x=>`<option ${x===(c==="from"?S.cfrom:S.cto)?"selected":""}>${x}</option>`).join("");
+  return `
+  <h2 class="page">Convert</h2>
+  <div class="card"><div class="row"><span class="grow muted" style="font-size:12px">From</span><span class="a-amt">Balance ${b?f7(b.amount):0}</span></div>
+    <select class="f" style="border:none;padding:0;height:34px;font-size:16px" onchange="S.cfrom=this.value;render()">${opts("from")}</select></div>
+  <div style="display:flex;justify-content:center;margin:-6px 0"><button onclick="flipConvert()" style="width:38px;height:38px;border-radius:999px;border:1px solid var(--hair);background:var(--paper);cursor:pointer;color:var(--slate)">${icon("swap")}</button></div>
+  <div class="card"><div class="row"><span class="grow muted" style="font-size:12px">To</span></div>
+    <select class="f" style="border:none;padding:0;height:34px;font-size:16px" onchange="S.cto=this.value;render()">${opts("to")}</select></div>
+  <label class="f"><span>Amount</span><input class="f" type="number" placeholder="0.0" value="${S.camt}" oninput="S.camt=this.value;render()"></label>
+  ${amt>0&&!over?`<div class="card" style="margin-top:12px;font-size:13px">
+     <div class="row"><span class="grow muted">You get about</span><span class="mono">${f7(out)} ${S.cto}</span></div>
+     <div class="row" style="margin-top:6px"><span class="grow muted">Minimum received</span><span class="mono">${f7(min)} ${S.cto}</span></div>
+     <p class="fog" style="font-size:11px;margin:8px 0 0">Slippage tolerance 0.5%. Best rate via the Stellar DEX.</p></div>`:""}
+  ${over?`<p style="color:var(--refund);font-size:13px;margin:8px 2px">Amount is more than your balance.</p>`:""}
+  <button class="btn" style="margin-top:16px" ${ready?"":"disabled"} onclick="doConvert()">${icon("swap")} Convert</button>`;
+}
+
+function pactsList(){
+  return `
+  <h2 class="page">Your Pacts</h2>
+  <p class="muted" style="font-size:13px;margin:-8px 2px 12px">Protected payments you've sent or received. Funds held by a contract, released as work lands.</p>
+  ${S.pacts.map(p=>{
+    const st=p.status, pill=st==="active"?"active":st==="pending"?"pending":"done";
+    return `<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="go('pact:${p.id}')">
+      <div class="row"><span class="chip xlm">${p.who.slice(1,3)}</span>
+        <span class="grow"><span class="a-code">${p.role==="pay"?"You're paying":"You're getting paid"}</span><br>
+        <span class="a-amt">${p.who}</span></span>
+        <span class="pill ${pill}">${st==="active"?"Active":st==="pending"?"Pending":"Completed"}</span></div>
+      <div class="row" style="margin-top:10px"><span class="grow"><span class="mono" style="font-size:18px">${f7(p.capital)}</span> <span class="muted" style="font-size:12px">XLM</span></span>
+        <span class="a-amt">Pact ${String(p.id).padStart(3,"0")}</span></div>
+      ${st!=="pending"?`<div class="bar"><i style="width:${p.released/p.milestones*100}%"></i></div>
+        <p class="a-amt" style="margin:6px 2px 0">${p.released}/${p.milestones} milestones released</p>`:
+        `<p class="a-amt" style="margin:8px 2px 0">Waiting on deposit &amp; bond</p>`}
+    </div>`;}).join("")}`;
+}
+
+function pactDetail(id){
+  const p=S.pacts.find(x=>x.id===id); if(!p) return `<p>Not found</p>`;
+  const unreleased=p.capital - p.capital*(p.released/p.milestones);
+  const canRelease=p.role==="pay"&&p.status==="active"&&p.released<p.milestones;
+  return `
+  <button class="back" onclick="go('pacts')">${icon("chev")} Back to Pacts</button>
+  <div class="row" style="margin:2px 0 12px"><span class="grow mono muted" style="font-size:13px">Pact ${String(p.id).padStart(3,"0")}</span>
+    <span class="pill ${p.status==="active"?"active":p.status==="pending"?"pending":"done"}">${p.status[0].toUpperCase()+p.status.slice(1)}</span></div>
+  <div class="card"><div class="lbl muted" style="font-size:12px">${p.status==="done"?"Released to recipient":"Protected"}</div>
+    <div class="mono" style="font-size:28px;margin-top:4px">${f7(p.status==="done"?p.capital:unreleased)} <span class="muted" style="font-size:14px">XLM</span></div>
+    <div class="a-amt" style="margin-top:4px">+ ${f7(p.bond)} XLM bond held</div></div>
+  <div class="card" style="margin-top:12px"><div class="row"><span class="grow"><span class="a-amt fog">${p.role==="pay"?"Recipient":"Sender"}</span><br><span class="mono" style="font-size:14px">${p.who}</span></span>
+    <span class="verified">${icon("check")} 3 done · 0 refunds</span></div></div>
+  <div class="card" style="margin-top:12px"><span class="a-amt fog">Milestones</span>
+    <div class="bar"><i style="width:${p.released/p.milestones*100}%"></i></div>
+    <p class="a-amt" style="margin:6px 2px 0">${p.released} of ${p.milestones} released</p></div>
+  <div style="margin-top:14px">
+    ${p.status==="pending"?`<button class="btn" onclick="fund(${p.id})">${icon("shield")} Deposit funds &amp; activate</button>`:""}
+    ${canRelease?`<button class="btn" onclick="release(${p.id})">Release next milestone</button>`:""}
+    ${p.role==="pay"&&p.status==="active"&&p.released>=p.milestones?`<button class="btn" onclick="release(${p.id})">Complete &amp; return bond</button>`:""}
+    ${p.status==="active"?`<button class="btn warnline" style="margin-top:10px" onclick="alert('Refund unlocks after the deadline.')">${icon("undo")} Emergency refund</button>`:""}
+  </div>
+  <div class="proof"><div class="pl">${icon("lock")} protected · on-chain</div>
+    <div class="pv">${f7(p.status==="done"?p.capital:unreleased)}</div>
+    <div class="pm">contract CBLS…L3HL · ${fakeHash()}</div></div>`;
+}
+
+function activityList(){
+  const items=[
+    ...S.outbox.map(o=>({queued:true,code:o.code,amt:o.amt,who:o.to,t:now()})),
+    ...S.activity
+  ];
+  const day=t=>{const d=Math.floor((now()-t)/864e5); return d<=0?"Today":d===1?"Yesterday":"Earlier";};
+  const groups={}; items.forEach(i=>{const g=i.queued?"Queued":day(i.t);(groups[g]=groups[g]||[]).push(i);});
+  const order=["Queued","Today","Yesterday","Earlier"].filter(g=>groups[g]);
+  return `<h2 class="page">Activity</h2>
+  ${order.map(g=>`<div class="sep">${g}</div>${groups[g].map(i=>row(i)).join("")}`).join("") || `<div class="empty">No activity yet.</div>`}`;
+  function row(i){
+    const inc=i.kind==="in";
+    return `<div class="card ${i.queued?"queuedrow":""}" style="margin-bottom:8px"><div class="row">
+      <span class="chip ${i.code==="USDC"?"usdc":"xlm"}">${i.code.slice(0,2)}</span>
+      <span class="grow"><span class="a-code">${i.queued?"Queued":inc?"Received":"Sent"} ${i.code}</span><br>
+      <span class="a-amt">${inc?"from":"to"} ${i.who}</span></span>
+      <span style="text-align:right"><span class="mono ${inc?"":""}" style="font-size:14px;color:${inc?"var(--accent-deep)":"var(--ink)"}">${inc?"+":"−"}${f7(i.amt)}</span><br>
+      <span class="a-amt">${i.queued?"waiting":timeAgo(i.t)}</span></span></div></div>`;
+  }
+}
+
+function profile(){
+  return `<h2 class="page">Profile</h2>
+  <div class="card row"><span class="chip xlm">JD</span>
+    <span class="grow"><span class="mono" style="font-size:14px">GCO4…43PS</span><br>
+    <span class="a-amt fog">Connected with Freighter</span><br>
+    <span class="verified" style="margin-top:6px">${icon("check")} Verified · J** D** C**</span></span></div>
+  <div class="card" style="margin-top:12px"><div class="row"><span class="sect" style="margin:0">Linked wallets</span>
+    <span class="pill done" style="margin-left:8px">${S.linked.length}</span></div>
+    <p class="a-amt" style="margin:6px 2px 10px">Any of these can send protected payments as you.</p>
+    ${S.linked.map((w,i)=>`<div class="wallet"><span class="chip xlm" style="width:28px;height:28px">${icon("wallet")}</span>
+      <span class="grow mono" style="font-size:13px">${w}</span>
+      ${i===0?`<span class="pill done">${icon("check")} Verified</span>`:`<span class="a-amt">linked</span>`}</div>`).join("")}
+    <button class="btn ghost sm" style="margin-top:12px" onclick="linkWallet()">+ Link a wallet</button></div>
+  <div class="sect">On-chain reputation</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+    <div class="stat"><b>3</b><span>Completed</span></div>
+    <div class="stat"><b>0</b><span>Refunded</span></div>
+    <div class="stat"><b>425</b><span>Volume XLM</span></div></div>`;
+}
+
+function receipt(kind,title,body,showTx){
+  return `<div class="receipt ${kind==="good"?"good":"queue"} fadein">
+    <div class="big-ic">${kind==="good"?icon("check",30):icon("cloudoff",26)}</div>
+    <h3>${title}</h3><p>${body}</p>
+    ${showTx?`<p style="margin-top:10px"><a class="link" href="#" onclick="return false">View on Stellar Expert ↗</a></p>`:""}
+    <div class="btnrow"><button class="btn ghost" onclick="go('${kind==="good"&&title==="Converted"?"convert":"home"}');S.amt='';S.camt=''">Do another</button>
+      <button class="btn" onclick="go('home')">Done</button></div></div>`;
+}
+
+/* nav */
+function go(where){
+  if(where.startsWith("pact:")){ S.screen=where; render(); return; }
+  if(where==="receive"){ S.screen=null; S.tab="home"; alert("Receive: share your address or QR to get paid from any Stellar wallet."); return; }
+  if(["home","convert","pacts","activity","profile"].includes(where)){ S.tab=where; S.screen=null; render(); return; }
+  S.screen=where; render();
+}
+function tab(t){ S.tab=t; S.screen=null; render(); }
+function tabs(){
+  const T=[["home","Home","wallet"],["convert","Convert","swap"],["pacts","Pacts","shield"],["activity","Activity","list"],["profile","Profile","user"]];
+  return T.map(([id,label,ic])=>`<button class="${S.tab===id&&!S.screen?"on":""}" onclick="tab('${id}')">${icon(ic)}<span>${label}</span></button>`).join("");
+}
+
+/* auto-flush when coming back online */
+let wasOffline=false;
+const _toggle=toggleOffline;
+toggleOffline=function(){ const before=S.offline; _toggle(); if(before && !S.offline && S.outbox.length) flush(); };
+
+/* icons */
+function icon(name,sz){ const s=sz||16; const S2=`width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
+  const P={
+    up:'<path d="M12 19V5M5 12l7-7 7 7"/>', down:'<path d="M12 5v14M19 12l-7 7-7-7"/>',
+    swap:'<path d="M17 3l4 4-4 4M21 7H3M7 21l-4-4 4-4M3 17h18"/>',
+    wallet:'<path d="M3 7h18v12H3zM16 12h3"/>', shield:'<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/>',
+    list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>', user:'<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>',
+    cloud:'<path d="M17 18a4 4 0 0 0 0-8 6 6 0 0 0-11-2 4 4 0 0 0-1 8"/>',
+    cloudoff:'<path d="M17 18a4 4 0 0 0 1-7.9M5 8a6 6 0 0 1 8-3M3 3l18 18M8 18a4 4 0 0 1-2-7"/>',
+    check:'<path d="M20 6L9 17l-5-5"/>', chev:'<path d="M15 18l-6-6 6-6"/>',
+    lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    undo:'<path d="M3 7v6h6M3 13a9 9 0 1 0 3-7"/>',
+    spin:'<path d="M12 3a9 9 0 1 0 9 9" opacity=".9"/>'
+  };
+  const spin = name==="spin"?' style="animation:rot 1s linear infinite"':'';
+  return `<svg ${S2}${spin}>${P[name]||""}</svg>`;
+}
+const st=document.createElement("style"); st.textContent="@keyframes rot{to{transform:rotate(360deg)}}"; document.head.appendChild(st);
+
+render();
+</script>
+</body>
+</html>
