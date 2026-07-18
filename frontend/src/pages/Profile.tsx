@@ -36,7 +36,6 @@ export function Profile() {
   const [repLoading, setRepLoading] = useState(false);
 
   // Linked-wallet management state.
-  const [linkOpen, setLinkOpen] = useState(false);
   const [linking, setLinking] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [eraseTarget, setEraseTarget] = useState<LinkedWallet | null>(null);
@@ -80,10 +79,11 @@ export function Profile() {
     setActionError(null);
     try {
       await linkWallet();
-      setLinkOpen(false);
       await reload();
     } catch (e) {
-      setActionError(linkErrorMessage(e));
+      // The user closing the wallet picker is not an error.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!/cancel/i.test(msg)) setActionError(linkErrorMessage(e));
     } finally {
       setLinking(false);
     }
@@ -191,32 +191,17 @@ export function Profile() {
             ))}
           </ul>
 
-          {linkOpen ? (
-            <div className="mt-3 rounded-control border border-accent/30 bg-accent-tint p-3">
-              <p className="text-[13px] text-ink">
-                In your wallet extension, switch to the account you want to link, then continue. You will sign one message to prove you own it. No new ID check is needed.
-              </p>
-              <div className="mt-3 flex gap-2">
-                <Button className="flex-1" disabled={linking} onClick={doLink}>
-                  {linking ? 'Linking...' : 'Continue'}
-                </Button>
-                <Button
-                  variant="secondary"
-                  className="flex-1"
-                  onClick={() => { setLinkOpen(false); setActionError(null); }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => { setLinkOpen(true); setActionError(null); }}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            >
-              <Plus size={15} aria-hidden /> Link a wallet
-            </button>
-          )}
+          <button
+            onClick={doLink}
+            disabled={linking}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            {linking ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Plus size={15} aria-hidden />}
+            {linking ? 'Linking...' : 'Link a wallet'}
+          </button>
+          <p className="mt-1.5 text-[12px] text-slate">
+            Opens your wallet picker. Choose another wallet (Albedo and xBull run in the browser, no install), sign once, and it joins this identity.
+          </p>
 
           {actionError && <p className="mt-2 text-[13px] text-refund">{actionError}</p>}
         </div>

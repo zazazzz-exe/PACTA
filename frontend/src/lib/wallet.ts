@@ -3,12 +3,17 @@ import {
   WalletNetwork,
   FREIGHTER_ID,
   FreighterModule,
+  AlbedoModule,
+  xBullModule,
+  LobstrModule,
+  RabetModule,
   type ISupportedWallet,
 } from '@creit.tech/stellar-wallets-kit';
 import { NETWORK_PASSPHRASE } from './config';
 
-// Freighter only — the kit modal lists just Freighter (and an install prompt if
-// the extension is missing).
+// The kit modal lists these Stellar wallets. Albedo and xBull are web-based (no
+// extension install), which makes them the easy choice for connecting a SECOND
+// wallet to test linked identity. Freighter is the default selection.
 //
 // Lazily constructed: the StellarWalletsKit constructor touches browser-only
 // globals (`window`), which is a hazard at module-import time in tests/SSR.
@@ -19,11 +24,21 @@ export function getKit(): StellarWalletsKit {
     _kit = new StellarWalletsKit({
       network: WalletNetwork.TESTNET,
       selectedWalletId: FREIGHTER_ID,
-      modules: [new FreighterModule()],
+      modules: [
+        new FreighterModule(),
+        new AlbedoModule(),
+        new xBullModule(),
+        new LobstrModule(),
+        new RabetModule(),
+      ],
     });
   }
   return _kit;
 }
+
+// The wallet id the app is currently connected/acting as, so the link flow can
+// temporarily switch to another wallet and then restore this one.
+let _selectedWalletId: string = FREIGHTER_ID;
 
 export async function connectWallet(): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -31,6 +46,7 @@ export async function connectWallet(): Promise<string> {
       onWalletSelected: async (option: ISupportedWallet) => {
         try {
           getKit().setWallet(option.id);
+          _selectedWalletId = option.id;
           const { address } = await getKit().getAddress();
           resolve(address);
         } catch (e) {
@@ -44,12 +60,41 @@ export async function connectWallet(): Promise<string> {
   });
 }
 
-// Read the wallet extension's currently-active account address. Used by the
-// "link a wallet" flow: the user switches their extension to the account they
-// want to link, and this reads whichever account is active.
-export async function getWalletAddress(): Promise<string> {
-  const { address } = await getKit().getAddress();
-  return address;
+// The wallet id currently selected in the kit (the connected wallet).
+export function currentSelectedWalletId(): string {
+  return _selectedWalletId;
+}
+
+// Open the wallet picker to choose a DIFFERENT wallet to link, returning its id
+// + address. This switches the kit's active wallet to the chosen one so the
+// caller can sign with it; the caller MUST call restoreSelectedWallet afterward
+// to switch back to the connected wallet. Rejects if the user closes the modal.
+export async function pickWalletForLink(): Promise<{ id: string; address: string }> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    getKit().openModal({
+      onWalletSelected: async (option: ISupportedWallet) => {
+        settled = true;
+        try {
+          getKit().setWallet(option.id);
+          const { address } = await getKit().getAddress();
+          resolve({ id: option.id, address });
+        } catch (e) {
+          reject(e);
+        }
+      },
+      onClosed: (err?: Error) => {
+        if (!settled) reject(err ?? new Error('cancelled'));
+      },
+    });
+  });
+}
+
+// Switch the kit back to a previously-selected wallet (after a link temporarily
+// selected another). Does not change _selectedWalletId, which still tracks the
+// connected wallet.
+export function restoreSelectedWallet(id: string): void {
+  getKit().setWallet(id);
 }
 
 // Best-effort read of the wallet's current network passphrase. Returns null if

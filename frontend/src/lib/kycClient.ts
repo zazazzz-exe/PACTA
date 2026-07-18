@@ -1,4 +1,9 @@
-import { signMessage, getWalletAddress } from './wallet';
+import {
+  signMessage,
+  pickWalletForLink,
+  currentSelectedWalletId,
+  restoreSelectedWallet,
+} from './wallet';
 import { CONSENT_VERSION } from './consent';
 
 // Same-origin client for the KYC endpoints (mirrors the useRiskLens fetch
@@ -105,19 +110,26 @@ export async function eraseKyc(): Promise<{ status: KycStatus }> {
   return postJson('/api/kyc-erase', { confirm: true });
 }
 
-// Link the wallet extension's currently-active account to the connected,
-// verified identity. The user first switches their extension to the account they
-// want to link; this reads that address, proves ownership of it with a fresh
-// signature, and posts to kyc-link-wallet (authenticated by the current, already
-// verified session). No re-verification is needed.
+// Link another wallet to the connected, verified identity. Opens the wallet
+// picker so the user chooses the wallet to link (e.g. Albedo or xBull), proves
+// ownership of it with a fresh signature, and posts to kyc-link-wallet
+// (authenticated by the current, already verified session). No re-verification
+// is needed. The kit is restored to the connected wallet afterward so the app
+// keeps acting as it.
 export async function linkWallet(): Promise<{ linked: boolean; wallets: LinkedWallet[] }> {
-  const address = await getWalletAddress();
-  const { nonce, challenge } = await postJson<{ nonce: string; challenge: string }>(
-    '/api/kyc-request-nonce',
-    { address },
-  );
-  const { signedMessage } = await signMessage(challenge, { address });
-  return postJson('/api/kyc-link-wallet', { address, nonce, signedMessage });
+  const original = currentSelectedWalletId();
+  const picked = await pickWalletForLink();
+  try {
+    const address = picked.address;
+    const { nonce, challenge } = await postJson<{ nonce: string; challenge: string }>(
+      '/api/kyc-request-nonce',
+      { address },
+    );
+    const { signedMessage } = await signMessage(challenge, { address });
+    return await postJson('/api/kyc-link-wallet', { address, nonce, signedMessage });
+  } finally {
+    restoreSelectedWallet(original);
+  }
 }
 
 // Remove a wallet from the connected identity. Removing the verifier wallet (or
