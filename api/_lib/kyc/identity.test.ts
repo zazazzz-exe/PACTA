@@ -29,17 +29,29 @@ function row(wallet: string, identity: string, status: string, masked: string | 
   };
 }
 
-function mockSupa(rows: Row[]): SupabaseClient {
+function mockSupa(rows: Row[], opts: { failIdentityCol?: boolean } = {}): SupabaseClient {
+  // failIdentityCol simulates migration 0002 not being applied: any query that
+  // selects the identity_id column errors, like a real "column does not exist".
+  const colErr = { message: 'column kyc_profile.identity_id does not exist', code: '42703' };
   const client = {
     from() {
       const filters: [string, unknown][] = [];
+      let cols = '';
       const apply = () => rows.filter((r) => filters.every(([c, v]) => (r as Record<string, unknown>)[c] === v));
+      const fail = () => opts.failIdentityCol === true && cols.includes('identity_id');
       const builder = {
-        select() { return builder; },
+        select(c?: string) { cols = c ?? ''; return builder; },
         eq(c: string, v: unknown) { filters.push([c, v]); return builder; },
-        maybeSingle() { return Promise.resolve({ data: apply()[0] ?? null, error: null }); },
-        then(res: (x: { data: Row[]; error: null }) => unknown, rej?: (e: unknown) => unknown) {
-          return Promise.resolve({ data: apply(), error: null }).then(res, rej);
+        maybeSingle() {
+          return fail()
+            ? Promise.resolve({ data: null, error: colErr })
+            : Promise.resolve({ data: apply()[0] ?? null, error: null });
+        },
+        then(res: (x: { data: Row[] | null; error: unknown }) => unknown, rej?: (e: unknown) => unknown) {
+          return (fail()
+            ? Promise.resolve({ data: null, error: colErr })
+            : Promise.resolve({ data: apply(), error: null })
+          ).then(res, rej);
         },
       };
       return builder;
@@ -99,6 +111,18 @@ describe('resolveIdentity', () => {
     const r = await resolveIdentity(supa, C);
     expect(r.status).toBe('unverified');
     expect(r.wallets).toEqual([C]);
+  });
+
+  it('falls back to a per-wallet read when identity_id is missing (migration 0002 not applied)', async () => {
+    // Without the fallback, the grouped read errors and status silently reads
+    // 'unverified' even though the wallet is verified in the DB.
+    const supa = mockSupa([row(A, 'id1', 'verified', 'J** D**')], { failIdentityCol: true });
+    const r = await resolveIdentity(supa, A);
+    expect(r.status).toBe('verified');
+    expect(r.identityId).toBeNull();
+    expect(r.verifierAddress).toBe(A);
+    expect(r.maskedName).toBe('J** D**');
+    expect(r.wallets).toEqual([A]);
   });
 });
 

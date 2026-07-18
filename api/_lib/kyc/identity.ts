@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { logError } from '../http';
 
 // Linked-identity resolution (Phase 4b). Wallets sharing kyc_profile.identity_id
 // are one identity. A wallet is "verified" if ANY wallet in its group holds a
@@ -28,6 +29,11 @@ interface ProfileRow {
 const COLS =
   'wallet_address, identity_id, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at';
 
+// Same columns minus identity_id, for a graceful fallback read when migration
+// 0002 has not been applied yet (the identity_id column is absent).
+const LEGACY_COLS =
+  'wallet_address, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at';
+
 export interface ResolvedIdentity {
   identityId: string | null;
   status: GroupStatus;
@@ -53,25 +59,18 @@ export async function resolveIdentity(
   supa: SupabaseClient,
   wallet: string,
 ): Promise<ResolvedIdentity> {
-  const { data: self } = await supa
+  const { data: self, error: selfErr } = await supa
     .from('kyc_profile')
     .select(COLS)
     .eq('wallet_address', wallet)
     .maybeSingle<ProfileRow>();
 
-  if (!self) {
-    return {
-      identityId: null,
-      status: 'unverified',
-      maskedName: null,
-      docType: null,
-      docCountry: null,
-      docExpiry: null,
-      updatedAt: null,
-      verifierAddress: null,
-      wallets: [wallet],
-    };
-  }
+  // If the identity_id column is missing (migration 0002 not applied) or the read
+  // errors, fall back to a per-wallet read so verification status still resolves.
+  // Core verification must never silently read as unverified because the optional
+  // grouping query failed.
+  if (selfErr) return resolveLegacy(supa, wallet, selfErr);
+  if (!self) return singleton(wallet);
 
   const { data: group } = await supa
     .from('kyc_profile')
@@ -92,6 +91,50 @@ export async function resolveIdentity(
     updatedAt: source.status_updated_at,
     verifierAddress: verifier?.wallet_address ?? null,
     wallets: rows.map((r) => r.wallet_address),
+  };
+}
+
+// A wallet with no profile row (or whose identity cannot be resolved) is its own
+// unverified singleton identity.
+function singleton(wallet: string): ResolvedIdentity {
+  return {
+    identityId: null,
+    status: 'unverified',
+    maskedName: null,
+    docType: null,
+    docCountry: null,
+    docExpiry: null,
+    updatedAt: null,
+    verifierAddress: null,
+    wallets: [wallet],
+  };
+}
+
+// Fallback read that does not reference identity_id, used when migration 0002 is
+// not yet applied. Resolves the wallet's own status so verification is never
+// masked by the grouping query. The underlying error is logged, not swallowed.
+async function resolveLegacy(
+  supa: SupabaseClient,
+  wallet: string,
+  cause: unknown,
+): Promise<ResolvedIdentity> {
+  logError('resolveIdentity:legacy_fallback', cause);
+  const { data } = await supa
+    .from('kyc_profile')
+    .select(LEGACY_COLS)
+    .eq('wallet_address', wallet)
+    .maybeSingle<Omit<ProfileRow, 'identity_id'>>();
+  if (!data) return singleton(wallet);
+  return {
+    identityId: null,
+    status: data.status,
+    maskedName: data.masked_name,
+    docType: data.doc_type,
+    docCountry: data.doc_country,
+    docExpiry: data.doc_expiry,
+    updatedAt: data.status_updated_at,
+    verifierAddress: data.status === 'verified' ? wallet : null,
+    wallets: [wallet],
   };
 }
 
