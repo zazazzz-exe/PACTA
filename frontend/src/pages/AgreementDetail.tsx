@@ -91,7 +91,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
     setPending(null);
   }
 
-  const agrId = `agr-${id.toString().padStart(3, '0')}`;
+  const agrId = `Pact ${id.toString().padStart(3, '0')}`;
 
   if (loading && !a) {
     return (
@@ -104,9 +104,9 @@ export function AgreementDetail({ id }: { id: bigint }) {
     return (
       <div className="mx-auto max-w-app">
         <div className="bg-paper border border-hairline rounded-card shadow-card p-6 text-center">
-          <p className="text-refund text-[14px]">{error ?? 'Agreement not found.'}</p>
+          <p className="text-refund text-[14px]">{error ?? 'Pact not found.'}</p>
           <Button variant="secondary" className="mt-4" onClick={() => navigate('/dashboard')}>
-            Back to dashboard
+            Back to Pacts
           </Button>
         </div>
       </div>
@@ -126,20 +126,20 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const headline = (() => {
     switch (a.status) {
       case Status.Active:
-        return { amount: unreleased, label: 'Protected in escrow', bond: a.bond, proof: unreleased + a.bond };
+        return { amount: unreleased, label: 'Protected', bond: a.bond, proof: unreleased + a.bond };
       case Status.Pending:
-        return { amount: a.capital, label: 'Capital in escrow once funded', bond: a.bond, proof: (a.capital_deposited ? a.capital : 0n) + (a.bond_posted ? a.bond : 0n) };
+        return { amount: a.capital, label: 'To be protected once funded', bond: a.bond, proof: (a.capital_deposited ? a.capital : 0n) + (a.bond_posted ? a.bond : 0n) };
       case Status.Completed:
-        return { amount: a.capital, label: 'Capital released to provider', bond: undefined, proof: a.capital };
+        return { amount: a.capital, label: 'Released to the recipient', bond: undefined, proof: a.capital };
       case Status.Refunded:
-        return { amount: unreleased + a.bond, label: 'Refunded to client', bond: undefined, proof: unreleased + a.bond };
+        return { amount: unreleased + a.bond, label: 'Refunded to you', bond: undefined, proof: unreleased + a.bond };
       default:
-        return { amount: a.capital, label: 'Agreement cancelled', bond: undefined, proof: 0n };
+        return { amount: a.capital, label: 'Pact cancelled', bond: undefined, proof: 0n };
     }
   })();
 
   const counterparty = isTrader ? a.investor : a.trader;
-  const counterRole = isTrader ? 'Client' : 'Provider';
+  const counterRole = isTrader ? 'Sender' : 'Recipient';
   const closed =
     a.status === Status.Completed || a.status === Status.Refunded || a.status === Status.Cancelled;
 
@@ -154,7 +154,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate('/dashboard')}
-          aria-label="Back to dashboard"
+          aria-label="Back to Pacts"
           className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <ChevronLeft size={20} aria-hidden />
@@ -253,7 +253,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                       description: (
                         <>
                           Post a bond of <span className="mono text-ink">{formatAmount(a.bond)}</span>. It
-                          is held by the contract as protection and returned to you when the agreement
+                          is held by the contract as protection and returned to you when the Pact
                           completes.
                           {signNote}
                         </>
@@ -276,11 +276,11 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   onClick={() =>
                     gated({
                       key: 'deposit',
-                      title: 'Deposit capital',
+                      title: 'Deposit funds',
                       description: (
                         <>
                           Deposit <span className="mono text-ink">{formatAmount(a.capital)}</span> into the
-                          escrow contract. It is released to the provider milestone by milestone.
+                          Pact. It is released to the recipient milestone by milestone.
                           {signNote}
                         </>
                       ),
@@ -290,7 +290,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                     })
                   }
                 >
-                  Deposit capital ({formatAmount(a.capital)})
+                  Deposit funds ({formatAmount(a.capital)})
                 </Button>
               )}
 
@@ -305,7 +305,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                       title: 'Release next milestone',
                       description: (
                         <>
-                          Release the next milestone to the provider. About{' '}
+                          Release the next milestone to the recipient. About{' '}
                           <span className="mono text-ink">{formatAmount(nextTranche)}</span> goes to{' '}
                           <span className="mono text-ink">{traderShort}</span>.{signNote}
                         </>
@@ -328,11 +328,11 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   onClick={() =>
                     ask({
                       key: 'complete',
-                      title: 'Complete agreement',
+                      title: 'Complete Pact',
                       description: (
                         <>
-                          Complete this agreement. The <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
-                          bond is returned to the provider.{signNote}
+                          Complete this Pact. The <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
+                          bond is returned to the recipient.{signNote}
                         </>
                       ),
                       confirmLabel: 'Complete',
@@ -361,7 +361,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
                             Reclaim <span className="mono text-ink">{formatAmount(unreleased)}</span> of
                             unreleased capital plus the <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
                             bond, totalling <span className="mono text-ink">{formatAmount(unreleased + a.bond)}</span>,
-                            back to you. The provider forfeits the bond.{signNote}
+                            back to you. The recipient forfeits the bond.{signNote}
                           </>
                         ),
                         confirmLabel: 'Refund to me',
@@ -389,31 +389,31 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   onClick={() =>
                     ask({
                       key: 'cancel',
-                      title: 'Cancel agreement',
+                      title: 'Cancel Pact',
                       description: (
                         <>
-                          Cancel this agreement. Any deposited capital and posted bond are returned to
-                          their owners.{signNote}
+                          Cancel this Pact. Any deposited funds and posted bond are returned to their
+                          owners.{signNote}
                         </>
                       ),
-                      confirmLabel: 'Cancel agreement',
+                      confirmLabel: 'Cancel Pact',
                       variant: 'danger',
                       fn: () => cancel(address!, a.id),
                     })
                   }
                 >
-                  <ShieldX size={18} aria-hidden /> Cancel agreement
+                  <ShieldX size={18} aria-hidden /> Cancel Pact
                 </Button>
               )}
             </div>
           )}
 
           {closed && (
-            <p className="text-[13px] text-slate">This agreement is closed. No further actions.</p>
+            <p className="text-[13px] text-slate">This Pact is closed. No further actions.</p>
           )}
           {!isInvestor && !isTrader && !closed && (
             <p className="text-[13px] text-slate">
-              You are viewing this agreement. Only the client and provider can act on it.
+              You are viewing this Pact. Only the sender and recipient can act on it.
             </p>
           )}
 

@@ -16,9 +16,9 @@ const STRIP: Record<Status, string> = {
 
 export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) {
   const counterparty = you === a.trader ? a.investor : a.trader;
-  const counterpartyRole = you === a.investor ? 'Provider' : 'Client';
+  const counterpartyRole = you === a.investor ? 'Recipient' : 'Sender';
   const yourRole =
-    you === a.investor ? "You're the client" : you === a.trader ? "You're the provider" : null;
+    you === a.investor ? "You're paying" : you === a.trader ? "You're getting paid" : null;
   const { amount, label } = statusAmount(a);
   const terminal = isTerminal(a.status);
   const nowSec = Math.floor(Date.now() / 1000);
@@ -70,7 +70,7 @@ export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) 
         )}
       </div>
 
-      <p className="mono text-[11px] text-fog mt-3">agr-{a.id.toString().padStart(3, '0')}</p>
+      <p className="mono text-[11px] text-fog mt-3">Pact {a.id.toString().padStart(3, '0')}</p>
       </div>
     </button>
   );

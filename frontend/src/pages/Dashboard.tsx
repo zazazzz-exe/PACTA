@@ -16,8 +16,8 @@ import { navigate } from '../lib/router';
 type Filter = 'all' | 'investor' | 'trader';
 const TABS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
-  { id: 'investor', label: 'As client' },
-  { id: 'trader', label: 'As provider' },
+  { id: 'investor', label: 'Paying' },
+  { id: 'trader', label: 'Receiving' },
 ];
 
 export function Dashboard() {
@@ -73,11 +73,15 @@ export function Dashboard() {
     <div className="mx-auto max-w-5xl space-y-5">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-[20px] sm:text-[22px] font-medium tracking-tight text-ink">
-          Your agreements
-        </h1>
-        <Button className="h-11 px-4 text-[14px]" data-tour="new" onClick={() => navigate('/create')}>
-          <Plus size={18} aria-hidden /> New agreement
+        <div>
+          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-tight text-ink">Your Pacts</h1>
+          <p className="mt-0.5 max-w-lg text-[13px] text-slate">
+            Protected payments you have sent or received. Funds are held by a contract and released as the
+            work lands.
+          </p>
+        </div>
+        <Button className="h-11 shrink-0 px-4 text-[14px]" data-tour="new" onClick={() => navigate('/create')}>
+          <Plus size={18} aria-hidden /> New Pact
         </Button>
       </div>
 
@@ -85,7 +89,7 @@ export function Dashboard() {
       {agreements.length > 0 && (
         <div className="space-y-3 animate-rise">
           <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Metric label="Protected in escrow" accent="accent">
+            <Metric label="Protected" accent="accent">
               <p className="mono text-[20px] font-medium text-accent">
                 {formatAmount(protectedTotal)}
               </p>
@@ -146,7 +150,7 @@ export function Dashboard() {
             {attention.map((a) => (
               <li key={a.id.toString()} className="flex items-center justify-between gap-3">
                 <span className="min-w-0 truncate text-[13px] text-deadline-deep">
-                  <span className="mono">agr-{a.id.toString().padStart(3, '0')}</span> ·{' '}
+                  <span className="mono">Pact {a.id.toString().padStart(3, '0')}</span> ·{' '}
                   {needsAttentionReason(a, address, nowSec)}
                 </span>
                 <button
@@ -259,10 +263,10 @@ function EmptyState() {
         <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-card">
           <Plus size={22} aria-hidden />
         </span>
-        <h2 className="text-[16px] font-medium text-ink">No agreements yet</h2>
-        <p className="mt-1 text-[14px] text-slate">Create your first protected agreement.</p>
+        <h2 className="text-[16px] font-medium text-ink">No Pacts yet</h2>
+        <p className="mt-1 text-[14px] text-slate">Send your first protected payment.</p>
         <Button className="mt-5" onClick={() => navigate('/create')}>
-          Create agreement
+          New Pact
         </Button>
       </div>
     </div>
@@ -281,7 +285,7 @@ function ConnectGate() {
           </span>
           <h1 className="text-[18px] font-medium text-ink">Connect your wallet</h1>
         <p className="mx-auto mt-1.5 max-w-xs text-[14px] text-slate">
-          Your wallet is your login. Connect to see your agreements and create new ones.
+          Your wallet is your login. Connect to see your Pacts and create new ones.
         </p>
         <Button className="mt-5" onClick={connect} disabled={connecting}>
           <Wallet size={16} aria-hidden />

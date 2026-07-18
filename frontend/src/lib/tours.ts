@@ -37,25 +37,25 @@ export const landingSteps: TourStep[] = [
 
 export const dashboardSteps: TourStep[] = [
   {
-    title: 'Your agreements',
-    body: 'Every agreement you are part of shows up here, with its status and milestone progress.',
+    title: 'Your Pacts',
+    body: 'Every protected payment you have sent or received shows up here, with its status and progress.',
     placement: 'center',
   },
   {
     target: '[data-tour="filters"]',
-    title: 'Filter by your role',
-    body: 'Switch between agreements where you are the client and where you are the provider.',
+    title: 'Filter by your side',
+    body: 'Switch between Pacts you are paying and Pacts you are receiving.',
     placement: 'bottom',
   },
   {
     target: '[data-tour="new"]',
-    title: 'Create an agreement',
-    body: 'Start a new protected agreement with a provider: set the capital, bond, milestones, and deadline.',
+    title: 'Start a Pact',
+    body: 'Create a new protected payment: set the amount, the bond, the milestones, and the deadline.',
     placement: 'left',
   },
   {
     target: '[data-tour="card"]',
-    title: 'Open an agreement',
+    title: 'Open a Pact',
     body: 'Tap a card to fund it, release milestones, complete it, or refund after the deadline.',
     placement: 'top',
   },
