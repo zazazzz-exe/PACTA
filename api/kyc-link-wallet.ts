@@ -99,8 +99,13 @@ async function handler(req: Request): Promise<Response> {
       { wallet_address: address, event_type: 'wallet_linked', detail: { into: sessionAddr } },
     ]);
 
-    const resolved = await resolveIdentity(supa, sessionAddr);
-    return json({ linked: true, wallets: linkedWalletsFrom(resolved, sessionAddr) });
+    // Build the updated wallet list from what we already know (A's group + B),
+    // avoiding another round-trip to resolve the identity.
+    const wallets = linkedWalletsFrom(
+      { ...me, wallets: [...me.wallets.filter((w) => w !== address), address] },
+      sessionAddr,
+    );
+    return json({ linked: true, wallets });
   } catch (e) {
     logError('kyc-link-wallet', e);
     return json({ error: 'server_error' }, 500);
