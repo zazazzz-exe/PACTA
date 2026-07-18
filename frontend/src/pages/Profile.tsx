@@ -200,7 +200,7 @@ export function Profile() {
             {linking ? 'Linking...' : 'Link a wallet'}
           </button>
           <p className="mt-1.5 text-[12px] text-slate">
-            Opens your wallet picker. Choose another wallet (Albedo and xBull run in the browser, no install), sign once, and it joins this identity.
+            Opens your wallet picker. Choose another wallet (xBull runs in the browser, no install), sign once, and it joins this identity.
           </p>
 
           {actionError && <p className="mt-2 text-[13px] text-refund">{actionError}</p>}
@@ -250,9 +250,21 @@ export function Profile() {
   );
 }
 
+// Extract a string message from an Error, a { message } object (the wallet kit
+// throws these), or anything else.
+function errMessage(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === 'object' && typeof (e as { message?: unknown }).message === 'string') {
+    return (e as { message: string }).message;
+  }
+  return String(e);
+}
+
 // Map link-specific server errors to friendly copy.
 function linkErrorMessage(e: unknown): string {
-  const msg = e instanceof Error ? e.message : String(e);
+  const msg = errMessage(e);
+  if (/signMessage|does not support/i.test(msg))
+    return 'That wallet cannot sign the ownership proof. Use Freighter or xBull.';
   if (/409/.test(msg)) return 'That wallet is already verified as a separate identity.';
   if (/403/.test(msg)) return 'Verify this identity first before linking more wallets.';
   if (/401/.test(msg)) return 'Could not prove ownership of that wallet. Make sure it is the active account, then try again.';

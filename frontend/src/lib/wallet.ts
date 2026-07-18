@@ -3,17 +3,18 @@ import {
   WalletNetwork,
   FREIGHTER_ID,
   FreighterModule,
-  AlbedoModule,
   xBullModule,
-  LobstrModule,
-  RabetModule,
+  HanaModule,
   type ISupportedWallet,
 } from '@creit.tech/stellar-wallets-kit';
 import { NETWORK_PASSPHRASE } from './config';
 
-// The kit modal lists these Stellar wallets. Albedo and xBull are web-based (no
-// extension install), which makes them the easy choice for connecting a SECOND
-// wallet to test linked identity. Freighter is the default selection.
+// The kit modal lists only wallets that support signMessage, because the whole
+// KYC / linked-identity ownership proof signs a challenge message. Albedo,
+// Lobstr, Rabet, and WalletConnect do NOT implement signMessage in this kit and
+// would fail the ownership challenge, so they are deliberately excluded. xBull is
+// web-based (no extension install), making it the easy SECOND wallet for testing
+// linked identity. Freighter is the default selection.
 //
 // Lazily constructed: the StellarWalletsKit constructor touches browser-only
 // globals (`window`), which is a hazard at module-import time in tests/SSR.
@@ -24,13 +25,7 @@ export function getKit(): StellarWalletsKit {
     _kit = new StellarWalletsKit({
       network: WalletNetwork.TESTNET,
       selectedWalletId: FREIGHTER_ID,
-      modules: [
-        new FreighterModule(),
-        new AlbedoModule(),
-        new xBullModule(),
-        new LobstrModule(),
-        new RabetModule(),
-      ],
+      modules: [new FreighterModule(), new xBullModule(), new HanaModule()],
     });
   }
   return _kit;
