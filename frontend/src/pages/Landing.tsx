@@ -205,11 +205,15 @@ export function Landing() {
 
           {/* Right — the wallet, on a 3D-tilted phone */}
           <div data-tour="proof" className="relative">
-            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] border border-accent/20 bg-gradient-to-br from-accent-tint via-canvas to-accent/10 p-6 shadow-pop sm:p-10">
-              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-accent/30" aria-hidden />
-              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-signal/25" aria-hidden />
-              <div className="glow-orb absolute right-10 bottom-4 h-28 w-28 bg-deadline/20" aria-hidden />
-              <div className="mesh-dots pointer-events-none absolute inset-0 opacity-40" aria-hidden />
+            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] bg-gradient-to-br from-accent-deep via-accent to-accent-deep p-6 shadow-pop sm:p-10">
+              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-signal/30" aria-hidden />
+              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-white/10" aria-hidden />
+              <div className="glow-orb absolute right-10 bottom-4 h-28 w-28 bg-deadline/25" aria-hidden />
+              <div
+                className="pointer-events-none absolute inset-0 opacity-60"
+                style={{ backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(52,227,176,0.22), transparent 55%)' }}
+                aria-hidden
+              />
 
               <div className="relative flex justify-center py-2">
                 <div className="phone-3d">
@@ -244,9 +248,9 @@ export function Landing() {
                 </div>
               </div>
               <div className="float-card-a absolute -right-1 bottom-9 z-20 hidden sm:block">
-                <div className="float-card-enter float-card-enter-3 flex items-center gap-1.5 rounded-pill bg-accent px-3 py-1.5 shadow-pop">
-                  <BadgeCheck size={14} className="text-white" aria-hidden />
-                  <span className="text-[11px] font-medium text-white">Verified</span>
+                <div className="float-card-enter float-card-enter-3 flex items-center gap-1.5 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
+                  <BadgeCheck size={14} className="text-accent" aria-hidden />
+                  <span className="text-[11px] font-medium text-ink">Verified</span>
                 </div>
               </div>
             </div>
@@ -274,7 +278,7 @@ export function Landing() {
             {CAPABILITIES.map(({ icon: Icon, title, body, tint }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
-                  <div className="group step-card h-full rounded-card border border-accent/20 bg-paper p-6 shadow-card">
+                  <div className="group step-card h-full rounded-card border border-hairline bg-paper p-6 shadow-card">
                     <div className={`icon-pop grid h-12 w-12 place-items-center rounded-control shadow-card ${tint}`}>
                       <Icon size={24} aria-hidden />
                     </div>
@@ -308,7 +312,7 @@ export function Landing() {
             {PROTECT.map(({ icon: Icon, title, body }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
-                  <div className="group step-card flex h-full items-start gap-4 rounded-card border border-accent/20 bg-paper/95 p-6 shadow-card ring-1 ring-accent/5">
+                  <div className="group step-card flex h-full items-start gap-4 rounded-card border border-hairline bg-paper p-6 shadow-card">
                     <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-white shadow-card">
                       <Icon size={24} aria-hidden />
                     </div>
