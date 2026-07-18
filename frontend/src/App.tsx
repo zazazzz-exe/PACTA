@@ -158,38 +158,38 @@ export default function App() {
         </PageTransition>
       </main>
 
-      <footer className={`relative z-10 bg-[#0A3328] text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-16'}`}>
-        <div className="mx-auto max-w-6xl px-5 py-12">
-          <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <footer className={`relative z-10 bg-[#0A3328] text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-12'}`}>
+        <div className="mx-auto max-w-6xl px-5 py-9">
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             {/* Brand */}
             <div>
-              <div className="flex items-center gap-2.5">
-                <img src="/Pacta_logo.png" alt="" aria-hidden className="h-12 w-12 object-contain" />
-                <span className="text-[21px] font-semibold tracking-tight text-panel-ink">PACTA</span>
+              <div className="flex items-center gap-2">
+                <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+                <span className="text-[17px] font-semibold tracking-tight text-panel-ink">PACTA</span>
               </div>
-              <p className="mt-3 max-w-[280px] text-[13px] leading-relaxed text-panel-muted">
-                Trust, written in code. A non-custodial escrow for entrusting money to independent
-                providers: locked in a contract, released step by step, backed by a bond.
+              <p className="mt-2.5 max-w-[260px] text-[12.5px] leading-relaxed text-panel-muted">
+                A non-custodial wallet on Stellar. Hold, send, receive, and convert, and send protected
+                when a payment needs to be safe.
               </p>
-              <span className="mono mt-4 inline-flex items-center gap-1.5 text-[12px] text-panel-muted">
+              <span className="mono mt-3 inline-flex items-center gap-1.5 text-[11px] text-panel-muted">
                 <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden /> Stellar testnet
               </span>
             </div>
 
             {/* Product */}
             <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Product</h3>
-              <ul className="mt-3 space-y-2.5">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-signal">Product</h3>
+              <ul className="mt-2.5 space-y-2">
                 <li><FooterBtn onClick={() => navigate('/')}>Home</FooterBtn></li>
-                <li><FooterBtn onClick={() => navigate('/dashboard')}>Dashboard</FooterBtn></li>
-                <li><FooterBtn onClick={() => navigate('/create')}>New agreement</FooterBtn></li>
+                <li><FooterBtn onClick={() => navigate('/dashboard')}>Pacts</FooterBtn></li>
+                <li><FooterBtn onClick={() => navigate('/activity')}>Activity</FooterBtn></li>
               </ul>
             </div>
 
             {/* Resources */}
             <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Resources</h3>
-              <ul className="mt-3 space-y-2.5">
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-signal">Resources</h3>
+              <ul className="mt-2.5 space-y-2">
                 <li><FooterExt href={contractExplorerUrl()}>Smart contract</FooterExt></li>
                 <li><FooterExt href="https://stellar.org">Stellar network</FooterExt></li>
                 <li><FooterExt href="https://www.freighter.app/">Freighter wallet</FooterExt></li>
@@ -198,17 +198,17 @@ export default function App() {
 
             {/* Security */}
             <div>
-              <h3 className="text-[12px] font-semibold uppercase tracking-wider text-signal">Security</h3>
-              <ul className="mt-3 space-y-2.5 text-[14px] text-panel-muted">
-                <li className="flex items-center gap-2"><ShieldCheck size={15} className="text-signal shrink-0" aria-hidden /> Non-custodial</li>
-                <li className="flex items-center gap-2"><Lock size={15} className="text-signal shrink-0" aria-hidden /> Funds locked in contract</li>
-                <li className="flex items-center gap-2"><CheckCircle2 size={15} className="text-signal shrink-0" aria-hidden /> On-chain reputation</li>
-                <li className="flex items-center gap-2"><RotateCcw size={15} className="text-signal shrink-0" aria-hidden /> Deadline refunds</li>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider text-signal">Security</h3>
+              <ul className="mt-2.5 space-y-2 text-[13px] text-panel-muted">
+                <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-signal shrink-0" aria-hidden /> Non-custodial</li>
+                <li className="flex items-center gap-2"><Lock size={14} className="text-signal shrink-0" aria-hidden /> Funds locked in contract</li>
+                <li className="flex items-center gap-2"><CheckCircle2 size={14} className="text-signal shrink-0" aria-hidden /> On-chain reputation</li>
+                <li className="flex items-center gap-2"><RotateCcw size={14} className="text-signal shrink-0" aria-hidden /> Deadline refunds</li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-2 border-t border-white/10 pt-5 text-[12px] text-panel-muted sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-8 flex flex-col gap-2 border-t border-white/10 pt-4 text-[12px] text-panel-muted sm:flex-row sm:items-center sm:justify-between">
             <span>© 2026 PACTA. Trust, written in code.</span>
             <span className="flex items-center gap-1.5">
               Powered by
@@ -234,7 +234,7 @@ function FooterBtn({ onClick, children }: { onClick: () => void; children: strin
   return (
     <button
       onClick={onClick}
-      className="text-[14px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+      className="text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
     >
       {children}
     </button>
@@ -247,7 +247,7 @@ function FooterExt({ href, children }: { href: string; children: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-1 text-[14px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+      className="inline-flex items-center gap-1 text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
     >
       {children}
       <ArrowUpRight size={13} aria-hidden />
