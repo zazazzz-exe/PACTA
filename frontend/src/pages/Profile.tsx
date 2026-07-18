@@ -9,6 +9,7 @@ import {
   type LinkedWallet,
 } from '../lib/kycClient';
 import { getReputation, type Reputation } from '../lib/contract';
+import { currentWalletName } from '../lib/wallet';
 import { Avatar } from '../components/Avatar';
 import { IdentityBadge } from '../components/kyc/IdentityBadge';
 import { CopyButton } from '../components/CopyButton';
@@ -78,8 +79,11 @@ export function Profile() {
     setLinking(true);
     setActionError(null);
     try {
-      await linkWallet();
-      await reload();
+      // Use the wallet list the link endpoint returns, so we only refresh the
+      // global gating status once (no extra kyc-status fetch for the list).
+      const res = await linkWallet();
+      setKyc((prev) => (prev ? { ...prev, linkedWallets: res.wallets } : prev));
+      await refreshKyc();
     } catch (e) {
       // The user closing the wallet picker is not an error.
       const msg = e instanceof Error ? e.message : String(e);
@@ -130,6 +134,9 @@ export function Profile() {
             <span className="mono truncate text-[14px] text-ink">{shortAddr(address)}</span>
             <CopyButton value={address} label="Copy address" />
           </div>
+          <p className="mt-0.5 flex items-center gap-1 text-[12px] text-slate">
+            <Wallet size={12} aria-hidden /> Connected with {currentWalletName()}
+          </p>
           <IdentityBadge status={kycStatus} maskedName={kyc?.maskedName} className="mt-1" />
         </div>
       </div>

@@ -60,6 +60,17 @@ export function currentSelectedWalletId(): string {
   return _selectedWalletId;
 }
 
+const WALLET_NAMES: Record<string, string> = {
+  freighter: 'Freighter',
+  xbull: 'xBull',
+  hana: 'Hana',
+};
+
+// Friendly name of the currently-connected wallet app (for display).
+export function currentWalletName(): string {
+  return WALLET_NAMES[_selectedWalletId] ?? 'your wallet';
+}
+
 // Open the wallet picker to choose a DIFFERENT wallet to link, returning its id
 // + address. This switches the kit's active wallet to the chosen one so the
 // caller can sign with it; the caller MUST call restoreSelectedWallet afterward

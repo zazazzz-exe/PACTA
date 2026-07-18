@@ -34,21 +34,29 @@ async function handler(req: Request): Promise<Response> {
     const nowIso = new Date().toISOString();
 
     // Proof 1: the session must resolve to a verified identity.
-    const me = await resolveIdentity(supa, sessionAddr);
-    if (me.status !== 'verified' || !me.identityId) return json({ error: 'not_verified' }, 403);
-
-    // Throttle brute-force signature attempts on B (same brake as verify-wallet).
-    if (
-      await overLimit(
+    // The three gating reads are independent, so run them concurrently: the
+    // session's identity, B's current identity, and B's rate-limit state.
+    const [me, b, limited] = await Promise.all([
+      resolveIdentity(supa, sessionAddr),
+      resolveIdentity(supa, address),
+      overLimit(
         supa,
         'kyc_event',
         { wallet_address: address, event_type: 'wallet_verify_failed' },
         10 * 60_000,
         10,
-      )
-    ) {
-      return json({ error: 'rate_limited' }, 429);
+      ),
+    ]);
+
+    if (limited) return json({ error: 'rate_limited' }, 429);
+    // Proof 1: the session must resolve to a verified identity.
+    if (me.status !== 'verified' || !me.identityId) return json({ error: 'not_verified' }, 403);
+    // Already part of this identity: idempotent success, no proof needed for a no-op.
+    if (b.identityId === me.identityId) {
+      return json({ linked: true, wallets: linkedWalletsFrom(me, sessionAddr) });
     }
+    // B belongs to a DIFFERENT verified identity: never silently merge.
+    if (b.status === 'verified') return json({ error: 'already_verified_elsewhere' }, 409);
 
     // Proof 2: atomic single-use consume of B's ownership nonce, then verify B's
     // signature — identical mechanics to kyc-verify-wallet.
@@ -72,26 +80,11 @@ async function handler(req: Request): Promise<Response> {
       return json({ error: 'bad_signature' }, 401);
     }
 
-    // Ensure B has a profile row (creates an unverified singleton if new).
-    const { error: upsertErr } = await supa
-      .from('kyc_profile')
-      .upsert({ wallet_address: address }, { onConflict: 'wallet_address', ignoreDuplicates: true });
-    if (upsertErr) throw upsertErr;
-
-    const b = await resolveIdentity(supa, address);
-    // Already part of this identity: idempotent success.
-    if (b.identityId === me.identityId) {
-      const resolved = await resolveIdentity(supa, sessionAddr);
-      return json({ linked: true, wallets: linkedWalletsFrom(resolved, sessionAddr) });
-    }
-    // B belongs to a DIFFERENT verified identity: never silently merge.
-    if (b.status === 'verified') return json({ error: 'already_verified_elsewhere' }, 409);
-
-    // Point B at A's identity.
+    // Link B into A's identity. One upsert both creates B's row if missing and
+    // points it at A's identity, replacing the create-then-update pair.
     const { error: linkErr } = await supa
       .from('kyc_profile')
-      .update({ identity_id: me.identityId })
-      .eq('wallet_address', address);
+      .upsert({ wallet_address: address, identity_id: me.identityId }, { onConflict: 'wallet_address' });
     if (linkErr) throw linkErr;
 
     await supa.from('kyc_event').insert([
