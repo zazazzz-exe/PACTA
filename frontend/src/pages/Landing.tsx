@@ -14,6 +14,7 @@ import {
   Fingerprint,
   Boxes,
   Clock,
+  CheckCircle2,
 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useTour } from '../components/Tour';
@@ -21,7 +22,8 @@ import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
 import { Reveal } from '../components/Reveal';
-import { HeroFlow } from '../components/HeroFlow';
+import { PhoneMockup } from '../components/PhoneMockup';
+import { WalletPreview } from '../components/WalletPreview';
 
 // The wallet, up front. Escrow is one capability (Send protected), not the story.
 const CAPABILITIES = [
@@ -117,79 +119,101 @@ export function Landing() {
 
   return (
     <div className="w-full bg-canvas">
-      {/* ── Hero — wallet-first, with the live Pact flow as the signature ── */}
-      <section className="relative w-full overflow-hidden px-5 pb-8 pt-14 sm:pt-20">
+      {/* ── Hero — wallet-first, split with a live wallet-UI phone ── */}
+      <section className="relative w-full overflow-hidden px-5 pb-12 pt-12 sm:px-8 sm:pt-16 lg:pb-20">
         <div className="pointer-events-none absolute inset-0 landing-hero-left" aria-hidden />
         <div
-          className="blob blob-a pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-accent/15"
+          className="blob blob-a pointer-events-none absolute -left-24 top-0 h-72 w-72 rounded-full bg-accent/15"
           aria-hidden
         />
         <div
-          className="blob blob-b pointer-events-none absolute -right-16 top-44 h-56 w-56 rounded-full bg-signal/10"
+          className="blob blob-b pointer-events-none absolute -right-10 top-40 h-56 w-56 rounded-full bg-signal/10"
           aria-hidden
         />
 
-        <div className="animate-rise relative mx-auto max-w-3xl text-center">
-          <span
-            data-tour="network"
-            className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
-          >
-            <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
-            Live on Stellar testnet
-          </span>
-
-          <h1 className="mx-auto mt-6 max-w-2xl text-[38px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-[52px] lg:text-[60px]">
-            Your money is{' '}
-            <span className="relative inline-block text-accent">
-              yours
-              <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-pill bg-deadline/70" aria-hidden />
-            </span>{' '}
-            to move.
-          </h1>
-
-          <p className="mx-auto mt-6 max-w-xl text-[16px] leading-relaxed text-slate sm:text-[17px]">
-            PACTA is a non-custodial wallet for Stellar. Hold, send, receive, and convert without ever
-            handing over your keys. And when a payment needs to be safe, send it as a Pact: staged,
-            bond-backed, refundable, and provable on-chain.
-          </p>
-
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <button
-              onClick={connect}
-              data-tour="connect"
-              className="btn-shimmer group inline-flex h-14 items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98]"
+        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-8">
+          {/* Left — copy */}
+          <div className="animate-rise max-w-xl text-center lg:text-left">
+            <span
+              data-tour="network"
+              className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
             >
-              <Wallet size={20} aria-hidden />
-              Connect wallet
-              <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
-            </button>
-            <button
-              onClick={scrollToHow}
-              className="inline-flex h-14 items-center justify-center gap-2 rounded-[14px] border border-hairline-strong bg-paper px-8 text-[15px] font-medium text-ink transition hover:border-accent/40 hover:bg-accent-tint active:scale-[0.98]"
-            >
-              See how it works
-            </button>
-          </div>
+              <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
+              Live on Stellar testnet
+            </span>
 
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-            {['No custody, ever', 'Stellar-native settlement', 'Provable on-chain'].map((chip) => (
-              <span
-                key={chip}
-                className="inline-flex items-center gap-2 rounded-pill border border-accent/15 bg-accent-tint/70 px-3.5 py-1.5 text-[13px] font-medium text-accent-deep"
+            <h1 className="mt-6 text-[36px] font-semibold leading-[1.08] tracking-tight text-ink sm:text-[48px] lg:text-[54px]">
+              Simplify every payment.{' '}
+              <span className="text-accent">Protect the ones that matter.</span>
+            </h1>
+
+            <p className="mx-auto mt-6 max-w-lg text-[16px] leading-relaxed text-slate lg:mx-0 sm:text-[17px]">
+              A non-custodial wallet for Stellar. Hold, send, receive, and convert without giving up your
+              keys. When a payment needs to be safe, send it as a Pact: staged, bond-backed, and provable
+              on-chain.
+            </p>
+
+            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+              <button
+                onClick={connect}
+                data-tour="connect"
+                className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:w-auto"
               >
-                <ShieldCheck size={14} className="text-accent" aria-hidden />
-                {chip}
-              </span>
-            ))}
-          </div>
-        </div>
+                <Wallet size={20} aria-hidden />
+                Connect wallet
+                <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </button>
+              <button
+                onClick={scrollToHow}
+                className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] border border-hairline-strong bg-paper px-8 text-[15px] font-medium text-ink transition hover:border-accent/40 hover:bg-accent-tint active:scale-[0.98] sm:w-auto"
+              >
+                See how it works
+              </button>
+            </div>
 
-        {/* Signature — the live Pact flow */}
-        <div data-tour="proof" className="relative mt-10 sm:mt-14">
-          <HeroFlow />
-          <p className="mt-1 text-center text-[13px] text-slate">
-            A Pact: money leaves your wallet, locks in the contract, releases in milestones, backed by a bond.
-          </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+              {['No custody, ever', 'Stellar-native', 'Provable on-chain'].map((chip) => (
+                <span
+                  key={chip}
+                  className="inline-flex items-center gap-2 rounded-pill border border-accent/15 bg-accent-tint/70 px-3.5 py-1.5 text-[13px] font-medium text-accent-deep"
+                >
+                  <ShieldCheck size={14} className="text-accent" aria-hidden />
+                  {chip}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — the wallet, on a phone */}
+          <div data-tour="proof" className="relative">
+            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] bg-gradient-to-br from-accent-tint via-canvas to-accent-tint/70 p-6 shadow-card sm:p-10">
+              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-accent/25" aria-hidden />
+              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-signal/20" aria-hidden />
+              <div className="mesh-dots pointer-events-none absolute inset-0 opacity-30" aria-hidden />
+
+              <div className="relative flex justify-center">
+                <div className="float-card-enter">
+                  <PhoneMockup size="lg" variant="light" float>
+                    <WalletPreview />
+                  </PhoneMockup>
+                </div>
+              </div>
+
+              {/* Floating life */}
+              <div className="float-card-a absolute right-1 top-10 z-20 hidden sm:block">
+                <div className="float-card-enter float-card-enter-2 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
+                  <CheckCircle2 size={14} className="text-accent" aria-hidden />
+                  <span className="text-[11px] font-medium text-ink">Received 75 XLM</span>
+                </div>
+              </div>
+              <div className="float-card-b absolute bottom-12 left-1 z-20 hidden sm:block">
+                <div className="float-card-enter float-card-enter-3 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
+                  <Repeat size={14} className="text-accent-deep" aria-hidden />
+                  <span className="text-[11px] font-medium text-ink">XLM to USDC</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 

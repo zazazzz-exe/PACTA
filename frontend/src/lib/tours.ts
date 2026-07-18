@@ -17,9 +17,9 @@ export const landingSteps: TourStep[] = [
   },
   {
     target: '[data-tour="proof"]',
-    title: 'Send protected, as a Pact',
-    body: 'Money leaves your wallet, locks in the contract, and releases in milestones, backed by the recipient bond.',
-    placement: 'top',
+    title: 'Your wallet at a glance',
+    body: 'Balance, assets, and one tap to send, receive, or convert. Send protected when a payment needs to be safe.',
+    placement: 'left',
   },
   {
     target: '[data-tour="how"]',
