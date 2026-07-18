@@ -1,15 +1,19 @@
 import { useEffect } from 'react';
 import {
   ArrowRight,
-  Banknote,
-  Clock,
-  Layers,
-  Lock,
-  QrCode,
-  ShieldCheck,
-  Smartphone,
   Wallet,
-  Zap,
+  Send,
+  QrCode,
+  Repeat,
+  Lock,
+  ShieldCheck,
+  Layers,
+  RotateCcw,
+  KeyRound,
+  Eye,
+  Fingerprint,
+  Boxes,
+  Clock,
 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useTour } from '../components/Tour';
@@ -17,60 +21,76 @@ import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
 import { Reveal } from '../components/Reveal';
-import { HeroShowcase } from '../components/HeroShowcase';
+import { HeroFlow } from '../components/HeroFlow';
 
-const HOW_STEPS = [
+// The wallet, up front. Escrow is one capability (Send protected), not the story.
+const CAPABILITIES = [
   {
-    n: 1,
-    title: 'Create your agreement',
-    body: 'Set the capital, security bond, milestones, and deadline. Both parties agree before any funds move.',
-    tag: 'Free on testnet',
-    icon: QrCode,
-  },
-  {
-    n: 2,
-    title: 'Lock funds on-chain',
-    body: 'The client deposits capital and the provider posts a bond. Everything sits in a Soroban contract, not a person.',
-    tag: 'No custody',
     icon: Wallet,
+    title: 'Hold',
+    body: 'A multi-asset portfolio with live peso values. Your keys and funds never leave your wallet.',
   },
   {
-    n: 3,
-    title: 'Release step by step',
-    body: 'Approve milestones as work completes. Money settles on Stellar in seconds. Refund if the deadline passes.',
-    tag: '~3s settlement',
-    icon: Zap,
+    icon: Send,
+    title: 'Send',
+    body: 'Pay anyone on Stellar in seconds. Send now, or send protected when it matters.',
+  },
+  {
+    icon: QrCode,
+    title: 'Receive',
+    body: 'Share your address or QR and get paid from any Stellar wallet.',
+  },
+  {
+    icon: Repeat,
+    title: 'Convert',
+    body: 'Swap one asset for another on the Stellar DEX, at the best on-chain rate.',
   },
 ] as const;
 
-const FEATURES = [
+// Protection layer — the Pact — explained as what it does for the sender.
+const PROTECT = [
   {
-    icon: Layers,
-    title: 'Milestone escrow',
-    body: 'Lock capital in tranches and release milestone by milestone. Every step is visible on-chain.',
-    bullets: ['No middleman', 'Client stays in control', 'Works on any wallet'],
-    highlight: '₱0 platform fees on testnet',
+    icon: Lock,
+    title: 'Locked in code',
+    body: 'Funds sit in a Soroban contract, not a person. PACTA never takes custody.',
   },
   {
     icon: ShieldCheck,
-    title: 'Security bond',
-    body: 'Providers post a bond held by the contract. If they walk away, the bond is yours.',
-    bullets: ['Skin in the game', 'Bond returned on completion', 'Forfeited on refund'],
-    highlight: null,
+    title: 'Backed by a bond',
+    body: 'The recipient posts a security bond. If they walk away, the bond is yours.',
   },
   {
-    icon: Lock,
-    title: 'Immutable records',
-    body: 'Every agreement, deposit, and release is permanently on the Stellar blockchain. Dispute-proof.',
-    bullets: ['Verifiable history', 'On-chain reputation', 'Transparent ledger'],
-    highlight: null,
+    icon: Layers,
+    title: 'Released in milestones',
+    body: 'Approve each stage as the work lands. Money settles on Stellar in seconds.',
   },
   {
-    icon: Smartphone,
-    title: 'Mobile-first web app',
-    body: 'Open in any browser on Android or iPhone. Connect your wallet and go. No app store required.',
-    bullets: ['Wallet is your login', 'No passwords', 'Testnet ready today'],
-    highlight: 'Available now',
+    icon: RotateCcw,
+    title: 'Refundable',
+    body: 'Reclaim everything if the deadline passes and the work never comes.',
+  },
+] as const;
+
+const TRUST = [
+  {
+    icon: KeyRound,
+    title: 'Non-custodial',
+    body: 'Your wallet is your login. No passwords, no custody, no counterparty risk from us.',
+  },
+  {
+    icon: Eye,
+    title: 'Risk Lens',
+    body: 'Before you commit, read the counterparty from their real on-chain history.',
+  },
+  {
+    icon: Fingerprint,
+    title: 'One identity, many wallets',
+    body: 'Verify once, then link your other wallets. Any of them counts as you.',
+  },
+  {
+    icon: Boxes,
+    title: 'Provable on-chain',
+    body: 'Every send, swap, and Pact is permanent on Stellar. Verifiable by anyone.',
   },
 ] as const;
 
@@ -79,7 +99,7 @@ export function Landing() {
   const { start } = useTour();
 
   useEffect(() => {
-    if (address) navigate('/dashboard');
+    if (address) navigate('/home');
   }, [address]);
 
   useEffect(() => {
@@ -97,169 +117,181 @@ export function Landing() {
 
   return (
     <div className="w-full bg-canvas">
-      {/* ── Hero (PalengkePay split) ── */}
-      <section className="relative w-full overflow-hidden">
+      {/* ── Hero — wallet-first, with the live Pact flow as the signature ── */}
+      <section className="relative w-full overflow-hidden px-5 pb-8 pt-14 sm:pt-20">
         <div className="pointer-events-none absolute inset-0 landing-hero-left" aria-hidden />
-        <div className="pointer-events-none absolute -left-20 top-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl blob blob-a" aria-hidden />
-        <div className="pointer-events-none absolute bottom-10 left-1/3 h-48 w-48 rounded-full bg-signal/15 blur-3xl blob blob-b" aria-hidden />
+        <div
+          className="blob blob-a pointer-events-none absolute -left-24 top-6 h-72 w-72 rounded-full bg-accent/15"
+          aria-hidden
+        />
+        <div
+          className="blob blob-b pointer-events-none absolute -right-16 top-44 h-56 w-56 rounded-full bg-signal/10"
+          aria-hidden
+        />
 
-        <div className="relative grid lg:grid-cols-2 lg:min-h-[600px]">
-          {/* Left — copy + CTAs */}
-          <div className="flex flex-col justify-center px-5 py-14 sm:px-10 lg:px-12 xl:px-16">
-            <div className="mx-auto w-full max-w-xl lg:mx-0 animate-rise">
+        <div className="animate-rise relative mx-auto max-w-3xl text-center">
+          <span
+            data-tour="network"
+            className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
+          >
+            <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
+            Live on Stellar testnet
+          </span>
+
+          <h1 className="mx-auto mt-6 max-w-2xl text-[38px] font-semibold leading-[1.05] tracking-tight text-ink sm:text-[52px] lg:text-[60px]">
+            Your money is{' '}
+            <span className="relative inline-block text-accent">
+              yours
+              <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-pill bg-deadline/70" aria-hidden />
+            </span>{' '}
+            to move.
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-xl text-[16px] leading-relaxed text-slate sm:text-[17px]">
+            PACTA is a non-custodial wallet for Stellar. Hold, send, receive, and convert without ever
+            handing over your keys. And when a payment needs to be safe, send it as a Pact: staged,
+            bond-backed, refundable, and provable on-chain.
+          </p>
+
+          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <button
+              onClick={connect}
+              data-tour="connect"
+              className="btn-shimmer group inline-flex h-14 items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98]"
+            >
+              <Wallet size={20} aria-hidden />
+              Connect wallet
+              <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+            </button>
+            <button
+              onClick={scrollToHow}
+              className="inline-flex h-14 items-center justify-center gap-2 rounded-[14px] border border-hairline-strong bg-paper px-8 text-[15px] font-medium text-ink transition hover:border-accent/40 hover:bg-accent-tint active:scale-[0.98]"
+            >
+              See how it works
+            </button>
+          </div>
+
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+            {['No custody, ever', 'Stellar-native settlement', 'Provable on-chain'].map((chip) => (
               <span
-                data-tour="network"
-                className="mb-6 inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
+                key={chip}
+                className="inline-flex items-center gap-2 rounded-pill border border-accent/15 bg-accent-tint/70 px-3.5 py-1.5 text-[13px] font-medium text-accent-deep"
               >
-                <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
-                Live on Stellar testnet
+                <ShieldCheck size={14} className="text-accent" aria-hidden />
+                {chip}
               </span>
-
-              <h1 className="mb-5 text-[32px] font-semibold leading-[1.1] tracking-tight text-ink sm:text-[44px] lg:text-[48px]">
-                Protected agreements{' '}
-                <span className="text-accent">built in</span>{' '}
-                <span className="relative inline-block text-ink">
-                  code
-                  <span className="absolute -bottom-1 left-0 h-1.5 w-full rounded-pill bg-deadline" aria-hidden />
-                </span>
-              </h1>
-
-              <p className="mb-8 max-w-md text-[16px] leading-relaxed text-slate">
-                Lock. Release. Prove. Powered by Stellar Soroban.
-                Non-custodial escrow with milestone releases and provider bonds.
-              </p>
-
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={connect}
-                  data-tour="connect"
-                  className="group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] bg-accent px-6 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:flex-none sm:px-8"
-                >
-                  <Wallet size={20} aria-hidden />
-                  I&apos;m a Client
-                  <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
-                </button>
-                <button
-                  onClick={connect}
-                  className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-[14px] border-2 border-accent/50 bg-accent-tint px-6 text-[15px] font-medium text-accent-deep shadow-card transition hover:border-accent hover:bg-accent-tint/80 active:scale-[0.98] sm:flex-none sm:px-8"
-                >
-                  <Banknote size={20} className="text-accent" aria-hidden />
-                  I&apos;m a Provider
-                  <ArrowRight size={18} aria-hidden />
-                </button>
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <span className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint/80 px-3.5 py-2 text-[13px] font-medium text-accent-deep">
-                  <ShieldCheck size={15} className="text-accent" aria-hidden />
-                  No custody, no middleman
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint/80 px-3.5 py-2 text-[13px] font-medium text-accent-deep">
-                  <Zap size={15} className="text-accent" aria-hidden />
-                  Stellar-native settlement
-                </span>
-              </div>
-            </div>
+            ))}
           </div>
+        </div>
 
-          {/* Right — phone showcase (navy panel) */}
-          <div className="animate-rise lg:block" style={{ animationDelay: '120ms' }}>
-            <HeroShowcase />
-          </div>
+        {/* Signature — the live Pact flow */}
+        <div data-tour="proof" className="relative mt-10 sm:mt-14">
+          <HeroFlow />
+          <p className="mt-1 text-center text-[13px] text-slate">
+            A Pact: money leaves your wallet, locks in the contract, releases in milestones, backed by a bond.
+          </p>
         </div>
       </section>
 
-      {/* ── How it works ── */}
-      <section className="landing-section-green relative px-5 py-16 sm:px-8 lg:py-20" data-tour="how">
+      {/* ── One wallet, everything money ── */}
+      <section className="landing-section-green relative px-5 py-16 sm:px-8 lg:py-24" data-tour="how">
         <div className="mesh-dots pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="relative mx-auto max-w-6xl">
           <Reveal>
             <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-accent">
-              Simple &amp; fast
+              The wallet
             </p>
-            <h2 className="mt-2 text-center text-[28px] font-semibold text-ink sm:text-[34px]">
-              How it works
+            <h2 className="mt-2 text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
+              One wallet, everything money
             </h2>
             <p className="mx-auto mt-3 max-w-lg text-center text-[15px] text-slate">
-              Three simple steps to your first protected agreement
+              Connect a Stellar wallet and your money is ready to move. No sign up, no passwords.
             </p>
           </Reveal>
 
-          <ul className="mt-12 grid gap-6 md:grid-cols-3">
-            {HOW_STEPS.map(({ n, title, body, tag, icon: Icon }, i) => (
-              <li key={n}>
-                <Reveal delay={i * 100}>
-                  <div className="step-card relative h-full rounded-card border border-accent/25 bg-paper/90 p-6 shadow-card backdrop-blur-sm">
-                    <span className="absolute -top-3 left-6 grid h-8 w-8 place-items-center rounded-full bg-accent text-[13px] font-semibold text-white shadow-card">
-                      {n}
-                    </span>
-                    <div className="mt-4 grid h-11 w-11 place-items-center rounded-control bg-accent-tint text-accent">
-                      <Icon size={22} aria-hidden />
+          <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {CAPABILITIES.map(({ icon: Icon, title, body }, i) => (
+              <li key={title}>
+                <Reveal delay={i * 80}>
+                  <div className="group step-card h-full rounded-card border border-accent/20 bg-paper/95 p-6 shadow-card">
+                    <div className="icon-pop grid h-12 w-12 place-items-center rounded-control bg-accent-tint text-accent">
+                      <Icon size={24} aria-hidden />
                     </div>
                     <h3 className="mt-4 text-[18px] font-medium text-ink">{title}</h3>
                     <p className="mt-2 text-[14px] leading-relaxed text-slate">{body}</p>
-                    <span className="mt-4 inline-flex items-center gap-1.5 rounded-pill bg-accent-tint px-3 py-1 text-[12px] font-medium text-accent-deep">
-                      <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden /> {tag}
-                    </span>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Send protected (a Pact) ── */}
+      <section className="landing-section-mint relative px-5 py-16 sm:px-8 lg:py-24">
+        <div className="relative mx-auto max-w-6xl">
+          <Reveal>
+            <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-accent">
+              When it matters
+            </p>
+            <h2 className="mt-2 text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
+              Send protected, as a Pact
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-center text-[15px] text-slate">
+              Paying someone new, or paying on delivery? Choose Send protected instead of Send now.
+              Your money is escrowed by a smart contract and released only as the work lands.
+            </p>
+          </Reveal>
+
+          <ul className="mt-12 grid gap-5 sm:grid-cols-2">
+            {PROTECT.map(({ icon: Icon, title, body }, i) => (
+              <li key={title}>
+                <Reveal delay={i * 80}>
+                  <div className="group step-card flex h-full items-start gap-4 rounded-card border border-accent/20 bg-paper/95 p-6 shadow-card ring-1 ring-accent/5">
+                    <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-white shadow-card">
+                      <Icon size={24} aria-hidden />
+                    </div>
+                    <div>
+                      <h3 className="text-[18px] font-medium text-ink">{title}</h3>
+                      <p className="mt-1.5 text-[14px] leading-relaxed text-slate">{body}</p>
+                    </div>
                   </div>
                 </Reveal>
               </li>
             ))}
           </ul>
 
-          <Reveal delay={200}>
-            <p className="mt-10 text-center text-[14px] text-slate">
-              Ready to get started?{' '}
-              <button
-                onClick={connect}
-                className="font-medium text-accent hover:text-accent-deep focus:outline-none focus-visible:underline"
-              >
-                Connect your wallet
-              </button>
+          <Reveal delay={160}>
+            <p className="mx-auto mt-10 max-w-xl text-center text-[14px] text-slate">
+              Every commitment is gated by verified identity, and the Risk Lens reads your counterparty
+              before you sign. Fund-returning actions are never gated, so you can always get your money back.
             </p>
           </Reveal>
         </div>
       </section>
 
-      {/* ── Why choose us ── */}
-      <section className="landing-section-mint relative px-5 py-16 sm:px-8 lg:py-20">
+      {/* ── Trust you can verify ── */}
+      <section className="relative px-5 py-16 sm:px-8 lg:py-24">
         <div className="relative mx-auto max-w-6xl">
           <Reveal>
             <p className="text-center text-[13px] font-semibold uppercase tracking-widest text-accent">
-              Why choose us
+              Why PACTA
             </p>
-            <h2 className="mt-2 text-center text-[28px] font-semibold text-ink sm:text-[34px]">
-              Built for real agreements
+            <h2 className="mt-2 text-center text-[28px] font-semibold tracking-tight text-ink sm:text-[36px]">
+              Trust you can verify
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-center text-[15px] text-slate">
-              Everything you need to entrust money safely between two parties
-            </p>
           </Reveal>
 
-          <ul className="mt-12 grid gap-6 sm:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, title, body, bullets, highlight }, i) => (
+          <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {TRUST.map(({ icon: Icon, title, body }, i) => (
               <li key={title}>
                 <Reveal delay={i * 80}>
-                  <div className="step-card h-full rounded-card border border-accent/20 bg-paper/95 p-6 shadow-card ring-1 ring-accent/10">
-                    <div className="grid h-12 w-12 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-white shadow-card">
-                      <Icon size={24} aria-hidden />
+                  <div className="group step-card h-full rounded-card border border-hairline bg-paper p-6 shadow-card">
+                    <div className="icon-pop grid h-11 w-11 place-items-center rounded-control bg-mist text-accent">
+                      <Icon size={22} aria-hidden />
                     </div>
-                    <h3 className="mt-4 text-[18px] font-medium text-ink">{title}</h3>
-                    <p className="mt-2 text-[14px] leading-relaxed text-slate">{body}</p>
-                    <ul className="mt-4 space-y-1.5">
-                      {bullets.map((b) => (
-                        <li key={b} className="flex items-center gap-2 text-[13px] text-slate">
-                          <span className="h-1.5 w-1.5 shrink-0 rounded-pill bg-accent" aria-hidden />
-                          {b}
-                        </li>
-                      ))}
-                    </ul>
-                    {highlight && (
-                      <p className="mt-4">
-                        <span className="text-[22px] font-semibold text-accent">₱0</span>
-                        <span className="text-[14px] text-slate"> platform fees on testnet</span>
-                      </p>
-                    )}
+                    <h3 className="mt-4 text-[16px] font-medium text-ink">{title}</h3>
+                    <p className="mt-2 text-[13.5px] leading-relaxed text-slate">{body}</p>
                   </div>
                 </Reveal>
               </li>
@@ -269,36 +301,37 @@ export function Landing() {
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="bg-accent-tint/50 px-5 py-16 sm:px-8">
+      <section className="px-5 py-16 sm:px-8 lg:pb-24">
         <div className="mx-auto max-w-6xl">
           <Reveal>
-            <div className="landing-hero-panel relative overflow-hidden rounded-[20px] px-6 py-12 text-center shadow-pop sm:px-12 sm:py-16">
+            <div className="landing-hero-panel relative overflow-hidden rounded-[24px] px-6 py-14 text-center shadow-pop sm:px-12 sm:py-20">
               <div className="mesh-dots pointer-events-none absolute inset-0 opacity-15" aria-hidden />
               <div
                 className="pointer-events-none absolute inset-0 opacity-70"
                 style={{
                   backgroundImage:
-                    'radial-gradient(circle at 70% 30%, rgba(52,227,176,0.4), transparent 50%)',
+                    'radial-gradient(circle at 70% 25%, rgba(52,227,176,0.35), transparent 55%)',
                 }}
                 aria-hidden
               />
-              <div className="relative">
+              <div className="relative mx-auto max-w-lg">
                 <span className="inline-flex items-center gap-2 rounded-pill border border-signal/30 bg-signal/10 px-4 py-1.5 text-[12px] font-medium text-signal">
                   <Clock size={14} aria-hidden />
                   Available now · Testnet
                 </span>
-                <h2 className="mt-5 text-[26px] font-semibold text-panel-ink sm:text-[34px]">
-                  Protect your first agreement
+                <h2 className="mt-5 text-[28px] font-semibold tracking-tight text-panel-ink sm:text-[38px]">
+                  Open your wallet
                 </h2>
-                <p className="mx-auto mt-3 max-w-md text-[15px] text-panel-muted">
-                  Join agreements already protected on-chain. No setup fees. No monthly costs.
-                  Just connect and create.
+                <p className="mx-auto mt-3 text-[15px] text-panel-muted">
+                  No sign up, no passwords, no custody. Connect a Stellar wallet and your money is ready
+                  to move.
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={connect}
                     className="inline-flex h-14 items-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white transition hover:bg-accent-deep active:scale-[0.98]"
                   >
+                    <Wallet size={18} aria-hidden />
                     Connect wallet
                     <ArrowRight size={18} aria-hidden />
                   </button>

@@ -6,7 +6,7 @@ import type { TourStep } from '../components/Tour';
 export const landingSteps: TourStep[] = [
   {
     title: 'Welcome to PACTA',
-    body: 'PACTA keeps money safe between a client and a provider, enforced by a smart contract. Here is a 30 second tour.',
+    body: 'A non-custodial wallet for Stellar: hold, send, receive, and convert, and send protected when it matters. Here is a 30 second tour.',
     placement: 'center',
   },
   {
@@ -17,20 +17,20 @@ export const landingSteps: TourStep[] = [
   },
   {
     target: '[data-tour="proof"]',
-    title: 'Proof, not promises',
-    body: 'This panel shows the amount protected by the contract, linked to the live record on Stellar.',
-    placement: 'left',
+    title: 'Send protected, as a Pact',
+    body: 'Money leaves your wallet, locks in the contract, and releases in milestones, backed by the recipient bond.',
+    placement: 'top',
   },
   {
     target: '[data-tour="how"]',
-    title: 'How it works',
-    body: 'Lock capital, the provider posts a bond, then release in milestones or reclaim it if the deadline passes.',
+    title: 'Everything money',
+    body: 'Hold a multi-asset portfolio, send and receive on Stellar, and convert between assets, all from one wallet.',
     placement: 'top',
   },
   {
     target: '[data-tour="connect"]',
     title: 'Connect to start',
-    body: 'Connect your wallet to create your first protected agreement. You can replay this tour anytime from the help button.',
+    body: 'Connect your wallet and your money is ready to move. You can replay this tour anytime from the help button.',
     placement: 'bottom',
   },
 ];
