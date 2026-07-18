@@ -15,6 +15,7 @@ import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
 import { NETWORK_PASSPHRASE } from './lib/config';
+import { isDemo, DEMO_ADDRESS } from './lib/demo';
 
 // Some @stellar/stellar-sdk code paths expect a global Buffer in the browser.
 (globalThis as unknown as { Buffer: typeof Buffer }).Buffer =
@@ -33,10 +34,12 @@ function WalletProvider({ children }: { children: ReactNode }) {
   const idleTimer = useRef<number | undefined>(undefined);
 
   const disconnect = useCallback(() => {
-    try {
-      void getKit().disconnect();
-    } catch {
-      /* noop */
+    if (!isDemo()) {
+      try {
+        void getKit().disconnect();
+      } catch {
+        /* noop */
+      }
     }
     setAddress(null);
     setNetwork(null);
@@ -48,6 +51,14 @@ function WalletProvider({ children }: { children: ReactNode }) {
     setConnecting(true);
     setLockNotice(null);
     try {
+      // Demo mode: connect instantly to the seeded, verified demo wallet.
+      if (isDemo()) {
+        setAddress(DEMO_ADDRESS);
+        setNetwork(NETWORK_PASSPHRASE);
+        setKycStatus('verified');
+        navigate('/home');
+        return;
+      }
       const addr = await connectWallet();
       setAddress(addr);
       navigate('/home');
@@ -73,6 +84,10 @@ function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshKyc = useCallback(async () => {
+    if (isDemo()) {
+      setKycStatus('verified');
+      return;
+    }
     setKycLoading(true);
     try {
       setKycStatus((await fetchKycStatus()).kycStatus);

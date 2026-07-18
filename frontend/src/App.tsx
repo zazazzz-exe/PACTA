@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
-import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight, Cloud, CloudOff } from 'lucide-react';
 import { useRoute, navigate } from './lib/router';
+import { isDemo, setDemo } from './lib/demo';
+import { useOffline, toggleForceOffline } from './lib/outbox';
+import { OutboxBar } from './components/OutboxBar';
 import { useWallet } from './hooks/useWallet';
 import { useTour } from './components/Tour';
 import { landingSteps, dashboardSteps } from './lib/tours';
@@ -67,6 +70,39 @@ function LockNotice() {
   );
 }
 
+function DemoControls() {
+  const demo = isDemo();
+  const offline = useOffline();
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={() => {
+          setDemo(!demo);
+          window.location.reload();
+        }}
+        title={demo ? 'Turn off demo mode' : 'Turn on demo mode (seeded, no network)'}
+        className={`rounded-pill px-2.5 py-1 text-[11px] font-semibold transition ${
+          demo ? 'bg-accent text-white' : 'bg-mist text-slate hover:bg-hairline'
+        }`}
+      >
+        {demo ? 'Demo on' : 'Demo'}
+      </button>
+      {demo && (
+        <button
+          onClick={() => toggleForceOffline()}
+          title={offline ? 'Simulate coming back online' : 'Simulate going offline'}
+          className={`inline-flex items-center gap-1 rounded-pill px-2.5 py-1 text-[11px] font-semibold transition ${
+            offline ? 'bg-deadline-tint text-deadline-deep' : 'bg-mist text-slate hover:bg-hairline'
+          }`}
+        >
+          {offline ? <CloudOff size={11} aria-hidden /> : <Cloud size={11} aria-hidden />}
+          {offline ? 'Offline' : 'Online'}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const route = useRoute();
   const { start } = useTour();
@@ -118,6 +154,7 @@ export default function App() {
             <NetworkBadge />
           </div>
           <div className="flex items-center gap-2">
+            <DemoControls />
             {address && <IdentityBadge status={kycStatus} className="hidden sm:inline-flex" />}
             <button
               onClick={startTour}
@@ -136,6 +173,7 @@ export default function App() {
 
       <NetworkGuard />
       <LockNotice />
+      <OutboxBar />
 
       <main
         className={`relative z-10 flex-1 ${
@@ -158,6 +196,7 @@ export default function App() {
         </PageTransition>
       </main>
 
+      {!address && (
       <footer className={`relative z-10 bg-[#0A3328] text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-12'}`}>
         <div className="mx-auto max-w-6xl px-5 py-9">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
@@ -224,6 +263,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      )}
 
       {showTabs && <BottomTabs current={route.name} />}
     </div>

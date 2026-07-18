@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowUp, ShieldCheck, CheckCircle2, ArrowUpRight } from 'lucide-react';
+import { ArrowUp, ShieldCheck, CheckCircle2, ArrowUpRight, CloudOff } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useBalances } from '../hooks/useBalances';
 import { adapter } from '../lib/adapters/StellarAdapter';
@@ -13,6 +13,7 @@ import { navigate } from '../lib/router';
 import { isValidStellarAddress, shortAddr } from '../lib/format';
 import { txExplorerUrl } from '../lib/config';
 import { friendlyError } from '../lib/errors';
+import { useOffline, isOffline, outboxEnqueue } from '../lib/outbox';
 
 const keyOf = (b: AssetBalance) => `${b.asset.code}:${b.asset.issuer ?? 'native'}`;
 
@@ -27,6 +28,8 @@ export function Send() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sentHash, setSentHash] = useState<string | null>(null);
+  const [queued, setQueued] = useState(false);
+  const offline = useOffline();
 
   const selected = useMemo(() => {
     if (balances.length === 0) return undefined;
@@ -76,6 +79,30 @@ export function Send() {
     );
   }
 
+  // Queued (offline) receipt.
+  if (queued) {
+    return (
+      <div className="mx-auto max-w-app space-y-5 px-1 text-center">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-pill bg-deadline-tint text-deadline-deep">
+          <CloudOff size={26} aria-hidden />
+        </span>
+        <div>
+          <h1 className="text-[22px] font-semibold tracking-tight text-ink">Queued</h1>
+          <p className="mt-1 text-[14px] text-slate">
+            {amount} {selected?.asset.code} to <span className="mono">{shortAddr(to)}</span> will send
+            automatically when you are back online.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <Button variant="secondary" className="flex-1" onClick={() => { setQueued(false); setAmount(''); }}>
+            Queue another
+          </Button>
+          <Button className="flex-1" onClick={() => navigate('/home')}>Done</Button>
+        </div>
+      </div>
+    );
+  }
+
   const amountNum = Number(amount);
   const maxNum = selected ? Number(selected.amount) : 0;
   const isXlm = selected?.asset.code === 'XLM' && !selected?.asset.issuer;
@@ -95,6 +122,13 @@ export function Send() {
 
   async function doSendNow() {
     if (!selected) return;
+    // Offline: queue the payment instead of submitting; it auto-sends on reconnect.
+    if (isOffline()) {
+      outboxEnqueue({ to: to.trim(), assetCode: selected.asset.code, issuer: selected.asset.issuer, amount });
+      setConfirming(false);
+      setQueued(true);
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -178,8 +212,10 @@ export function Send() {
             <ArrowUp size={18} aria-hidden />
           </span>
           <span>
-            <span className="block text-[15px] font-medium text-ink">Send now</span>
-            <span className="block text-[13px] text-slate">Pay directly. Fast and final.</span>
+            <span className="block text-[15px] font-medium text-ink">{offline ? 'Queue payment' : 'Send now'}</span>
+            <span className="block text-[13px] text-slate">
+              {offline ? 'Queued while offline, delivered when you reconnect.' : 'Pay directly. Fast and final.'}
+            </span>
           </span>
         </button>
 
@@ -204,14 +240,22 @@ export function Send() {
 
       <ConfirmDialog
         open={confirming}
-        title="Send now"
+        title={offline ? 'Queue payment' : 'Send now'}
         description={
-          <>
-            You are sending <span className="mono text-ink">{amount} {selected?.asset.code}</span> to{' '}
-            <span className="mono text-ink">{shortAddr(to.trim())}</span>. This is final and cannot be undone.
-          </>
+          offline ? (
+            <>
+              You are offline. <span className="mono text-ink">{amount} {selected?.asset.code}</span> to{' '}
+              <span className="mono text-ink">{shortAddr(to.trim())}</span> will be queued and sent
+              automatically when you reconnect.
+            </>
+          ) : (
+            <>
+              You are sending <span className="mono text-ink">{amount} {selected?.asset.code}</span> to{' '}
+              <span className="mono text-ink">{shortAddr(to.trim())}</span>. This is final and cannot be undone.
+            </>
+          )
         }
-        confirmLabel="Send"
+        confirmLabel={offline ? 'Queue payment' : 'Send'}
         busy={sending}
         onConfirm={doSendNow}
         onCancel={() => { setConfirming(false); setError(null); }}

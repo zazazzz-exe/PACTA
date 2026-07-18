@@ -26,6 +26,8 @@ import { parseActivity, type RawPaymentRecord, type ActivityItem } from '../acti
 import { signTransaction } from '../wallet';
 import { NETWORK_PASSPHRASE, txExplorerUrl } from '../config';
 import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
+import { isDemo } from '../demo';
+import { MockAdapter } from '../demo/MockAdapter';
 
 export class StellarAdapter implements ChainAdapter {
   readonly chainId = 'stellar:testnet';
@@ -166,6 +168,7 @@ export function buildConvertTx(
   return b.setTimeout(180).build();
 }
 
-// The single adapter the wallet layer imports. Swapping in an EvmAdapter later
-// is a one-line change here.
-export const adapter: ChainAdapter = new StellarAdapter();
+// The single adapter the wallet layer imports. In demo mode it is a MockAdapter
+// (seeded, simulated, no network); otherwise the real StellarAdapter. Swapping in
+// an EvmAdapter later is a one-line change here.
+export const adapter: ChainAdapter = isDemo() ? new MockAdapter() : new StellarAdapter();
