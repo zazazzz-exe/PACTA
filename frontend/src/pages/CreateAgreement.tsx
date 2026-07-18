@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { ChevronLeft, Minus, Plus, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Minus, Plus, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { createAgreement } from '../lib/contract';
 import { toBaseUnits, shortAddr, isValidStellarAddress } from '../lib/format';
@@ -13,6 +13,14 @@ import { useRiskLens } from '../hooks/useRiskLens';
 import { useDebounce } from '../hooks/useDebounce';
 import { takePendingSend } from '../lib/pendingSend';
 
+// Friendly deadline choices; value is the contract `duration` in seconds.
+const DEADLINE_PRESETS = [
+  { label: '1 minute (demo)', secs: '60' },
+  { label: '1 hour', secs: '3600' },
+  { label: '1 day', secs: '86400' },
+  { label: '1 week', secs: '604800' },
+];
+
 export function CreateAgreement() {
   const { address, connect, kycStatus, kycLoading } = useWallet();
   // If arriving from the Send screen's "Send protected" option, prefill the
@@ -24,6 +32,7 @@ export function CreateAgreement() {
   const [milestones, setMilestones] = useState(4);
   const [share, setShare] = useState('20');
   const [duration, setDuration] = useState('60');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -56,9 +65,9 @@ export function CreateAgreement() {
   }
 
   function validate(): string | null {
-    if (!/^G[A-Z2-7]{55}$/.test(trader)) return "That provider address isn't valid. Check it and try again.";
-    if (trader === address) return 'The provider cannot be the same as you.';
-    if (!(Number(capital) > 0)) return 'Capital must be greater than zero.';
+    if (!/^G[A-Z2-7]{55}$/.test(trader)) return "That recipient address isn't valid. Check it and try again.";
+    if (trader === address) return 'The recipient cannot be the same as you.';
+    if (!(Number(capital) > 0)) return 'Amount must be greater than zero.';
     if (Number(bond) < 0) return 'Bond cannot be negative.';
     if (!Number.isInteger(milestones) || milestones < 1) return 'There must be at least one milestone.';
     const sh = Number(share);
@@ -94,7 +103,7 @@ export function CreateAgreement() {
     }
   }
 
-  const traderLabel = /^G[A-Z2-7]{55}$/.test(trader) ? shortAddr(trader, 4, 4) : 'The provider';
+  const traderLabel = /^G[A-Z2-7]{55}$/.test(trader) ? shortAddr(trader, 4, 4) : 'The recipient';
 
   return (
     <div className="mx-auto max-w-app">
@@ -109,35 +118,82 @@ export function CreateAgreement() {
         <h1 className="text-[22px] font-medium tracking-tight text-ink">Send protected</h1>
       </div>
 
+      <p className="mb-4 text-[13px] leading-relaxed text-slate">
+        Your payment is held by a contract and released to the recipient in steps. Get it back if they do
+        not deliver before the deadline.
+      </p>
+
       <form className="space-y-4" onSubmit={onSubmit}>
         <Field label="Recipient address">
           <Input mono placeholder="G..." value={trader} onChange={(v) => setTrader(v.trim())} spellCheck={false} />
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label={`Capital (${TOKEN_SYMBOL})`}>
+          <Field label={`Amount to send (${TOKEN_SYMBOL})`}>
             <Input mono type="number" min="0" step="any" value={capital} onChange={setCapital} />
           </Field>
           <Field label={`Security bond (${TOKEN_SYMBOL})`}>
             <Input mono type="number" min="0" step="any" value={bond} onChange={setBond} />
           </Field>
         </div>
+        <p className="-mt-2 text-[12px] text-fog">
+          The bond is held from the recipient as a guarantee, and returned when the Pact completes.
+        </p>
 
-        <Field label="Milestones">
+        <Field label="Release in steps">
           <Stepper value={milestones} min={1} onChange={setMilestones} />
         </Field>
-
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Profit share (%)">
-            <Input mono type="number" min="0" max="100" step="any" value={share} onChange={setShare} />
-          </Field>
-          <Field label="Duration (seconds)">
-            <Input mono type="number" min="0" step="1" value={duration} onChange={setDuration} />
-          </Field>
-        </div>
-        <p className="text-[12px] text-fog -mt-1">
-          Duration is in seconds and starts when the escrow becomes active. Use 60 for the live demo.
+        <p className="-mt-2 text-[12px] text-fog">
+          The amount is released to the recipient one step at a time, as the work lands.
         </p>
+
+        <Field label="Deadline">
+          <div className="flex flex-wrap gap-2">
+            {DEADLINE_PRESETS.map((p) => (
+              <button
+                key={p.secs}
+                type="button"
+                onClick={() => setDuration(p.secs)}
+                className={`rounded-pill border px-3.5 py-2 text-[13px] font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
+                  duration === p.secs
+                    ? 'border-accent bg-accent-tint text-accent-deep'
+                    : 'border-hairline bg-paper text-slate hover:border-accent/40'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </Field>
+        <p className="-mt-2 text-[12px] text-fog">
+          After the deadline you can refund any unreleased amount plus the bond. Use 1 minute for the live demo.
+        </p>
+
+        {/* Advanced */}
+        <div className="rounded-control border border-hairline bg-paper">
+          <button
+            type="button"
+            onClick={() => setShowAdvanced((s) => !s)}
+            className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-medium text-slate focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            Advanced options
+            <ChevronDown
+              size={16}
+              className={`transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
+              aria-hidden
+            />
+          </button>
+          {showAdvanced && (
+            <div className="border-t border-hairline p-4">
+              <Field label="Profit share (%)">
+                <Input mono type="number" min="0" max="100" step="any" value={share} onChange={setShare} />
+              </Field>
+              <p className="mt-1.5 text-[12px] text-fog">
+                Optional share of profit for the recipient, recorded on-chain. Leave as is if unsure.
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* AI Risk Lens — appears once a valid trader address is entered */}
         {lensTrader && (
@@ -151,10 +207,10 @@ export function CreateAgreement() {
 
         {/* Plain-language summary */}
         <div className="bg-mist rounded-control p-4 text-[14px] leading-relaxed text-slate">
-          You lock <span className="mono text-ink">{capital || 0} XLM</span>. {traderLabel} posts a{' '}
-          <span className="mono text-ink">{bond || 0} XLM</span> bond. Release in{' '}
-          <span className="mono text-ink">{milestones}</span> {milestones === 1 ? 'step' : 'steps'}.
-          Refund if the deadline passes.
+          You send <span className="mono text-ink">{capital || 0} XLM</span>, held by the contract.{' '}
+          {traderLabel} posts a <span className="mono text-ink">{bond || 0} XLM</span> bond. Released in{' '}
+          <span className="mono text-ink">{milestones}</span> {milestones === 1 ? 'step' : 'steps'}. Refund
+          if the deadline passes.
         </div>
 
         {err && <p className="text-refund text-[13px]">{err}</p>}
