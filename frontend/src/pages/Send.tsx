@@ -14,12 +14,14 @@ import { isValidStellarAddress, shortAddr } from '../lib/format';
 import { txExplorerUrl } from '../lib/config';
 import { friendlyError } from '../lib/errors';
 import { useOffline, isOffline, outboxEnqueue } from '../lib/outbox';
+import { useActiveNetwork } from '../lib/activeNetwork';
 
 const keyOf = (b: AssetBalance) => `${b.asset.code}:${b.asset.issuer ?? 'native'}`;
 
 export function Send() {
   const { address } = useWallet();
   const { balances, loading } = useBalances(address);
+  const net = useActiveNetwork();
 
   const [to, setTo] = useState('');
   const [assetKey, setAssetKey] = useState('');
@@ -219,23 +221,29 @@ export function Send() {
           </span>
         </button>
 
-        <button
-          disabled={!ready || !isXlm}
-          onClick={doSendProtected}
-          className="flex w-full items-start gap-3 rounded-card border border-accent/30 bg-accent-tint p-4 text-left transition hover:border-accent/50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-        >
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-accent text-white">
-            <ShieldCheck size={18} aria-hidden />
-          </span>
-          <span>
-            <span className="block text-[15px] font-medium text-ink">Send protected (a Pact)</span>
-            <span className="block text-[13px] text-slate">
-              {isXlm
-                ? 'Release in milestones, backed by a bond, refundable if they fail to deliver.'
-                : 'Protected payments support XLM in this build.'}
+        {net.supportsPacts ? (
+          <button
+            disabled={!ready || !isXlm}
+            onClick={doSendProtected}
+            className="flex w-full items-start gap-3 rounded-card border border-accent/30 bg-accent-tint p-4 text-left transition hover:border-accent/50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-accent text-white">
+              <ShieldCheck size={18} aria-hidden />
             </span>
-          </span>
-        </button>
+            <span>
+              <span className="block text-[15px] font-medium text-ink">Send protected (a Pact)</span>
+              <span className="block text-[13px] text-slate">
+                {isXlm
+                  ? 'Release in milestones, backed by a bond, refundable if they fail to deliver.'
+                  : 'Protected payments support XLM in this build.'}
+              </span>
+            </span>
+          </button>
+        ) : (
+          <div className="rounded-card border border-hairline bg-mist px-4 py-3 text-[13px] text-slate">
+            Protected payments are on testnet for now. Switch your wallet to testnet to use them.
+          </div>
+        )}
       </div>
 
       <ConfirmDialog

@@ -2,12 +2,21 @@ import { useCallback, useEffect, useState } from 'react';
 import { getAllAgreements, getAgreement, type Agreement } from '../lib/contract';
 import { friendlyError } from '../lib/errors';
 
-export function useAgreements(publicKey?: string) {
+// `enabled` (default true) gates the actual contract read. The Pact/escrow
+// contract is testnet-only (see lib/networks.ts supportsPacts); callers pass
+// `enabled: net.supportsPacts` so getAllAgreements (contract.ts) is never
+// invoked while the connected wallet is on an unsupported/mainnet network.
+export function useAgreements(publicKey?: string, enabled = true) {
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    if (!enabled) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -20,7 +29,7 @@ export function useAgreements(publicKey?: string) {
     } finally {
       setLoading(false);
     }
-  }, [publicKey]);
+  }, [publicKey, enabled]);
 
   useEffect(() => {
     refresh();

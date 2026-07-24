@@ -12,6 +12,7 @@ import { Status } from '../lib/contract';
 import { needsAttentionReason, urgencyRank } from '../lib/agreementView';
 import { formatAmount, formatPhp } from '../lib/format';
 import { navigate } from '../lib/router';
+import { useActiveNetwork } from '../lib/activeNetwork';
 
 type Filter = 'all' | 'investor' | 'trader';
 const TABS: { id: Filter; label: string }[] = [
@@ -21,8 +22,13 @@ const TABS: { id: Filter; label: string }[] = [
 ];
 
 export function Dashboard() {
+  const net = useActiveNetwork();
   const { address } = useWallet();
-  const { agreements, loading, error } = useAgreements(address ?? undefined);
+  // enabled: net.supportsPacts so the escrow contract (contract.ts, testnet-only)
+  // is never read while the connected wallet is on an unsupported/mainnet network.
+  // The hook itself is still called unconditionally on every render (stable hook
+  // order); only its internal fetch is skipped.
+  const { agreements, loading, error } = useAgreements(address ?? undefined, net.supportsPacts);
   const [filter, setFilter] = useState<Filter>('all');
   const { start } = useTour();
 
@@ -44,6 +50,17 @@ export function Dashboard() {
   }, [agreements, address, filter]);
 
   if (!address) return <ConnectGate />;
+
+  if (!net.supportsPacts) {
+    return (
+      <div className="mx-auto max-w-app px-1 py-16 text-center">
+        <h1 className="text-[22px] font-semibold tracking-tight text-ink">Pacts</h1>
+        <p className="mt-2 text-[14px] text-slate">
+          Protected payments are on testnet for now. Switch your wallet to testnet to view and create Pacts.
+        </p>
+      </div>
+    );
+  }
 
   const nowSec = Math.floor(Date.now() / 1000);
 
