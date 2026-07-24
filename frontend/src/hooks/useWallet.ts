@@ -5,7 +5,7 @@ export interface WalletState {
   address: string | null;
   /** Wallet-reported network passphrase, or null if it could not be determined. */
   network: string | null;
-  /** True when the wallet is on testnet, or when the network is unknown. */
+  /** True when the wallet is on a supported network (testnet or mainnet), or when the network is unknown. */
   networkOk: boolean;
   connecting: boolean;
   connect: () => Promise<void>;

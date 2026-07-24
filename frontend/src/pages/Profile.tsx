@@ -10,6 +10,7 @@ import {
 } from '../lib/kycClient';
 import { getReputation, type Reputation } from '../lib/contract';
 import { currentWalletName } from '../lib/wallet';
+import { useActiveNetwork } from '../lib/activeNetwork';
 import { Avatar } from '../components/Avatar';
 import { IdentityBadge } from '../components/kyc/IdentityBadge';
 import { CopyButton } from '../components/CopyButton';
@@ -33,6 +34,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 
 export function Profile() {
   const { address, kycStatus, refreshKyc } = useWallet();
+  const net = useActiveNetwork();
   const [kyc, setKyc] = useState<KycStatusRead | null>(null);
   const [rep, setRep] = useState<Reputation | null>(null);
   const [repLoading, setRepLoading] = useState(false);
@@ -61,14 +63,19 @@ export function Profile() {
       setRep(null);
       return;
     }
-    setRepLoading(true);
     void loadKyc(() => ignore);
+    if (!net.supportsPacts) {
+      setRep(null);
+      setRepLoading(false);
+      return () => { ignore = true; };
+    }
+    setRepLoading(true);
     void getReputation(address, address)
       .then((r) => { if (!ignore) setRep(r); })
       .catch(() => { if (!ignore) setRep(null); })
       .finally(() => { if (!ignore) setRepLoading(false); });
     return () => { ignore = true; };
-  }, [address, loadKyc]);
+  }, [address, loadKyc, net.supportsPacts]);
 
   // Re-read status here and refresh the global gating status after a change.
   const reload = useCallback(async () => {
@@ -223,27 +230,29 @@ export function Profile() {
         </div>
       )}
 
-      {/* Reputation */}
-      <div className="space-y-3">
-        <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">On-chain reputation</h2>
-        {repLoading && !rep ? (
-          <div className="grid grid-cols-3 gap-3">
-            {[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-card bg-mist" />)}
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-3">
-            <Stat label="Completed" value={String(rep?.completed ?? 0)} />
-            <Stat label="Refunded" value={String(rep?.refunded ?? 0)} />
-            <Stat label="Volume" value={formatAmount(rep?.total_volume ?? 0n, false)} sub={formatPhp(rep?.total_volume ?? 0n)} />
-          </div>
-        )}
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center gap-1 text-[13px] text-accent-deep hover:opacity-80"
-        >
-          View my Pacts <ArrowUpRight size={14} aria-hidden />
-        </button>
-      </div>
+      {/* Reputation (a Pact-layer concept: hidden where Pacts aren't supported) */}
+      {net.supportsPacts && (
+        <div className="space-y-3">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">On-chain reputation</h2>
+          {repLoading && !rep ? (
+            <div className="grid grid-cols-3 gap-3">
+              {[0, 1, 2].map((i) => <div key={i} className="h-20 animate-pulse rounded-card bg-mist" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 gap-3">
+              <Stat label="Completed" value={String(rep?.completed ?? 0)} />
+              <Stat label="Refunded" value={String(rep?.refunded ?? 0)} />
+              <Stat label="Volume" value={formatAmount(rep?.total_volume ?? 0n, false)} sub={formatPhp(rep?.total_volume ?? 0n)} />
+            </div>
+          )}
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="inline-flex items-center gap-1 text-[13px] text-accent-deep hover:opacity-80"
+          >
+            View my Pacts <ArrowUpRight size={14} aria-hidden />
+          </button>
+        </div>
+      )}
 
       {/* Confirm dialog for removing the verifier wallet / erasing the identity */}
       <ConfirmDialog

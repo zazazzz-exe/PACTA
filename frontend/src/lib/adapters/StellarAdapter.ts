@@ -28,7 +28,9 @@ import { txExplorerUrl } from '../config';
 import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
 
 export class StellarAdapter implements ChainAdapter {
-  readonly chainId = 'stellar:testnet';
+  get chainId(): string {
+    return `stellar:${getActiveNetwork().key === 'public' ? 'mainnet' : 'testnet'}`;
+  }
   private _server?: Horizon.Server;
   private _serverHorizon?: string;
   private get server(): Horizon.Server {

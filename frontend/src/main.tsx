@@ -50,11 +50,11 @@ function WalletProvider({ children }: { children: ReactNode }) {
     setLockNotice(null);
     try {
       const addr = await connectWallet();
-      setAddress(addr);
-      navigate('/home');
       const passphrase = await getWalletNetworkPassphrase();
-      setNetwork(passphrase);
       setActiveNetworkFromPassphrase(passphrase);
+      setAddress(addr);
+      setNetwork(passphrase);
+      navigate('/home');
       // Prove wallet ownership for the KYC layer, then load status. A failure
       // here (backend not configured, or the user declines the signature) must
       // not break the connection: the app stays usable and only money actions

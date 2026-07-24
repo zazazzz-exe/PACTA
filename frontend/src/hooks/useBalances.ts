@@ -3,8 +3,10 @@ import { adapter } from '../lib/adapters/StellarAdapter';
 import { totalPhp as sumPhp } from '../lib/prices';
 import type { AssetBalance } from '../lib/adapters/ChainAdapter';
 import { friendlyError } from '../lib/errors';
+import { useActiveNetwork } from '../lib/activeNetwork';
 
 export function useBalances(address: string | null) {
+  const net = useActiveNetwork();
   const [balances, setBalances] = useState<AssetBalance[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export function useBalances(address: string | null) {
     return () => {
       ignore = true;
     };
-  }, [load]);
+  }, [load, net.key]);
 
   return {
     balances,

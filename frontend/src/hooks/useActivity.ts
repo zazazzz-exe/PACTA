@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { adapter } from '../lib/adapters/StellarAdapter';
 import type { ActivityItem } from '../lib/activity';
 import { friendlyError } from '../lib/errors';
+import { useActiveNetwork } from '../lib/activeNetwork';
 
 export function useActivity(address: string | null) {
+  const net = useActiveNetwork();
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export function useActivity(address: string | null) {
     return () => {
       ignore = true;
     };
-  }, [load]);
+  }, [load, net.key]);
 
   return { items, loading, error, refetch: () => void load() };
 }

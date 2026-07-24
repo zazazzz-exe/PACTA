@@ -78,7 +78,7 @@ export function Convert() {
         if (id === reqId.current) setQuote(q);
       } catch (e) {
         if (id === reqId.current) {
-          setError(e instanceof NoRouteError ? 'No route for this pair on testnet.' : friendlyError(e));
+          setError(e instanceof NoRouteError ? 'No route for this pair.' : friendlyError(e));
         }
       } finally {
         if (id === reqId.current) setQuoting(false);

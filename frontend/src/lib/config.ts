@@ -1,4 +1,5 @@
 import { getActiveNetwork } from './activeNetwork';
+import { TESTNET } from './networks';
 
 // Deployed PACTA escrow on Stellar testnet (captured in Phase 2).
 // The contract is token-agnostic; the demo settles in the native XLM SAC.
@@ -20,8 +21,12 @@ export const TOKEN_DECIMALS = 7;
 // XLM (DESIGN §6.4). Approximate, static; not used in any contract call.
 export const PHP_PER_XLM = 22;
 
+// CONTRACT_ID is always the testnet-deployed escrow, so its explorer link must
+// stay pinned to the testnet explorer regardless of the active network.
 export const contractExplorerUrl = () =>
-  `${getActiveNetwork().explorerBase}/contract/${CONTRACT_ID}`;
+  `${TESTNET.explorerBase}/contract/${CONTRACT_ID}`;
+// Tx hashes belong to whatever network they happened on, so this one follows
+// the active network.
 export const txExplorerUrl = (hash: string) =>
   `${getActiveNetwork().explorerBase}/tx/${hash}`;
 
