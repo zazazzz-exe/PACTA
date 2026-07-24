@@ -7,7 +7,7 @@ import {
   Account,
   Transaction,
 } from '@stellar/stellar-sdk';
-import { HORIZON_URL } from '../config';
+import { getActiveNetwork } from '../activeNetwork';
 import { withDisplayValues } from '../prices';
 import {
   type ChainAdapter,
@@ -24,12 +24,21 @@ import {
 import { assetFromId } from './stellarAssets';
 import { parseActivity, type RawPaymentRecord, type ActivityItem } from '../activity';
 import { signTransaction } from '../wallet';
-import { NETWORK_PASSPHRASE, txExplorerUrl } from '../config';
+import { txExplorerUrl } from '../config';
 import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
 
 export class StellarAdapter implements ChainAdapter {
   readonly chainId = 'stellar:testnet';
-  private server = new Horizon.Server(HORIZON_URL);
+  private _server?: Horizon.Server;
+  private _serverHorizon?: string;
+  private get server(): Horizon.Server {
+    const { horizonUrl } = getActiveNetwork();
+    if (!this._server || this._serverHorizon !== horizonUrl) {
+      this._server = new Horizon.Server(horizonUrl);
+      this._serverHorizon = horizonUrl;
+    }
+    return this._server;
+  }
 
   async getBalances(address: string): Promise<AssetBalance[]> {
     try {
@@ -74,7 +83,7 @@ export class StellarAdapter implements ChainAdapter {
     const account = await this.server.loadAccount(from);
     const tx = new TransactionBuilder(account, {
       fee: BASE_FEE,
-      networkPassphrase: NETWORK_PASSPHRASE,
+      networkPassphrase: getActiveNetwork().passphrase,
     })
       .addOperation(
         Operation.payment({
@@ -125,7 +134,7 @@ export class StellarAdapter implements ChainAdapter {
     // Single signing chokepoint for every write path. The wallet returns a
     // signed XDR; submit it via Horizon and surface the hash + explorer link.
     const { signedTxXdr } = await signTransaction(xdr);
-    const signed = TransactionBuilder.fromXDR(signedTxXdr, NETWORK_PASSPHRASE);
+    const signed = TransactionBuilder.fromXDR(signedTxXdr, getActiveNetwork().passphrase);
     const resp = await this.server.submitTransaction(signed);
     return { hash: resp.hash, explorerUrl: txExplorerUrl(resp.hash), status: 'success' };
   }
@@ -148,7 +157,7 @@ export function buildConvertTx(
 ): Transaction {
   const b = new TransactionBuilder(account, {
     fee: BASE_FEE,
-    networkPassphrase: NETWORK_PASSPHRASE,
+    networkPassphrase: getActiveNetwork().passphrase,
   });
   if (opts.addTrust) {
     b.addOperation(Operation.changeTrust({ asset: opts.destAsset }));

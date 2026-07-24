@@ -7,7 +7,7 @@ import {
   HanaModule,
   type ISupportedWallet,
 } from '@creit.tech/stellar-wallets-kit';
-import { NETWORK_PASSPHRASE } from './config';
+import { getActiveNetwork } from './activeNetwork';
 
 // The kit modal lists only wallets that support signMessage, because the whole
 // KYC / linked-identity ownership proof signs a challenge message. Albedo,
@@ -121,7 +121,7 @@ export async function signTransaction(
   opts?: { networkPassphrase?: string; address?: string },
 ) {
   const { signedTxXdr, signerAddress } = await getKit().signTransaction(xdr, {
-    networkPassphrase: opts?.networkPassphrase ?? NETWORK_PASSPHRASE,
+    networkPassphrase: opts?.networkPassphrase ?? getActiveNetwork().passphrase,
     address: opts?.address,
   });
   return { signedTxXdr, signerAddress };
@@ -137,7 +137,7 @@ export async function signMessage(
   opts?: { address?: string },
 ): Promise<{ signedMessage: string; signerAddress?: string }> {
   const res = (await getKit().signMessage(message, {
-    networkPassphrase: NETWORK_PASSPHRASE,
+    networkPassphrase: getActiveNetwork().passphrase,
     address: opts?.address,
   })) as { signedMessage: unknown; signerAddress?: string };
   return {
