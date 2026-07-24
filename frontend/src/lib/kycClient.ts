@@ -5,10 +5,6 @@ import {
   restoreSelectedWallet,
 } from './wallet';
 import { CONSENT_VERSION } from './consent';
-import { isDemo } from './demo';
-import { demoStatus, demoLink, demoUnlink } from './demo/demoKyc';
-
-const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 // Same-origin client for the KYC endpoints (mirrors the useRiskLens fetch
 // pattern). The browser holds no Supabase credentials; the session cookie set by
@@ -69,7 +65,6 @@ export async function proveOwnership(address: string): Promise<KycStatus> {
 
 // Read current status using the existing session cookie.
 export async function fetchKycStatus(): Promise<KycStatusRead> {
-  if (isDemo()) return demoStatus();
   const res = await fetch('/api/kyc-status');
   if (!res.ok) throw new Error(`kyc-status ${res.status}`);
   return res.json() as Promise<KycStatusRead>;
@@ -122,10 +117,6 @@ export async function eraseKyc(): Promise<{ status: KycStatus }> {
 // is needed. The kit is restored to the connected wallet afterward so the app
 // keeps acting as it.
 export async function linkWallet(): Promise<{ linked: boolean; wallets: LinkedWallet[] }> {
-  if (isDemo()) {
-    await wait(700);
-    return demoLink();
-  }
   const original = currentSelectedWalletId();
   const picked = await pickWalletForLink();
   try {
@@ -147,9 +138,5 @@ export async function unlinkWallet(
   address: string,
   confirm = false,
 ): Promise<{ unlinked?: boolean; erased?: boolean; wallets?: LinkedWallet[] }> {
-  if (isDemo()) {
-    await wait(400);
-    return demoUnlink(address);
-  }
   return postJson('/api/kyc-unlink-wallet', { address, confirm });
 }

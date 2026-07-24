@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight, Cloud, CloudOff } from 'lucide-react';
+import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import { useRoute, navigate } from './lib/router';
-import { isDemo, setDemo } from './lib/demo';
-import { useOffline, toggleForceOffline } from './lib/outbox';
 import { OutboxBar } from './components/OutboxBar';
 import { useWallet } from './hooks/useWallet';
 import { useTour } from './components/Tour';
@@ -70,39 +68,6 @@ function LockNotice() {
   );
 }
 
-function DemoControls() {
-  const demo = isDemo();
-  const offline = useOffline();
-  return (
-    <div className="flex items-center gap-1.5">
-      <button
-        onClick={() => {
-          setDemo(!demo);
-          window.location.reload();
-        }}
-        title={demo ? 'Turn off demo mode' : 'Turn on demo mode (seeded, no network)'}
-        className={`rounded-pill px-2.5 py-1 text-[11px] font-semibold transition ${
-          demo ? 'bg-accent text-white' : 'bg-mist text-slate hover:bg-hairline'
-        }`}
-      >
-        {demo ? 'Demo on' : 'Demo'}
-      </button>
-      {demo && (
-        <button
-          onClick={() => toggleForceOffline()}
-          title={offline ? 'Simulate coming back online' : 'Simulate going offline'}
-          className={`inline-flex items-center gap-1 rounded-pill px-2.5 py-1 text-[11px] font-semibold transition ${
-            offline ? 'bg-deadline-tint text-deadline-deep' : 'bg-mist text-slate hover:bg-hairline'
-          }`}
-        >
-          {offline ? <CloudOff size={11} aria-hidden /> : <Cloud size={11} aria-hidden />}
-          {offline ? 'Offline' : 'Online'}
-        </button>
-      )}
-    </div>
-  );
-}
-
 export default function App() {
   const route = useRoute();
   const { start } = useTour();
@@ -154,7 +119,6 @@ export default function App() {
             <NetworkBadge />
           </div>
           <div className="flex items-center gap-2">
-            <DemoControls />
             {address && <IdentityBadge status={kycStatus} className="hidden sm:inline-flex" />}
             <button
               onClick={startTour}

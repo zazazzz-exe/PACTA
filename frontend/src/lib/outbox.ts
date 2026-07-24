@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
 
 // Simulated offline queue. When offline, a payment is stored here and auto-sent
-// when the connection returns. In demo mode the send is simulated; in real mode
-// it would go through the adapter. Offline state is the browser's navigator.onLine
-// plus a manual override used to drive the demo.
+// through the adapter when the connection returns. Offline state is the browser's
+// navigator.onLine plus an optional manual override.
 
 // ---- offline state ----
 let forced = false;
