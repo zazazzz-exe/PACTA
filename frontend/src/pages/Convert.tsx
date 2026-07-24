@@ -11,7 +11,8 @@ import {
   hasTrustline,
   DEFAULT_SLIPPAGE_BPS,
 } from '../lib/convert';
-import { KNOWN_ASSETS, txExplorerUrl } from '../lib/config';
+import { txExplorerUrl } from '../lib/config';
+import { useActiveNetwork } from '../lib/activeNetwork';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Button } from '../components/Button';
 import { ConnectButton } from '../components/ConnectButton';
@@ -23,6 +24,7 @@ const keyOf = (b: AssetBalance) => assetKey(b.asset);
 export function Convert() {
   const { address } = useWallet();
   const { balances, loading, refetch } = useBalances(address);
+  const net = useActiveNetwork();
 
   const [fromKey, setFromKey] = useState('');
   const [toKey, setToKey] = useState('');
@@ -40,8 +42,8 @@ export function Convert() {
   }, [balances, fromKey]);
 
   const toOptions = useMemo(
-    () => (from ? mergeToAssets(KNOWN_ASSETS, balances, from.asset) : []),
-    [balances, from],
+    () => (from ? mergeToAssets(net.knownAssets, balances, from.asset) : []),
+    [balances, from, net.knownAssets],
   );
 
   const to = useMemo(() => {
