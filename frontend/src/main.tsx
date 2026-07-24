@@ -1,5 +1,6 @@
 import { StrictMode, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import { Buffer } from 'buffer';
 import '@fontsource/hanken-grotesk/400.css';
 import '@fontsource/hanken-grotesk/500.css';
@@ -127,5 +128,6 @@ createRoot(document.getElementById('root')!).render(
         <App />
       </TourProvider>
     </WalletProvider>
+    <Analytics />
   </StrictMode>,
 );

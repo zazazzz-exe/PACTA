@@ -16,6 +16,7 @@
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@stellar/stellar-sdk": "^14.5.0",
+    "@vercel/analytics": "^2.0.1",
     "buffer": "^6.0.3",
     "lucide-react": "^1.22.0",
     "qrcode": "^1.5.4",
