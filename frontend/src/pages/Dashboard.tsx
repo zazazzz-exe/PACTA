@@ -35,13 +35,13 @@ export function Dashboard() {
   // Auto-start the dashboard tour once, after the cards have rendered.
   // Mark "seen" inside the timeout (StrictMode double-invoke safe).
   useEffect(() => {
-    if (!address || loading || seenTour('dashboard')) return;
+    if (!address || !net.supportsPacts || loading || seenTour('dashboard')) return;
     const t = setTimeout(() => {
       markTourSeen('dashboard');
       start(dashboardSteps);
     }, 500);
     return () => clearTimeout(t);
-  }, [address, loading, start]);
+  }, [address, loading, start, net.supportsPacts]);
 
   const filtered = useMemo(() => {
     if (!address || filter === 'all') return agreements;

@@ -52,6 +52,17 @@ function NetworkBadge() {
   );
 }
 
+function PactsTestnetNotice() {
+  return (
+    <div className="mx-auto max-w-app px-1 py-16 text-center">
+      <h1 className="text-[22px] font-semibold tracking-tight text-ink">Protected payments</h1>
+      <p className="mt-2 text-[14px] text-slate">
+        Protected payments are on testnet for now. Switch your wallet to testnet to use them.
+      </p>
+    </div>
+  );
+}
+
 function LockNotice() {
   const { lockNotice, clearLockNotice } = useWallet();
   if (!lockNotice) return null;
@@ -73,6 +84,7 @@ function LockNotice() {
 
 export default function App() {
   const route = useRoute();
+  const net = useActiveNetwork();
   const { start } = useTour();
   const { address, kycStatus } = useWallet();
   const [scrolled, setScrolled] = useState(false);
@@ -151,9 +163,9 @@ export default function App() {
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}
           {route.name === 'dashboard' && <Dashboard />}
-          {route.name === 'create' && <CreateAgreement />}
-          {route.name === 'detail' && <AgreementDetail id={route.id} />}
-          {route.name === 'trader' && <TraderProfile address={route.address} />}
+          {route.name === 'create' && (net.supportsPacts ? <CreateAgreement /> : <PactsTestnetNotice />)}
+          {route.name === 'detail' && (net.supportsPacts ? <AgreementDetail id={route.id} /> : <PactsTestnetNotice />)}
+          {route.name === 'trader' && (net.supportsPacts ? <TraderProfile address={route.address} /> : <PactsTestnetNotice />)}
           {route.name === 'verify' && <Verify />}
           {route.name === 'home' && <Home />}
           {route.name === 'receive' && <Receive />}
