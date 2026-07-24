@@ -15,7 +15,7 @@ import { connectWallet, getWalletNetworkPassphrase, getKit } from './lib/wallet'
 import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
-import { NETWORK_PASSPHRASE } from './lib/config';
+import { setActiveNetworkFromPassphrase, isSupportedNetwork } from './lib/activeNetwork';
 
 // Some @stellar/stellar-sdk code paths expect a global Buffer in the browser.
 (globalThis as unknown as { Buffer: typeof Buffer }).Buffer =
@@ -52,7 +52,9 @@ function WalletProvider({ children }: { children: ReactNode }) {
       const addr = await connectWallet();
       setAddress(addr);
       navigate('/home');
-      setNetwork(await getWalletNetworkPassphrase());
+      const passphrase = await getWalletNetworkPassphrase();
+      setNetwork(passphrase);
+      setActiveNetworkFromPassphrase(passphrase);
       // Prove wallet ownership for the KYC layer, then load status. A failure
       // here (backend not configured, or the user declines the signature) must
       // not break the connection: the app stays usable and only money actions
@@ -103,7 +105,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, [address, disconnect]);
 
-  const networkOk = network == null || network === NETWORK_PASSPHRASE;
+  const networkOk = network == null || isSupportedNetwork(network);
 
   const value: WalletState = {
     address,

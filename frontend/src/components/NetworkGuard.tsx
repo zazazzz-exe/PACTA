@@ -1,8 +1,10 @@
 import { AlertTriangle } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 
-// Warns when the connected wallet is not on testnet, so the user does not sign
-// against the wrong network. Best-effort: if the network can't be read, no warning.
+// Warns only when the connected wallet is on a network PACTA does not support
+// (not testnet and not mainnet), so the user does not sign against an unknown
+// network. Mainnet and testnet are both supported and get no warning.
+// Best-effort: if the network can't be read (networkOk stays true), no warning.
 export function NetworkGuard() {
   const { address, networkOk } = useWallet();
   if (!address || networkOk) return null;
@@ -12,7 +14,7 @@ export function NetworkGuard() {
       <div className="mx-auto max-w-6xl px-5 py-2.5 flex items-center gap-2 text-[13px] text-deadline-deep">
         <AlertTriangle size={16} aria-hidden />
         <span>
-          Your wallet is not on testnet. Switch it to the Stellar test network before signing.
+          Your wallet is on an unsupported network. Switch it to Stellar mainnet or testnet.
         </span>
       </div>
     </div>

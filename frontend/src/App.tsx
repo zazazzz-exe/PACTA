@@ -25,6 +25,7 @@ import { Activity } from './pages/Activity';
 import { BottomTabs } from './components/BottomTabs';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
+import { useActiveNetwork } from './lib/activeNetwork';
 
 function Wordmark() {
   return (
@@ -39,13 +40,14 @@ function Wordmark() {
 }
 
 function NetworkBadge() {
+  const net = useActiveNetwork();
   return (
     <span
       data-tour="network"
       className="mono hidden sm:inline-flex items-center gap-1.5 text-[12px] text-slate"
     >
       <span className="h-1.5 w-1.5 rounded-pill bg-accent pulse-dot" aria-hidden />
-      testnet
+      {net.label}
     </span>
   );
 }
