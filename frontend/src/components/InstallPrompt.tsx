@@ -3,7 +3,10 @@ import { Download, X, Share } from 'lucide-react';
 import { useInstallPrompt } from '../hooks/useInstallPrompt';
 
 // The "Download app" affordance. `banner` is a dismissible top strip (mounted in
-// App near OutboxBar); `row` is a permanent button (mounted in Profile).
+// App near OutboxBar); `row` is a full card with heading, copy, and button
+// (mounted in Profile). Both variants render nothing (null) once installed or
+// when the browser offers no install affordance, so no dangling copy is left
+// behind.
 export function InstallPrompt({ variant }: { variant: 'banner' | 'row' }) {
   const { canPrompt, iosInstall, installed, dismissed, promptInstall, dismiss } =
     useInstallPrompt();
@@ -48,12 +51,18 @@ export function InstallPrompt({ variant }: { variant: 'banner' | 'row' }) {
 
   return (
     <>
-      <button
-        onClick={onInstall}
-        className="inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-      >
-        <Download size={15} aria-hidden /> Install app
-      </button>
+      <div className="flex items-center justify-between gap-3 rounded-card border border-hairline bg-paper p-4">
+        <div className="min-w-0">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">App</h2>
+          <p className="mt-1 text-[13px] text-slate">Install PACTA to your device for one-tap access, even offline.</p>
+        </div>
+        <button
+          onClick={onInstall}
+          className="inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        >
+          <Download size={15} aria-hidden /> Install app
+        </button>
+      </div>
       {showIosHelp && <IosHelp onClose={() => setShowIosHelp(false)} />}
     </>
   );

@@ -142,14 +142,8 @@ export function Profile() {
         </div>
       </div>
 
-      {/* App install */}
-      <div className="flex items-center justify-between gap-3 rounded-card border border-hairline bg-paper p-4">
-        <div className="min-w-0">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">App</h2>
-          <p className="mt-1 text-[13px] text-slate">Install PACTA to your device for one-tap access, even offline.</p>
-        </div>
-        <InstallPrompt variant="row" />
-      </div>
+      {/* App install: renders nothing when already installed or unavailable */}
+      <InstallPrompt variant="row" />
 
       {/* KYC */}
       <div className="rounded-card border border-hairline bg-paper p-4">
