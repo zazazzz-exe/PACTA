@@ -16,6 +16,7 @@ import { CopyButton } from '../components/CopyButton';
 import { ConnectButton } from '../components/ConnectButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Button } from '../components/Button';
+import { InstallPrompt } from '../components/InstallPrompt';
 import { navigate } from '../lib/router';
 import { shortAddr, formatAmount, formatPhp } from '../lib/format';
 import { friendlyError } from '../lib/errors';
@@ -139,6 +140,15 @@ export function Profile() {
           </p>
           <IdentityBadge status={kycStatus} maskedName={kyc?.maskedName} className="mt-1" />
         </div>
+      </div>
+
+      {/* App install */}
+      <div className="flex items-center justify-between gap-3 rounded-card border border-hairline bg-paper p-4">
+        <div className="min-w-0">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">App</h2>
+          <p className="mt-1 text-[13px] text-slate">Install PACTA to your device for one-tap access, even offline.</p>
+        </div>
+        <InstallPrompt variant="row" />
       </div>
 
       {/* KYC */}

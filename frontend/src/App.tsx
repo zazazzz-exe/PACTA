@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, HelpCircle, ShieldCheck, Lock, RotateCcw, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import { useRoute, navigate } from './lib/router';
 import { OutboxBar } from './components/OutboxBar';
+import { InstallPrompt } from './components/InstallPrompt';
 import { useWallet } from './hooks/useWallet';
 import { useTour } from './components/Tour';
 import { landingSteps, dashboardSteps } from './lib/tours';
@@ -138,6 +139,7 @@ export default function App() {
       <NetworkGuard />
       <LockNotice />
       <OutboxBar />
+      <InstallPrompt variant="banner" />
 
       <main
         className={`relative z-10 flex-1 ${
