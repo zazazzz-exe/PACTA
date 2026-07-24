@@ -5,6 +5,8 @@ import { BalanceHeader } from '../components/BalanceHeader';
 import { AssetRow } from '../components/AssetRow';
 import { ConnectButton } from '../components/ConnectButton';
 import { navigate } from '../lib/router';
+import { useOffline } from '../lib/outbox';
+import { OfflineNotice } from '../components/OfflineNotice';
 
 function Action({
   icon,
@@ -31,6 +33,7 @@ function Action({
 export function Home() {
   const { address } = useWallet();
   const { balances, totalPhp, loading, error, refetch } = useBalances(address);
+  const offline = useOffline();
 
   if (!address) {
     return (
@@ -68,10 +71,14 @@ export function Home() {
           </button>
         </div>
 
-        {error && (
-          <div className="rounded-card border border-refund/40 bg-refund-tint px-4 py-3 text-[13px] text-refund-deep">
-            {error}
-          </div>
+        {offline ? (
+          <OfflineNotice />
+        ) : (
+          error && (
+            <div className="rounded-card border border-refund/40 bg-refund-tint px-4 py-3 text-[13px] text-refund-deep">
+              {error}
+            </div>
+          )
         )}
 
         {loading && balances.length === 0 && (

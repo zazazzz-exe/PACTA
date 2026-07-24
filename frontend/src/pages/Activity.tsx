@@ -6,6 +6,8 @@ import { timeAgo, groupByDay } from '../lib/activity';
 import { shortAddr } from '../lib/format';
 import { txExplorerUrl } from '../lib/config';
 import { ConnectButton } from '../components/ConnectButton';
+import { useOffline } from '../lib/outbox';
+import { OfflineNotice } from '../components/OfflineNotice';
 
 // A small colored asset chip, matching the wallet's asset styling.
 function assetTone(code: string): string {
@@ -59,6 +61,7 @@ function Row({ item, now }: { item: ActivityItem; now: number }) {
 export function Activity() {
   const { address } = useWallet();
   const { items, loading, error } = useActivity(address);
+  const offline = useOffline();
   const now = Date.now();
   const groups = groupByDay(items, now);
 
@@ -78,8 +81,12 @@ export function Activity() {
     <div className="mx-auto max-w-app space-y-5 px-1">
       <h1 className="text-[22px] font-semibold tracking-tight text-ink">Activity</h1>
 
-      {error && (
-        <p className="rounded-card border border-refund/40 bg-refund-tint p-3 text-[13px] text-refund-deep">{error}</p>
+      {offline ? (
+        <OfflineNotice />
+      ) : (
+        error && (
+          <p className="rounded-card border border-refund/40 bg-refund-tint p-3 text-[13px] text-refund-deep">{error}</p>
+        )
       )}
 
       {loading && items.length === 0 && (
