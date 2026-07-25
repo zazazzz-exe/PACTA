@@ -2,6 +2,18 @@
 // wallet's reported passphrase by activeNetwork.ts. The escrow (Pact) contract
 // is deployed only on testnet, so supportsPacts is true only there.
 
+// Mainnet Pacts (Phase B) are OFF unless the owner has, after an audit + mainnet
+// deploy, set all three env values. All are public, non-secret (contract ids and
+// asset SAC addresses are on-chain public), hence VITE_-prefixed.
+export function computeMainnetSupportsPacts(env: Record<string, unknown>): boolean {
+  const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
+  return (
+    env.VITE_MAINNET_PACTS_ENABLED === 'true' &&
+    nonEmpty(env.VITE_MAINNET_ESCROW_CONTRACT_ID) &&
+    nonEmpty(env.VITE_MAINNET_SETTLEMENT_SAC)
+  );
+}
+
 export type NetworkKey = 'testnet' | 'public';
 
 export interface NetworkInfo {
@@ -40,7 +52,7 @@ export const MAINNET: NetworkInfo = {
     { code: 'XLM' },
     { code: 'USDC', issuer: 'GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN' },
   ],
-  supportsPacts: false,
+  supportsPacts: computeMainnetSupportsPacts(import.meta.env as Record<string, unknown>),
 };
 
 // Pre-connect / fallback network.
