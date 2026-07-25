@@ -17,9 +17,9 @@ export const landingSteps: TourStep[] = [
   },
   {
     target: '[data-tour="proof"]',
-    title: 'Your wallet at a glance',
-    body: 'Balance, assets, and one tap to send, receive, or convert. Send protected when a payment needs to be safe.',
-    placement: 'left',
+    title: 'How PACTA works',
+    body: 'Connect a wallet, move real balances, and send protected when a payment needs to be safe.',
+    placement: 'top',
   },
   {
     target: '[data-tour="how"]',

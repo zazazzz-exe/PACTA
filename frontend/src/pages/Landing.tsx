@@ -14,9 +14,6 @@ import {
   Fingerprint,
   Boxes,
   Clock,
-  CheckCircle2,
-  TrendingUp,
-  BadgeCheck,
 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useTour } from '../components/Tour';
@@ -24,8 +21,7 @@ import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
 import { Reveal } from '../components/Reveal';
-import { PhoneMockup } from '../components/PhoneMockup';
-import { WalletPreview } from '../components/WalletPreview';
+import { HowItWorks } from '../components/HowItWorks';
 
 // The wallet, up front. Escrow is one capability (Send protected), not the story.
 const CAPABILITIES = [
@@ -125,7 +121,7 @@ export function Landing() {
 
   return (
     <div className="w-full bg-canvas">
-      {/* ── Hero — wallet-first, split with a live wallet-UI phone ── */}
+      {/* ── Hero — wallet-first copy, then a plain how-it-works note ── */}
       <section className="relative w-full overflow-hidden px-5 pb-12 pt-12 sm:px-8 sm:pt-16 lg:pb-20">
         <div className="pointer-events-none absolute inset-0 landing-hero-left" aria-hidden />
         <div
@@ -137,9 +133,9 @@ export function Landing() {
           aria-hidden
         />
 
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-2 lg:gap-8">
-          {/* Left — copy */}
-          <div className="animate-rise max-w-xl text-center lg:text-left">
+        <div className="relative mx-auto max-w-6xl">
+          {/* Copy */}
+          <div className="animate-rise mx-auto max-w-xl text-center">
             <span
               data-tour="network"
               className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
@@ -153,13 +149,13 @@ export function Landing() {
               <span className="text-accent">Protect the ones that matter.</span>
             </h1>
 
-            <p className="mx-auto mt-6 max-w-lg text-[16px] leading-relaxed text-slate lg:mx-0 sm:text-[17px]">
+            <p className="mx-auto mt-6 max-w-lg text-[16px] leading-relaxed text-slate sm:text-[17px]">
               A non-custodial wallet for Stellar. Hold, send, receive, and convert without giving up your
               keys. When a payment needs to be safe, send it as a Pact: staged, bond-backed, and provable
               on-chain.
             </p>
 
-            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
+            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <button
                 onClick={connect}
                 data-tour="connect"
@@ -177,7 +173,7 @@ export function Landing() {
               </button>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
               {['No custody, ever', 'Stellar-native', 'Provable on-chain'].map((chip) => (
                 <span
                   key={chip}
@@ -189,7 +185,7 @@ export function Landing() {
               ))}
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 lg:justify-start">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2">
               <span className="text-[12px] font-medium text-fog">Works with</span>
               {['Freighter', 'xBull', 'Hana'].map((w) => (
                 <span
@@ -203,57 +199,9 @@ export function Landing() {
             </div>
           </div>
 
-          {/* Right — the wallet, on a 3D-tilted phone */}
-          <div data-tour="proof" className="relative">
-            <div className="relative mx-auto max-w-md overflow-hidden rounded-[28px] bg-gradient-to-br from-accent-deep via-accent to-accent-deep p-6 shadow-pop sm:p-10">
-              <div className="glow-orb absolute -right-8 -top-8 h-48 w-48 bg-signal/30" aria-hidden />
-              <div className="glow-orb absolute -bottom-10 -left-8 h-40 w-40 bg-white/10" aria-hidden />
-              <div className="glow-orb absolute right-10 bottom-4 h-28 w-28 bg-deadline/25" aria-hidden />
-              <div
-                className="pointer-events-none absolute inset-0 opacity-60"
-                style={{ backgroundImage: 'radial-gradient(circle at 30% 20%, rgba(52,227,176,0.22), transparent 55%)' }}
-                aria-hidden
-              />
-
-              <div className="relative flex justify-center py-2">
-                <div className="phone-3d">
-                  <PhoneMockup size="lg" variant="light" float>
-                    <WalletPreview />
-                  </PhoneMockup>
-                </div>
-              </div>
-
-              {/* Floating life — varied colors */}
-              <div className="float-card-c absolute -left-2 top-16 z-20 hidden sm:block">
-                <div className="float-card-enter flex items-center gap-2.5 rounded-card border border-grid bg-carbon px-3 py-2 shadow-pop">
-                  <span className="grid h-8 w-8 place-items-center rounded-control bg-onyx text-signal">
-                    <TrendingUp size={15} aria-hidden />
-                  </span>
-                  <div>
-                    <p className="mono text-[13px] font-semibold leading-none text-signal">+12.4%</p>
-                    <p className="mt-0.5 text-[9px] text-panel-muted">this month</p>
-                  </div>
-                </div>
-              </div>
-              <div className="float-card-a absolute right-0 top-9 z-20 hidden sm:block">
-                <div className="float-card-enter float-card-enter-2 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
-                  <CheckCircle2 size={14} className="text-accent" aria-hidden />
-                  <span className="text-[11px] font-medium text-ink">Received 75 XLM</span>
-                </div>
-              </div>
-              <div className="float-card-b absolute bottom-16 left-0 z-20 hidden sm:block">
-                <div className="float-card-enter float-card-enter-3 flex items-center gap-2 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
-                  <Repeat size={14} className="text-accent-deep" aria-hidden />
-                  <span className="text-[11px] font-medium text-ink">XLM to USDC</span>
-                </div>
-              </div>
-              <div className="float-card-a absolute -right-1 bottom-9 z-20 hidden sm:block">
-                <div className="float-card-enter float-card-enter-3 flex items-center gap-1.5 rounded-pill border border-hairline bg-paper px-3 py-1.5 shadow-pop">
-                  <BadgeCheck size={14} className="text-accent" aria-hidden />
-                  <span className="text-[11px] font-medium text-ink">Verified</span>
-                </div>
-              </div>
-            </div>
+          {/* How it works — plain explanation, no simulated balances or transactions */}
+          <div data-tour="proof" className="mx-auto mt-14 max-w-4xl">
+            <HowItWorks />
           </div>
         </div>
       </section>
