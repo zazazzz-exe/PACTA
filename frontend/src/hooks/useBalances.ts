@@ -38,6 +38,13 @@ export function useBalances(address: string | null) {
     };
   }, [load, net.key]);
 
+  // Live updates: refetch whenever the account changes on-chain.
+  useEffect(() => {
+    if (!address) return;
+    const unsubscribe = adapter.subscribeAccount(address, () => void load());
+    return unsubscribe;
+  }, [address, net.key, load]);
+
   return {
     balances,
     totalPhp: sumPhp(balances),

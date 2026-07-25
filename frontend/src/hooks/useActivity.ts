@@ -37,5 +37,12 @@ export function useActivity(address: string | null) {
     };
   }, [load, net.key]);
 
+  // Live updates: refetch history whenever the account changes on-chain.
+  useEffect(() => {
+    if (!address) return;
+    const unsubscribe = adapter.subscribeAccount(address, () => void load());
+    return unsubscribe;
+  }, [address, net.key, load]);
+
   return { items, loading, error, refetch: () => void load() };
 }
