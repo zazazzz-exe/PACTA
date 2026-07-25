@@ -41,6 +41,7 @@ export function messageForEvent(e: AppEvent): { tone: ToastTone; message: string
 let toasts: Toast[] = [];
 let seq = 0;
 const subs = new Set<() => void>();
+const timers = new Map<string, number>(); // auto-dismiss timers, keyed by toast id
 const emit = () => subs.forEach((f) => f());
 
 export function pushEvent(e: AppEvent): void {
@@ -48,13 +49,18 @@ export function pushEvent(e: AppEvent): void {
   const id = `t${(seq += 1)}`;
   toasts = [...toasts, { id, tone, message }];
   emit();
-  // auto-dismiss after 5s
+  // auto-dismiss after 5s; track the timer so a manual dismiss can cancel it.
   if (typeof window !== 'undefined') {
-    window.setTimeout(() => dismissToast(id), 5000);
+    timers.set(id, window.setTimeout(() => dismissToast(id), 5000));
   }
 }
 
 export function dismissToast(id: string): void {
+  const timer = timers.get(id);
+  if (timer !== undefined) {
+    if (typeof window !== 'undefined') window.clearTimeout(timer);
+    timers.delete(id);
+  }
   toasts = toasts.filter((t) => t.id !== id);
   emit();
 }

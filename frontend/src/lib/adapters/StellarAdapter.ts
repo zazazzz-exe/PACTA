@@ -139,6 +139,7 @@ export class StellarAdapter implements ChainAdapter {
     let closed = false;
     let stopStream: (() => void) | undefined;
     let pollId: number | undefined;
+    let reconnectTimer: number | undefined;
 
     const signal = () => {
       if (!closed) onChange();
@@ -152,6 +153,23 @@ export class StellarAdapter implements ChainAdapter {
         window.clearInterval(pollId);
         pollId = undefined;
       }
+    };
+    const stopReconnect = () => {
+      if (reconnectTimer !== undefined) {
+        window.clearTimeout(reconnectTimer);
+        reconnectTimer = undefined;
+      }
+    };
+    // After a stream error we poll; also retry the stream after a backoff so a
+    // transient Horizon hiccup doesn't leave us polling for the whole session.
+    const scheduleReconnect = () => {
+      if (reconnectTimer !== undefined || closed) return;
+      reconnectTimer = window.setTimeout(() => {
+        reconnectTimer = undefined;
+        if (closed || document.hidden) return;
+        stopPolling();
+        startStream();
+      }, 15000);
     };
     const startStream = () => {
       if (stopStream || closed) return;
@@ -169,6 +187,7 @@ export class StellarAdapter implements ChainAdapter {
               stopStream = undefined;
               s?.();
               startPolling();
+              scheduleReconnect();
             },
           });
       } catch {
@@ -179,6 +198,7 @@ export class StellarAdapter implements ChainAdapter {
       stopStream?.();
       stopStream = undefined;
       stopPolling();
+      stopReconnect();
     };
     const onVisibility = () => {
       if (document.hidden) {
