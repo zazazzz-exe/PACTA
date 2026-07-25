@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getAllAgreements, getAgreement, type Agreement } from '../lib/contract';
+import { getAllAgreements, type Agreement } from '../lib/contract';
 import { friendlyError } from '../lib/errors';
 
 // `enabled` (default true) gates the actual contract read. The Pact/escrow
@@ -36,29 +36,4 @@ export function useAgreements(publicKey?: string, enabled = true) {
   }, [refresh]);
 
   return { agreements, loading, error, refresh };
-}
-
-export function useAgreement(id: bigint | null, publicKey?: string) {
-  const [agreement, setAgreement] = useState<Agreement | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const refresh = useCallback(async () => {
-    if (id == null) return;
-    setLoading(true);
-    setError(null);
-    try {
-      setAgreement(await getAgreement(id, publicKey));
-    } catch (e) {
-      setError(friendlyError(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [id, publicKey]);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  return { agreement, loading, error, refresh };
 }

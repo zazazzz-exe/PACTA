@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { ChevronLeft, Clock, Loader2, RotateCcw, ShieldX } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
-import { useAgreement } from '../hooks/useAgreements';
+import { usePactLive } from '../hooks/usePactLive';
 import {
   Status,
   postBond,
@@ -45,7 +45,9 @@ interface Pending {
 
 export function AgreementDetail({ id }: { id: bigint }) {
   const { address, kycStatus } = useWallet();
-  const { agreement: a, loading, error, refresh } = useAgreement(id, address ?? undefined);
+  // Live-polls this Pact every 6s (paused while the tab is hidden, testnet-gated)
+  // and pushes toast alerts on bond/deposit/milestone/complete/refund changes.
+  const { agreement: a, loading, error, refetch: refresh } = usePactLive(id);
   const [busy, setBusy] = useState<string | null>(null);
   const [actionErr, setActionErr] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
