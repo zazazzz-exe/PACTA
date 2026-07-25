@@ -22,6 +22,7 @@ import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
 import { Reveal } from '../components/Reveal';
 import { HowItWorks } from '../components/HowItWorks';
+import { PhonePreview } from '../components/PhonePreview';
 
 // The wallet, up front. Escrow is one capability (Send protected), not the story.
 const CAPABILITIES = [
@@ -134,68 +135,75 @@ export function Landing() {
         />
 
         <div className="relative mx-auto max-w-6xl">
-          {/* Copy */}
-          <div className="animate-rise mx-auto max-w-xl text-center">
-            <span
-              data-tour="network"
-              className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
-            >
-              <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
-              Live on Stellar testnet
-            </span>
-
-            <h1 className="mt-6 text-[36px] font-semibold leading-[1.08] tracking-tight text-ink sm:text-[48px] lg:text-[54px]">
-              Simplify every payment.{' '}
-              <span className="text-accent">Protect the ones that matter.</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-lg text-[16px] leading-relaxed text-slate sm:text-[17px]">
-              A non-custodial wallet for Stellar. Hold, send, receive, and convert without giving up your
-              keys. When a payment needs to be safe, send it as a Pact: staged, bond-backed, and provable
-              on-chain.
-            </p>
-
-            <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <button
-                onClick={connect}
-                data-tour="connect"
-                className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:w-auto"
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+            {/* Copy */}
+            <div className="animate-rise mx-auto max-w-xl text-center lg:mx-0 lg:max-w-none lg:text-left">
+              <span
+                data-tour="network"
+                className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
               >
-                <Wallet size={20} aria-hidden />
-                Connect wallet
-                <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
-              </button>
-              <button
-                onClick={scrollToHow}
-                className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] border border-hairline-strong bg-paper px-8 text-[15px] font-medium text-ink transition hover:border-accent/40 hover:bg-accent-tint active:scale-[0.98] sm:w-auto"
-              >
-                See how it works
-              </button>
+                <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
+                Live on Stellar testnet
+              </span>
+
+              <h1 className="mt-6 text-[36px] font-semibold leading-[1.08] tracking-tight text-ink sm:text-[48px] lg:text-[54px]">
+                Simplify every payment.{' '}
+                <span className="text-accent">Protect the ones that matter.</span>
+              </h1>
+
+              <p className="mx-auto mt-6 max-w-lg text-[16px] leading-relaxed text-slate sm:text-[17px] lg:mx-0">
+                A non-custodial wallet for Stellar. Hold, send, receive, and convert without giving up your
+                keys. When a payment needs to be safe, send it as a Pact: staged, bond-backed, and provable
+                on-chain.
+              </p>
+
+              <div className="mt-9 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+                <button
+                  onClick={connect}
+                  data-tour="connect"
+                  className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:w-auto"
+                >
+                  <Wallet size={20} aria-hidden />
+                  Connect wallet
+                  <ArrowRight size={18} className="transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </button>
+                <button
+                  onClick={scrollToHow}
+                  className="inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] border border-hairline-strong bg-paper px-8 text-[15px] font-medium text-ink transition hover:border-accent/40 hover:bg-accent-tint active:scale-[0.98] sm:w-auto"
+                >
+                  See how it works
+                </button>
+              </div>
+
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5 lg:justify-start">
+                {['No custody, ever', 'Stellar-native', 'Provable on-chain'].map((chip) => (
+                  <span
+                    key={chip}
+                    className="inline-flex items-center gap-2 rounded-pill border border-accent/15 bg-accent-tint/70 px-3.5 py-1.5 text-[13px] font-medium text-accent-deep"
+                  >
+                    <ShieldCheck size={14} className="text-accent" aria-hidden />
+                    {chip}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2 lg:justify-start">
+                <span className="text-[12px] font-medium text-fog">Works with</span>
+                {['Freighter', 'xBull', 'Hana'].map((w) => (
+                  <span
+                    key={w}
+                    className="inline-flex items-center gap-1.5 rounded-pill bg-mist px-3 py-1 text-[12px] font-medium text-slate"
+                  >
+                    <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden />
+                    {w}
+                  </span>
+                ))}
+              </div>
             </div>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
-              {['No custody, ever', 'Stellar-native', 'Provable on-chain'].map((chip) => (
-                <span
-                  key={chip}
-                  className="inline-flex items-center gap-2 rounded-pill border border-accent/15 bg-accent-tint/70 px-3.5 py-1.5 text-[13px] font-medium text-accent-deep"
-                >
-                  <ShieldCheck size={14} className="text-accent" aria-hidden />
-                  {chip}
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2">
-              <span className="text-[12px] font-medium text-fog">Works with</span>
-              {['Freighter', 'xBull', 'Hana'].map((w) => (
-                <span
-                  key={w}
-                  className="inline-flex items-center gap-1.5 rounded-pill bg-mist px-3 py-1 text-[12px] font-medium text-slate"
-                >
-                  <span className="h-1.5 w-1.5 rounded-pill bg-accent" aria-hidden />
-                  {w}
-                </span>
-              ))}
+            {/* Phone — an interface preview of the wallet Home screen */}
+            <div className="animate-rise flex justify-center lg:justify-end">
+              <PhonePreview />
             </div>
           </div>
 

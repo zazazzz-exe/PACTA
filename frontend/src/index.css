@@ -158,6 +158,31 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   .proof-sheen, .particle { display: none; }
 }
 
+/* Landing hero phone preview — gentle float, glow, and drifting claim chips. */
+@keyframes phone-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(-0.4deg); }
+}
+@keyframes chip-bob-a {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-9px); }
+}
+@keyframes chip-bob-b {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+.phone-float { animation: phone-bob 6s ease-in-out infinite; will-change: transform; }
+.chip-float-a { animation: chip-bob-a 4.5s ease-in-out infinite; will-change: transform; }
+.chip-float-b { animation: chip-bob-b 5.5s ease-in-out infinite 0.4s; will-change: transform; }
+.phone-glow {
+  background: radial-gradient(circle at 50% 42%, rgba(52, 227, 176, 0.28), transparent 62%);
+  filter: blur(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phone-float, .chip-float-a, .chip-float-b { animation: none !important; }
+}
+
 /* Dialog enter — backdrop + panel. */
 .dialog-backdrop { animation: dialog-fade-in 0.2s ease-out both; }
 .dialog-panel { animation: dialog-rise-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
