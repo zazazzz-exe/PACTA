@@ -1,20 +1,27 @@
-import { Client, networks, type Agreement, type Reputation } from 'pacta';
-import { RPC_URL, TOKEN_ADDRESS, READ_SOURCE } from './config';
+import { Client, type Agreement, type Reputation } from 'pacta';
 import { signTransaction } from './wallet';
+import { getActiveNetwork } from './activeNetwork';
+import { escrowConfigFor } from './escrowConfig';
 
 export { Status } from 'pacta';
 export type { Agreement, Reputation };
 
-// Reads still need an existing, funded source account to simulate against. When
-// nobody is connected, fall back to a known funded account (READ_SOURCE); a
-// random unfunded key fails RPC simulation with "Account not found".
-const readSource = (publicKey?: string) => publicKey ?? READ_SOURCE;
+// Resolve the escrow config for the network the wallet is on. Every UI path that
+// reaches this module is gated on supportsPacts, so a null here should be
+// unreachable; throw a clear message rather than silently target the wrong chain.
+function activeEscrow() {
+  const cfg = escrowConfigFor(getActiveNetwork());
+  if (!cfg) throw new Error('Protected payments are not available on this network.');
+  return cfg;
+}
 
 export function getContract(publicKey?: string) {
+  const { contractId, rpcUrl, passphrase, readSource } = activeEscrow();
   return new Client({
-    ...networks.testnet,
-    rpcUrl: RPC_URL,
-    publicKey: readSource(publicKey),
+    contractId,
+    networkPassphrase: passphrase,
+    rpcUrl,
+    publicKey: publicKey ?? readSource,
     signTransaction,
   });
 }
@@ -76,7 +83,7 @@ export async function createAgreement(
   const tx = await getContract(publicKey).create_agreement({
     investor: args.investor,
     trader: args.trader,
-    token: TOKEN_ADDRESS,
+    token: activeEscrow().settlementSac,
     capital: args.capital,
     bond: args.bond,
     milestones: args.milestones,

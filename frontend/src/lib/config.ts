@@ -6,8 +6,6 @@ import { TESTNET } from './networks';
 export const CONTRACT_ID = 'CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL';
 export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
-export const RPC_URL = 'https://soroban-testnet.stellar.org';
-
 // Read-only simulations still need an existing, funded source account (the RPC
 // loads its entry for the sequence number). When no wallet is connected we fall
 // back to the contract admin, which is funded and always exists on testnet.
