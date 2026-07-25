@@ -23,6 +23,7 @@ import { Send } from './pages/Send';
 import { Convert } from './pages/Convert';
 import { Activity } from './pages/Activity';
 import { BottomTabs } from './components/BottomTabs';
+import { Toaster } from './components/Toaster';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
 import { useActiveNetwork } from './lib/activeNetwork';
@@ -246,6 +247,7 @@ export default function App() {
       )}
 
       {showTabs && <BottomTabs current={route.name} />}
+      <Toaster />
     </div>
   );
 }
