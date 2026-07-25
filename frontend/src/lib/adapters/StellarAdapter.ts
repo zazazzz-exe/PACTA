@@ -144,7 +144,8 @@ export class StellarAdapter implements ChainAdapter {
       if (!closed) onChange();
     };
     const startPolling = () => {
-      if (pollId === undefined) pollId = window.setInterval(signal, 12000);
+      if (closed || pollId !== undefined) return;
+      pollId = window.setInterval(signal, 12000);
     };
     const stopPolling = () => {
       if (pollId !== undefined) {
