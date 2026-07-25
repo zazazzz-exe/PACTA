@@ -53,6 +53,9 @@ export interface ChainAdapter {
   getQuote(params: QuoteParams): Promise<Quote>;
   swap(quote: Quote): Promise<TxResult>;
   signAndSubmit(xdr: string): Promise<TxResult>;
+  // Fire onChange whenever the account's on-chain activity changes (new payment
+  // in/out). Returns an unsubscribe function. Consumers re-fetch on the signal.
+  subscribeAccount(address: string, onChange: () => void): () => void;
 }
 
 export class NotImplementedError extends Error {

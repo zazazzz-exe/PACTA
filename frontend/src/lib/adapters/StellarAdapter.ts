@@ -132,6 +132,69 @@ export class StellarAdapter implements ChainAdapter {
     return this.signAndSubmit(tx.toXDR());
   }
 
+  // Live account updates via a Horizon payments stream (cursor 'now'), with a
+  // polling fallback if streaming is unavailable/errors, paused while the tab is
+  // hidden. onChange is a signal ("something changed, refetch"), not data.
+  subscribeAccount(address: string, onChange: () => void): () => void {
+    let closed = false;
+    let stopStream: (() => void) | undefined;
+    let pollId: number | undefined;
+
+    const signal = () => {
+      if (!closed) onChange();
+    };
+    const startPolling = () => {
+      if (pollId === undefined) pollId = window.setInterval(signal, 12000);
+    };
+    const stopPolling = () => {
+      if (pollId !== undefined) {
+        window.clearInterval(pollId);
+        pollId = undefined;
+      }
+    };
+    const startStream = () => {
+      if (stopStream || closed) return;
+      try {
+        stopStream = this.server
+          .payments()
+          .forAccount(address)
+          .cursor('now')
+          .stream({
+            onmessage: () => signal(),
+            onerror: () => {
+              // Stream dropped: fall back to polling until visibility restarts it.
+              stopStream = undefined;
+              startPolling();
+            },
+          });
+      } catch {
+        startPolling();
+      }
+    };
+    const stopAll = () => {
+      stopStream?.();
+      stopStream = undefined;
+      stopPolling();
+    };
+    const onVisibility = () => {
+      if (document.hidden) {
+        stopAll();
+      } else {
+        startStream();
+        signal(); // immediate refresh on return to foreground
+      }
+    };
+
+    document.addEventListener('visibilitychange', onVisibility);
+    if (!document.hidden) startStream();
+
+    return () => {
+      closed = true;
+      stopAll();
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }
+
   async signAndSubmit(xdr: string): Promise<TxResult> {
     // Single signing chokepoint for every write path. The wallet returns a
     // signed XDR; submit it via Horizon and surface the hash + explorer link.
