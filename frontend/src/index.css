@@ -158,64 +158,6 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   .proof-sheen, .particle { display: none; }
 }
 
-/* Phone mockup — gentle float on desktop hero. */
-@keyframes phone-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-}
-.phone-float { animation: phone-float 5s ease-in-out infinite; }
-.phone-tilt { transform: rotate(-7deg); transform-origin: center center; }
-.phone-tilt.phone-float { animation: phone-float-tilt 5s ease-in-out infinite; }
-
-@keyframes phone-float-tilt {
-  0%, 100% { transform: rotate(-7deg) translateY(0); }
-  50% { transform: rotate(-7deg) translateY(-8px); }
-}
-
-/* Floating hero cards — staggered idle drift + entrance. */
-@keyframes float-card-a {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-@keyframes float-card-b {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
-}
-@keyframes float-card-c {
-  0%, 100% { transform: translateY(0) translateX(0); }
-  50% { transform: translateY(-6px) translateX(3px); }
-}
-@keyframes float-card-enter {
-  from { opacity: 0; transform: translateY(18px) scale(0.96); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.float-card-a { animation: float-card-a 4.2s ease-in-out infinite; }
-.float-card-b { animation: float-card-b 5s ease-in-out infinite 0.8s; }
-.float-card-c { animation: float-card-c 4.6s ease-in-out infinite 1.4s; }
-.float-card-enter { animation: float-card-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.float-card-enter-1 { animation-delay: 0.25s; }
-.float-card-enter-2 { animation-delay: 0.45s; }
-.float-card-enter-3 { animation-delay: 0.65s; }
-
-/* App preview — 3-screen crossfade inside phone (9s cycle). */
-.preview-stack { position: relative; }
-.preview-screen {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  animation: preview-crossfade 9s ease-in-out infinite;
-}
-.preview-screen-1 { animation-delay: 0s; }
-.preview-screen-2 { animation-delay: -6s; }
-.preview-screen-3 { animation-delay: -3s; }
-
-@keyframes preview-crossfade {
-  0%, 5%   { opacity: 0; }
-  8%, 28%  { opacity: 1; }
-  33%, 100% { opacity: 0; }
-}
-
 /* Dialog enter — backdrop + panel. */
 .dialog-backdrop { animation: dialog-fade-in 0.2s ease-out both; }
 .dialog-panel { animation: dialog-rise-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
@@ -230,16 +172,8 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .phone-float { animation: none !important; }
-  .phone-tilt { transform: rotate(-7deg); }
-  .phone-tilt.phone-float { animation: none !important; }
-  .float-card-a, .float-card-b, .float-card-c { animation: none !important; }
-  .float-card-enter { animation: none !important; opacity: 1; }
-  .preview-screen { animation: none !important; opacity: 0; }
-  .preview-screen-1 { opacity: 1; position: relative; }
-  .preview-screen-2, .preview-screen-3 { display: none; }
   .dialog-backdrop, .dialog-panel { animation: none !important; }
-  .btn-shimmer::after, .glow-orb, .step-card-hover { animation: none !important; }
+  .btn-shimmer::after, .step-card-hover { animation: none !important; }
 }
 
 /* Primary button shimmer sweep. */
@@ -264,19 +198,6 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .step-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-pop);
-}
-
-/* Floating glow orbs (hero showcase). */
-@keyframes glow-drift {
-  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-  50% { transform: translate(12px, -16px) scale(1.15); opacity: 0.75; }
-}
-.glow-orb {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(40px);
-  animation: glow-drift 8s ease-in-out infinite;
-  pointer-events: none;
 }
 
 /* Icon pop on card hover. */
@@ -314,17 +235,3 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   background: linear-gradient(145deg, var(--color-accent-deep) 0%, var(--color-hero-panel) 45%, var(--color-accent) 100%);
 }
 
-/* Hero phone — subtle 3D tilt with depth; straightens toward the viewer on
-   hover. The inner phone still floats (composed child transform). */
-.phone-3d {
-  transform: perspective(1500px) rotateY(-16deg) rotateX(7deg) rotateZ(-1deg);
-  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  filter: drop-shadow(0 26px 44px rgba(10, 90, 73, 0.32));
-  will-change: transform;
-}
-.phone-3d:hover {
-  transform: perspective(1500px) rotateY(-7deg) rotateX(3deg);
-}
-@media (prefers-reduced-motion: reduce) {
-  .phone-3d { transform: perspective(1500px) rotateY(-11deg) rotateX(5deg); }
-}

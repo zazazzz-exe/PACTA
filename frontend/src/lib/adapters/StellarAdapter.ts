@@ -163,8 +163,11 @@ export class StellarAdapter implements ChainAdapter {
           .stream({
             onmessage: () => signal(),
             onerror: () => {
-              // Stream dropped: fall back to polling until visibility restarts it.
+              // Stream dropped: close the errored handle before dropping the
+              // reference, then fall back to polling until visibility restarts it.
+              const s = stopStream;
               stopStream = undefined;
+              s?.();
               startPolling();
             },
           });

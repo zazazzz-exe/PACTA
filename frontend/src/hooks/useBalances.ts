@@ -41,8 +41,12 @@ export function useBalances(address: string | null) {
   // Live updates: refetch whenever the account changes on-chain.
   useEffect(() => {
     if (!address) return;
-    const unsubscribe = adapter.subscribeAccount(address, () => void load());
-    return unsubscribe;
+    let ignore = false;
+    const unsubscribe = adapter.subscribeAccount(address, () => void load(() => ignore));
+    return () => {
+      ignore = true;
+      unsubscribe();
+    };
   }, [address, net.key, load]);
 
   return {

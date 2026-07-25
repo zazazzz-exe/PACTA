@@ -28,7 +28,7 @@ export function Dashboard() {
   // is never read while the connected wallet is on an unsupported/mainnet network.
   // The hook itself is still called unconditionally on every render (stable hook
   // order); only its internal fetch is skipped.
-  const { agreements, loading, error } = useAgreements(address ?? undefined, net.supportsPacts);
+  const { agreements, loading, error, refresh } = useAgreements(address ?? undefined, net.supportsPacts);
   const [filter, setFilter] = useState<Filter>('all');
   const { start } = useTour();
 
@@ -42,6 +42,25 @@ export function Dashboard() {
     }, 500);
     return () => clearTimeout(t);
   }, [address, loading, start, net.supportsPacts]);
+
+  // Live-refresh the Pact list on an interval while mounted, testnet-supported,
+  // and the tab is visible. Never reads the contract off testnet. Mirrors the
+  // visibility pattern in usePactLive: pause while hidden, refresh once on return.
+  useEffect(() => {
+    if (!net.supportsPacts) return;
+    const tick = () => {
+      if (!document.hidden) void refresh();
+    };
+    const timer = window.setInterval(tick, 8000);
+    const onVis = () => {
+      if (!document.hidden) void refresh();
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [net.supportsPacts, refresh]);
 
   const filtered = useMemo(() => {
     if (!address || filter === 'all') return agreements;
