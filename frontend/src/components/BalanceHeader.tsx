@@ -1,4 +1,5 @@
 import { shortAddr } from '../lib/format';
+import { useActiveNetwork } from '../lib/activeNetwork';
 import { CopyButton } from './CopyButton';
 
 export function BalanceHeader({
@@ -10,6 +11,8 @@ export function BalanceHeader({
   totalPhp: number;
   loading: boolean;
 }) {
+  const net = useActiveNetwork();
+
   return (
     <div className="rounded-card bg-gradient-to-br from-accent to-accent-deep px-5 py-6 text-center text-white shadow-card">
       <div className="text-[12px] font-medium uppercase tracking-wider text-white/70">
@@ -30,7 +33,7 @@ export function BalanceHeader({
         <CopyButton value={address} className="text-white/80" />
         <span className="ml-1 inline-flex items-center gap-1">
           <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden />
-          testnet
+          {net.label}
         </span>
       </div>
     </div>

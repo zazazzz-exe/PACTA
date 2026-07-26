@@ -5,13 +5,13 @@ import { createAgreement } from '../lib/contract';
 import { toBaseUnits, shortAddr, isValidStellarAddress } from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
-import { TOKEN_SYMBOL } from '../lib/config';
 import { Button } from '../components/Button';
 import { KycGate } from '../components/kyc/KycGate';
 import { RiskLens } from '../components/RiskLens';
 import { useRiskLens } from '../hooks/useRiskLens';
 import { useDebounce } from '../hooks/useDebounce';
 import { takePendingSend } from '../lib/pendingSend';
+import { resolveTokenSac } from '../lib/tokenSac';
 
 // Friendly deadline choices; value is the contract `duration` in seconds.
 const DEADLINE_PRESETS = [
@@ -28,6 +28,8 @@ export function CreateAgreement() {
   const prefill = useRef(takePendingSend()).current;
   const [trader, setTrader] = useState(prefill?.trader ?? '');
   const [capital, setCapital] = useState(prefill?.capital ?? '100');
+  const assetCode = prefill?.assetCode ?? 'XLM';
+  const assetIssuer = prefill?.assetIssuer;
   const [bond, setBond] = useState('20');
   const [milestones, setMilestones] = useState(4);
   const [share, setShare] = useState('20');
@@ -86,6 +88,7 @@ export function CreateAgreement() {
     setErr(null);
     setBusy(true);
     try {
+      const tokenSac = resolveTokenSac({ code: assetCode, issuer: assetIssuer }) ?? undefined;
       const { result: id } = await createAgreement(address!, {
         investor: address!,
         trader,
@@ -94,6 +97,7 @@ export function CreateAgreement() {
         milestones,
         profit_share_bps: Math.round(Number(share) * 100),
         duration: BigInt(Math.round(Number(duration))),
+        token: tokenSac,
       });
       navigate(`/agreement/${id.toString()}`);
     } catch (e2) {
@@ -129,10 +133,10 @@ export function CreateAgreement() {
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label={`Amount to send (${TOKEN_SYMBOL})`}>
+          <Field label={`Amount to send (${assetCode})`}>
             <Input mono type="number" min="0" step="any" value={capital} onChange={setCapital} />
           </Field>
-          <Field label={`Security bond (${TOKEN_SYMBOL})`}>
+          <Field label={`Security bond (${assetCode})`}>
             <Input mono type="number" min="0" step="any" value={bond} onChange={setBond} />
           </Field>
         </div>
@@ -207,8 +211,8 @@ export function CreateAgreement() {
 
         {/* Plain-language summary */}
         <div className="bg-mist rounded-control p-4 text-[14px] leading-relaxed text-slate">
-          You send <span className="mono text-ink">{capital || 0} XLM</span>, held by the contract.{' '}
-          {traderLabel} posts a <span className="mono text-ink">{bond || 0} XLM</span> bond. Released in{' '}
+          You send <span className="mono text-ink">{capital || 0} {assetCode}</span>, held by the contract.{' '}
+          {traderLabel} posts a <span className="mono text-ink">{bond || 0} {assetCode}</span> bond. Released in{' '}
           <span className="mono text-ink">{milestones}</span> {milestones === 1 ? 'step' : 'steps'}. Refund
           if the deadline passes.
         </div>

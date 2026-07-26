@@ -20,15 +20,32 @@ import { getActiveNetwork } from './activeNetwork';
 // globals (`window`), which is a hazard at module-import time in tests/SSR.
 // Construct it on first use instead of at module scope.
 let _kit: StellarWalletsKit | null = null;
+
+// Map active network passphrase to the WalletNetwork enum the kit expects.
+function kitNetwork(): WalletNetwork {
+  const net = getActiveNetwork();
+  return net.key === 'public' ? WalletNetwork.PUBLIC : WalletNetwork.TESTNET;
+}
+
 export function getKit(): StellarWalletsKit {
   if (!_kit) {
     _kit = new StellarWalletsKit({
-      network: WalletNetwork.TESTNET,
+      network: kitNetwork(),
       selectedWalletId: FREIGHTER_ID,
       modules: [new FreighterModule(), new xBullModule(), new HanaModule()],
     });
   }
   return _kit;
+}
+
+// Update the kit's network when the wallet reports a different chain. Called
+// after setActiveNetworkFromPassphrase so the kit stays in sync with whichever
+// network the user's wallet is actually on, preventing "wallet not available"
+// errors caused by a network mismatch.
+export function syncKitNetwork(): void {
+  if (_kit) {
+    _kit.setNetwork(kitNetwork());
+  }
 }
 
 // The wallet id the app is currently connected/acting as, so the link flow can

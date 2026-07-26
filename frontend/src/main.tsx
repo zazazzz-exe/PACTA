@@ -12,7 +12,7 @@ import './index.css';
 import App from './App';
 import { TourProvider } from './components/Tour';
 import { WalletContext, type WalletState } from './hooks/useWallet';
-import { connectWallet, getWalletNetworkPassphrase, getKit } from './lib/wallet';
+import { connectWallet, getWalletNetworkPassphrase, getKit, syncKitNetwork } from './lib/wallet';
 import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
@@ -53,6 +53,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
       const addr = await connectWallet();
       const passphrase = await getWalletNetworkPassphrase();
       setActiveNetworkFromPassphrase(passphrase);
+      syncKitNetwork();
       setAddress(addr);
       setNetwork(passphrase);
       navigate('/home');

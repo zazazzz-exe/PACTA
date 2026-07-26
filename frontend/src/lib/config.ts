@@ -19,10 +19,18 @@ export const TOKEN_DECIMALS = 7;
 // XLM (DESIGN §6.4). Approximate, static; not used in any contract call.
 export const PHP_PER_XLM = 22;
 
-// CONTRACT_ID is always the testnet-deployed escrow, so its explorer link must
-// stay pinned to the testnet explorer regardless of the active network.
-export const contractExplorerUrl = () =>
-  `${TESTNET.explorerBase}/contract/${CONTRACT_ID}`;
+// Explorer link for the escrow contract. Resolves to the active network's
+// contract ID and explorer so it works on both testnet and mainnet.
+export const contractExplorerUrl = () => {
+  const net = getActiveNetwork();
+  if (net.key === 'public') {
+    const mainnetId = (import.meta.env as Record<string, string>).VITE_MAINNET_ESCROW_CONTRACT_ID;
+    if (mainnetId) return `${net.explorerBase}/contract/${mainnetId}`;
+  }
+  // Testnet or mainnet without a configured contract: use the testnet contract.
+  return `${TESTNET.explorerBase}/contract/${CONTRACT_ID}`;
+};
+
 // Tx hashes belong to whatever network they happened on, so this one follows
 // the active network.
 export const txExplorerUrl = (hash: string) =>

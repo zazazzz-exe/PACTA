@@ -4,6 +4,8 @@
 export interface PendingSend {
   trader: string; // recipient address
   capital: string; // human amount to protect
+  assetCode: string; // e.g. 'XLM', 'USDC'
+  assetIssuer?: string; // undefined for native XLM
 }
 
 let pending: PendingSend | null = null;

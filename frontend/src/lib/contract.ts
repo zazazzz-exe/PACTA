@@ -74,6 +74,7 @@ export interface CreateArgs {
   milestones: number;
   profit_share_bps: number;
   duration: bigint;
+  token?: string; // optional SAC address override; defaults to escrow config settlementSac
 }
 
 export async function createAgreement(
@@ -83,7 +84,7 @@ export async function createAgreement(
   const tx = await getContract(publicKey).create_agreement({
     investor: args.investor,
     trader: args.trader,
-    token: activeEscrow().settlementSac,
+    token: args.token || activeEscrow().settlementSac,
     capital: args.capital,
     bond: args.bond,
     milestones: args.milestones,

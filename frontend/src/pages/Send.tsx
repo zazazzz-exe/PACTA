@@ -107,7 +107,6 @@ export function Send() {
 
   const amountNum = Number(amount);
   const maxNum = selected ? Number(selected.amount) : 0;
-  const isXlm = selected?.asset.code === 'XLM' && !selected?.asset.issuer;
 
   const formError =
     !isValidStellarAddress(to.trim())
@@ -146,7 +145,12 @@ export function Send() {
   }
 
   function doSendProtected() {
-    setPendingSend({ trader: to.trim(), capital: amount });
+    setPendingSend({
+      trader: to.trim(),
+      capital: amount,
+      assetCode: selected!.asset.code,
+      assetIssuer: selected!.asset.issuer,
+    });
     navigate('/create');
   }
 
@@ -223,7 +227,7 @@ export function Send() {
 
         {net.supportsPacts ? (
           <button
-            disabled={!ready || !isXlm}
+            disabled={!ready}
             onClick={doSendProtected}
             className="flex w-full items-start gap-3 rounded-card border border-accent/30 bg-accent-tint p-4 text-left transition hover:border-accent/50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
@@ -233,15 +237,13 @@ export function Send() {
             <span>
               <span className="block text-[15px] font-medium text-ink">Send protected (a Pact)</span>
               <span className="block text-[13px] text-slate">
-                {isXlm
-                  ? 'Release in milestones, backed by a bond, refundable if they fail to deliver.'
-                  : 'Protected payments support XLM in this build.'}
+                Release in milestones, backed by a bond, refundable if they fail to deliver.
               </span>
             </span>
           </button>
         ) : (
           <div className="rounded-card border border-hairline bg-mist px-4 py-3 text-[13px] text-slate">
-            Protected payments are on testnet for now. Switch your wallet to testnet to use them.
+            Protected payments are not available on this network yet.
           </div>
         )}
       </div>
