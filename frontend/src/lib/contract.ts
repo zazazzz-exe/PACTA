@@ -117,3 +117,9 @@ export async function emergencyRefund(publicKey: string, id: bigint): Promise<Wr
 export async function cancel(publicKey: string, id: bigint): Promise<WriteResult<void>> {
   return send<void>(await getContract(publicKey).cancel({ agreement_id: id }));
 }
+
+// Recipient (trader) exit from a Pending Pact: returns their bond (and any
+// deposited capital to the sender) when the sender never funds it.
+export async function reclaimBond(publicKey: string, id: bigint): Promise<WriteResult<void>> {
+  return send<void>(await getContract(publicKey).reclaim_bond({ agreement_id: id }));
+}

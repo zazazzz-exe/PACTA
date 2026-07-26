@@ -7,9 +7,9 @@ import {
   postBond,
   depositCapital,
   releaseMilestone,
-  complete,
   emergencyRefund,
   cancel,
+  reclaimBond,
   type WriteResult,
 } from '../lib/contract';
 import {
@@ -123,8 +123,8 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const allReleased = a.released_milestones >= a.milestones;
   const deadlinePassed = now >= Number(a.deadline);
   const unreleased = a.capital - a.released_amount;
-  const nextTranche =
-    a.released_milestones + 1 >= a.milestones ? unreleased : a.capital / BigInt(a.milestones);
+  const isFinalRelease = a.released_milestones + 1 >= a.milestones;
+  const nextTranche = isFinalRelease ? unreleased : a.capital / BigInt(a.milestones);
   const traderShort = shortAddr(a.trader, 4, 4);
   const signNote = (
     <span className="block mt-2 text-[12px] text-fog">
@@ -154,6 +154,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
 
   const hasAction =
     (isTrader && a.status === Status.Pending && !a.bond_posted) ||
+    (isTrader && a.status === Status.Pending && a.bond_posted) ||
     (isInvestor && a.status === Status.Pending) ||
     (isInvestor && a.status === Status.Active);
 
@@ -311,46 +312,56 @@ export function AgreementDetail({ id }: { id: bigint }) {
                   onClick={() =>
                     gated({
                       key: 'release',
-                      title: 'Release next milestone',
+                      title: isFinalRelease ? 'Release final milestone' : 'Release next milestone',
                       description: (
                         <>
                           Release the next milestone to the recipient. About{' '}
                           <span className="mono text-ink">{formatAmount(nextTranche)}</span> goes to{' '}
-                          <span className="mono text-ink">{traderShort}</span>.{signNote}
+                          <span className="mono text-ink">{traderShort}</span>.
+                          {isFinalRelease && (
+                            <span className="block mt-2">
+                              This is the final milestone, so it also returns the{' '}
+                              <span className="mono text-ink">{formatAmount(a.bond)}</span> bond to the
+                              recipient and completes the Pact.
+                            </span>
+                          )}
+                          {signNote}
                         </>
                       ),
-                      confirmLabel: 'Release',
+                      confirmLabel: isFinalRelease ? 'Release and complete' : 'Release',
                       variant: 'primary',
                       fn: () => releaseMilestone(address!, a.id),
                     })
                   }
                 >
-                  Release next milestone
+                  {isFinalRelease ? 'Release final milestone' : 'Release next milestone'}
                 </Button>
               )}
 
-              {/* Investor + Active + all released -> Complete */}
-              {isInvestor && a.status === Status.Active && allReleased && (
+              {/* Trader + Pending + bonded -> Reclaim bond (sender never funded) */}
+              {isTrader && a.status === Status.Pending && a.bond_posted && (
                 <Button
+                  variant="danger"
                   className="w-full"
                   disabled={!!busy}
                   onClick={() =>
                     ask({
-                      key: 'complete',
-                      title: 'Complete Pact',
+                      key: 'reclaim',
+                      title: 'Reclaim bond',
                       description: (
                         <>
-                          Complete this Pact. The <span className="mono text-ink">{formatAmount(a.bond)}</span>{' '}
-                          bond is returned to the recipient.{signNote}
+                          Reclaim your <span className="mono text-ink">{formatAmount(a.bond)}</span> bond.
+                          The sender has not funded this Pact, so reclaiming it cancels the Pact and
+                          returns any deposited funds to the sender.{signNote}
                         </>
                       ),
-                      confirmLabel: 'Complete',
-                      variant: 'primary',
-                      fn: () => complete(address!, a.id),
+                      confirmLabel: 'Reclaim bond',
+                      variant: 'danger',
+                      fn: () => reclaimBond(address!, a.id),
                     })
                   }
                 >
-                  Complete and return bond
+                  <RotateCcw size={18} aria-hidden /> Reclaim bond
                 </Button>
               )}
 
