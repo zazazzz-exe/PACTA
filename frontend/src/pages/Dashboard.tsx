@@ -75,7 +75,8 @@ export function Dashboard() {
       <div className="mx-auto max-w-app px-1 py-16 text-center">
         <h1 className="text-[22px] font-semibold tracking-tight text-ink">Pacts</h1>
         <p className="mt-2 text-[14px] text-slate">
-          Protected payments are on testnet for now. Switch your wallet to testnet to view and create Pacts.
+          Protected payments are not available on {net.label} yet. Switch your wallet to testnet to
+          view and create Pacts.
         </p>
       </div>
     );

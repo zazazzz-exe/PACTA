@@ -53,12 +53,17 @@ function NetworkBadge() {
   );
 }
 
-function PactsTestnetNotice() {
+// Shown on any network where the Pact contract is not configured. Names the
+// network the wallet is actually on, so the message stays true once mainnet
+// Pacts are enabled (at which point it no longer renders on mainnet at all).
+function PactsUnavailableNotice() {
+  const net = useActiveNetwork();
   return (
     <div className="mx-auto max-w-app px-1 py-16 text-center">
       <h1 className="text-[22px] font-semibold tracking-tight text-ink">Protected payments</h1>
       <p className="mt-2 text-[14px] text-slate">
-        Protected payments are on testnet for now. Switch your wallet to testnet to use them.
+        Protected payments are not available on {net.label} yet. Switch your wallet to testnet to
+        use them.
       </p>
     </div>
   );
@@ -164,9 +169,9 @@ export default function App() {
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}
           {route.name === 'dashboard' && <Dashboard />}
-          {route.name === 'create' && (net.supportsPacts ? <CreateAgreement /> : <PactsTestnetNotice />)}
-          {route.name === 'detail' && (net.supportsPacts ? <AgreementDetail id={route.id} /> : <PactsTestnetNotice />)}
-          {route.name === 'trader' && (net.supportsPacts ? <TraderProfile address={route.address} /> : <PactsTestnetNotice />)}
+          {route.name === 'create' && (net.supportsPacts ? <CreateAgreement /> : <PactsUnavailableNotice />)}
+          {route.name === 'detail' && (net.supportsPacts ? <AgreementDetail id={route.id} /> : <PactsUnavailableNotice />)}
+          {route.name === 'trader' && (net.supportsPacts ? <TraderProfile address={route.address} /> : <PactsUnavailableNotice />)}
           {route.name === 'verify' && <Verify />}
           {route.name === 'home' && <Home />}
           {route.name === 'receive' && <Receive />}
@@ -192,7 +197,7 @@ export default function App() {
                 when a payment needs to be safe.
               </p>
               <span className="mono mt-3 inline-flex items-center gap-1.5 text-[11px] text-panel-muted">
-                <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden /> Stellar testnet
+                <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden /> Stellar {net.label}
               </span>
             </div>
 

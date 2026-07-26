@@ -22,7 +22,9 @@ import {
 } from '../lib/format';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
-import { CONTRACT_ID, contractExplorerUrl, txExplorerUrl } from '../lib/config';
+import { contractExplorerUrl, txExplorerUrl } from '../lib/config';
+import { useActiveNetwork } from '../lib/activeNetwork';
+import { activeContractId } from '../lib/escrowConfig';
 import { StatusPill } from '../components/StatusPill';
 import { MilestoneBar } from '../components/MilestoneBar';
 import { ReputationBadge } from '../components/ReputationBadge';
@@ -45,6 +47,7 @@ interface Pending {
 
 export function AgreementDetail({ id }: { id: bigint }) {
   const { address, kycStatus } = useWallet();
+  const net = useActiveNetwork();
   // Live-polls this Pact every 6s (paused while the tab is hidden, testnet-gated)
   // and pushes toast alerts on bond/deposit/milestone/complete/refund changes.
   const { agreement: a, loading, error, refetch: refresh } = usePactLive(id);
@@ -123,7 +126,11 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const nextTranche =
     a.released_milestones + 1 >= a.milestones ? unreleased : a.capital / BigInt(a.milestones);
   const traderShort = shortAddr(a.trader, 4, 4);
-  const signNote = <span className="block mt-2 text-[12px] text-fog">You will sign a transaction on testnet.</span>;
+  const signNote = (
+    <span className="block mt-2 text-[12px] text-fog">
+      You will sign a transaction on {net.label}.
+    </span>
+  );
 
   const headline = (() => {
     switch (a.status) {
@@ -423,7 +430,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
             id={agrId}
             protectedAmount={formatXlmFull(headline.proof)}
             txHash={txHash ? shortHash(txHash) : undefined}
-            contractShort={shortAddr(CONTRACT_ID, 6, 6)}
+            contractShort={shortAddr(activeContractId(), 6, 6)}
             explorerUrl={contractExplorerUrl()}
           />
           </div>

@@ -20,6 +20,11 @@ import { getActiveNetwork } from './activeNetwork';
 // globals (`window`), which is a hazard at module-import time in tests/SSR.
 // Construct it on first use instead of at module scope.
 let _kit: StellarWalletsKit | null = null;
+let _kitNetwork: WalletNetwork | null = null;
+
+// The wallet id the app is currently connected/acting as, so the link flow can
+// temporarily switch to another wallet and then restore this one.
+let _selectedWalletId: string = FREIGHTER_ID;
 
 // Map active network passphrase to the WalletNetwork enum the kit expects.
 function kitNetwork(): WalletNetwork {
@@ -27,20 +32,25 @@ function kitNetwork(): WalletNetwork {
   return net.key === 'public' ? WalletNetwork.PUBLIC : WalletNetwork.TESTNET;
 }
 
+// The kit's network is fixed at construction (v1.9.5 exposes no setNetwork), and
+// the first construction happens during connect, BEFORE the wallet has told us
+// which network it is on. Left alone the kit would stay pinned to the default
+// (testnet) for the whole session, so a mainnet wallet would be handed testnet
+// defaults. Rebuilding on a network change is the supported repoint: the
+// constructor only writes the kit's shared store, and the connected address
+// lives in that same store, so nothing is lost.
 export function getKit(): StellarWalletsKit {
-  if (!_kit) {
+  const network = kitNetwork();
+  if (!_kit || _kitNetwork !== network) {
     _kit = new StellarWalletsKit({
-      network: kitNetwork(),
-      selectedWalletId: FREIGHTER_ID,
+      network,
+      selectedWalletId: _selectedWalletId,
       modules: [new FreighterModule(), new xBullModule(), new HanaModule()],
     });
+    _kitNetwork = network;
   }
   return _kit;
 }
-
-// The wallet id the app is currently connected/acting as, so the link flow can
-// temporarily switch to another wallet and then restore this one.
-let _selectedWalletId: string = FREIGHTER_ID;
 
 export async function connectWallet(): Promise<string> {
   return new Promise((resolve, reject) => {

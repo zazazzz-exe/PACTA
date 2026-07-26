@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { priceForAssetPhp, displayValuePhp, withDisplayValues, totalPhp } from './prices';
+import { parsePhpRates } from './config';
 import type { AssetBalance } from './adapters/ChainAdapter';
 
 const xlm: AssetBalance = { asset: { code: 'XLM' }, amount: '100.0000000', baseUnits: 1_000_000_000n };
@@ -23,6 +24,27 @@ describe('displayValuePhp', () => {
   });
   it('is undefined for unpriced assets', () => {
     expect(displayValuePhp(unknown)).toBeUndefined();
+  });
+});
+
+describe('parsePhpRates', () => {
+  const defaults = { XLM: 22, USDC: 56 };
+
+  it('returns the defaults when unset or blank', () => {
+    expect(parsePhpRates(undefined, defaults)).toEqual(defaults);
+    expect(parsePhpRates('   ', defaults)).toEqual(defaults);
+  });
+  it('overrides individual rates and adds new codes', () => {
+    expect(parsePhpRates('XLM:25,PHPX:1', defaults)).toEqual({ XLM: 25, USDC: 56, PHPX: 1 });
+  });
+  it('uppercases codes and trims whitespace', () => {
+    expect(parsePhpRates(' xlm : 30 ', defaults).XLM).toBe(30);
+  });
+  it('ignores malformed pairs rather than dropping the whole table', () => {
+    expect(parsePhpRates('XLM:notanumber,USDC:60,:5,BAD', defaults)).toEqual({ XLM: 22, USDC: 60 });
+  });
+  it('rejects zero and negative rates', () => {
+    expect(parsePhpRates('XLM:0,USDC:-3', defaults)).toEqual(defaults);
   });
 });
 

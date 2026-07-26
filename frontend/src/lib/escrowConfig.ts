@@ -1,5 +1,6 @@
 import { type NetworkInfo, TESTNET, MAINNET } from './networks';
 import { CONTRACT_ID, TOKEN_ADDRESS, READ_SOURCE } from './config';
+import { getActiveNetwork } from './activeNetwork';
 
 // Everything the escrow (Pact) layer needs to talk to the contract on the active
 // network. Returns null when Pacts are not supported/configured for that network,
@@ -14,6 +15,13 @@ export interface EscrowConfig {
 
 function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
+}
+
+// The escrow contract id for the network the wallet is on, for display (the
+// proof panel, explorer links). Every caller sits behind a supportsPacts gate,
+// so the fallback is only reached if a surface is ever rendered ungated.
+export function activeContractId(): string {
+  return escrowConfigFor(getActiveNetwork())?.contractId ?? CONTRACT_ID;
 }
 
 export function escrowConfigFor(
@@ -35,12 +43,15 @@ export function escrowConfigFor(
   // net.key === 'public' (mainnet): all escrow values come from env.
   const contractId = str(env.VITE_MAINNET_ESCROW_CONTRACT_ID);
   const settlementSac = str(env.VITE_MAINNET_SETTLEMENT_SAC);
-  if (!contractId || !settlementSac) return null; // defense in depth
+  const readSource = str(env.VITE_MAINNET_READ_SOURCE);
+  // Defense in depth: same requirement as computeMainnetSupportsPacts, enforced
+  // again here so a hand-built NetworkInfo cannot slip through with half a config.
+  if (!contractId || !settlementSac || !readSource) return null;
   return {
     contractId,
     rpcUrl: MAINNET.rpcUrl,
     passphrase: MAINNET.passphrase,
     settlementSac,
-    readSource: str(env.VITE_MAINNET_READ_SOURCE),
+    readSource,
   };
 }

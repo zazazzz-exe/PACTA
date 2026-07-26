@@ -19,6 +19,35 @@ export const TOKEN_DECIMALS = 7;
 // XLM (DESIGN §6.4). Approximate, static; not used in any contract call.
 export const PHP_PER_XLM = 22;
 
+// Built-in indicative rates, PHP per whole unit. These are NOT a price feed:
+// they are a rough anchor so a balance reads as money rather than as a token
+// count. Every surface that shows them must say "estimate", because on mainnet
+// they sit next to real funds. Override without a code change via VITE_PHP_RATES
+// (e.g. "XLM:22,USDC:56"); a live feed would replace this wholesale.
+const DEFAULT_PHP_RATES: Record<string, number> = {
+  XLM: PHP_PER_XLM,
+  USDC: 56,
+  EURC: 60,
+};
+
+// Parse "CODE:RATE,CODE:RATE" into a rate map, ignoring malformed entries so a
+// typo in one pair cannot wipe out the whole table.
+export function parsePhpRates(
+  raw: unknown,
+  defaults: Record<string, number> = DEFAULT_PHP_RATES,
+): Record<string, number> {
+  if (typeof raw !== 'string' || raw.trim() === '') return { ...defaults };
+  const parsed: Record<string, number> = { ...defaults };
+  for (const pair of raw.split(',')) {
+    const [code, value] = pair.split(':');
+    const rate = Number(value);
+    if (code?.trim() && Number.isFinite(rate) && rate > 0) {
+      parsed[code.trim().toUpperCase()] = rate;
+    }
+  }
+  return parsed;
+}
+
 // Explorer link for the escrow contract. Resolves to the active network's
 // contract ID and explorer so it works on both testnet and mainnet.
 export const contractExplorerUrl = () => {
@@ -36,10 +65,8 @@ export const contractExplorerUrl = () => {
 export const txExplorerUrl = (hash: string) =>
   `${getActiveNetwork().explorerBase}/tx/${hash}`;
 
-// Static, display-only PHP rates by asset code (approximate; never used in a
-// contract call). Unknown assets show their amount only, no peso estimate.
-export const PHP_RATES: Record<string, number> = {
-  XLM: PHP_PER_XLM, // reuse the existing anchor (22)
-  USDC: 56,
-  EURC: 60,
-};
+// Display-only PHP rates by asset code (indicative; never used in a contract
+// call). Unknown assets show their amount only, no peso estimate.
+export const PHP_RATES: Record<string, number> = parsePhpRates(
+  (import.meta.env as Record<string, unknown>).VITE_PHP_RATES,
+);

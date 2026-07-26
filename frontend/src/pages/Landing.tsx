@@ -20,6 +20,7 @@ import { useTour } from '../components/Tour';
 import { landingSteps } from '../lib/tours';
 import { seenTour, markTourSeen } from '../lib/tourSeen';
 import { navigate } from '../lib/router';
+import { useActiveNetwork } from '../lib/activeNetwork';
 import { Reveal } from '../components/Reveal';
 import { HowItWorks } from '../components/HowItWorks';
 import { PhonePreview } from '../components/PhonePreview';
@@ -102,6 +103,7 @@ const TRUST = [
 export function Landing() {
   const { address, connect } = useWallet();
   const { start } = useTour();
+  const net = useActiveNetwork();
 
   useEffect(() => {
     if (address) navigate('/home');
@@ -143,7 +145,7 @@ export function Landing() {
                 className="inline-flex items-center gap-2 rounded-pill border border-accent/20 bg-accent-tint px-4 py-1.5 text-[12px] font-medium text-accent-deep"
               >
                 <span className="pulse-dot h-2 w-2 rounded-pill bg-accent" aria-hidden />
-                Live on Stellar testnet
+                Live on Stellar {net.label}
               </span>
 
               <h1 className="mt-6 text-[36px] font-semibold leading-[1.08] tracking-tight text-ink sm:text-[48px] lg:text-[54px]">
@@ -347,7 +349,7 @@ export function Landing() {
               <div className="relative mx-auto max-w-lg">
                 <span className="inline-flex items-center gap-2 rounded-pill border border-signal/30 bg-signal/10 px-4 py-1.5 text-[12px] font-medium text-signal">
                   <Clock size={14} aria-hidden />
-                  Available now · Testnet
+                  Available now · {net.label}
                 </span>
                 <h2 className="mt-5 text-[28px] font-semibold tracking-tight text-panel-ink sm:text-[38px]">
                   Open your wallet

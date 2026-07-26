@@ -34,5 +34,9 @@ describe('escrowConfigFor', () => {
   it('returns null on mainnet when supportsPacts is true but a required env value is missing', () => {
     const enabledMainnet = { ...MAINNET, supportsPacts: true };
     expect(escrowConfigFor(enabledMainnet, { ...mainnetEnv, VITE_MAINNET_ESCROW_CONTRACT_ID: '' })).toBeNull();
+    expect(escrowConfigFor(enabledMainnet, { ...mainnetEnv, VITE_MAINNET_SETTLEMENT_SAC: '' })).toBeNull();
+    // A read source is required: without it, reads made while disconnected would
+    // simulate against an empty account and fail.
+    expect(escrowConfigFor(enabledMainnet, { ...mainnetEnv, VITE_MAINNET_READ_SOURCE: '' })).toBeNull();
   });
 });

@@ -2,16 +2,31 @@
 // wallet's reported passphrase by activeNetwork.ts. The escrow (Pact) contract
 // is deployed only on testnet, so supportsPacts is true only there.
 
+const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
+
 // Mainnet Pacts (Phase B) are OFF unless the owner has, after an audit + mainnet
-// deploy, set all three env values. All are public, non-secret (contract ids and
-// asset SAC addresses are on-chain public), hence VITE_-prefixed.
+// deploy, set all four env values. All are public, non-secret (contract ids,
+// asset SAC addresses and account ids are on-chain public), hence VITE_-prefixed.
+// The read source is required, not optional: reads simulate against a funded
+// account, so without one every Pact read fails the moment no wallet is
+// connected. Better to keep the gate shut than to enable a half-working layer.
 export function computeMainnetSupportsPacts(env: Record<string, unknown>): boolean {
-  const nonEmpty = (v: unknown): v is string => typeof v === 'string' && v.length > 0;
   return (
     env.VITE_MAINNET_PACTS_ENABLED === 'true' &&
     nonEmpty(env.VITE_MAINNET_ESCROW_CONTRACT_ID) &&
-    nonEmpty(env.VITE_MAINNET_SETTLEMENT_SAC)
+    nonEmpty(env.VITE_MAINNET_SETTLEMENT_SAC) &&
+    nonEmpty(env.VITE_MAINNET_READ_SOURCE)
   );
+}
+
+// Soroban RPC for mainnet. There is no free, SLA-backed public mainnet RPC, so
+// this must be pointed at a provider endpoint in production. The default below
+// is a community endpoint: fine for a first look, not for real traffic.
+export const DEFAULT_MAINNET_RPC_URL = 'https://mainnet.sorobanrpc.com';
+
+export function mainnetRpcUrl(env: Record<string, unknown>): string {
+  const configured = env.VITE_MAINNET_RPC_URL;
+  return nonEmpty(configured) ? configured : DEFAULT_MAINNET_RPC_URL;
 }
 
 export type NetworkKey = 'testnet' | 'public';
@@ -46,7 +61,7 @@ export const MAINNET: NetworkInfo = {
   label: 'mainnet',
   passphrase: 'Public Global Stellar Network ; September 2015',
   horizonUrl: 'https://horizon.stellar.org',
-  rpcUrl: 'https://mainnet.sorobanrpc.com',
+  rpcUrl: mainnetRpcUrl(import.meta.env as Record<string, unknown>),
   explorerBase: 'https://stellar.expert/explorer/public',
   knownAssets: [
     { code: 'XLM' },

@@ -25,6 +25,11 @@ import { setActiveNetworkFromPassphrase, isSupportedNetwork } from './lib/active
 // Auto-lock the session after this much inactivity (security on shared phones).
 const IDLE_LIMIT_MS = 15 * 60 * 1000;
 
+// How often to re-read the wallet's network while connected. Wallets have their
+// own network picker and emit no event we can subscribe to, so the only way to
+// notice a mid-session switch is to ask.
+const NETWORK_POLL_MS = 10 * 1000;
+
 function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
@@ -113,6 +118,38 @@ function WalletProvider({ children }: { children: ReactNode }) {
       events.forEach((ev) => window.removeEventListener(ev, reset));
     };
   }, [address, disconnect]);
+
+  // Follow the wallet if it changes network mid-session. Without this the app
+  // keeps using the network read at connect time, so a user who switches to
+  // mainnet in their extension would still be pointed at testnet Horizon and
+  // sign with the testnet passphrase. Everything network-dependent (balances,
+  // activity, the adapter, the signing passphrase, the Pact gate) reads the
+  // active network, so updating it here repoints the whole app.
+  useEffect(() => {
+    if (!address) return;
+    let cancelled = false;
+
+    const check = async () => {
+      if (cancelled || document.hidden) return;
+      const passphrase = await getWalletNetworkPassphrase();
+      // null means the wallet would not tell us. Treat unknown as "no change"
+      // rather than dropping back to the default network.
+      if (cancelled || passphrase == null) return;
+      setActiveNetworkFromPassphrase(passphrase);
+      setNetwork((prev) => (prev === passphrase ? prev : passphrase));
+    };
+
+    const id = window.setInterval(check, NETWORK_POLL_MS);
+    const onWake = () => void check();
+    window.addEventListener('focus', onWake);
+    document.addEventListener('visibilitychange', onWake);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+      window.removeEventListener('focus', onWake);
+      document.removeEventListener('visibilitychange', onWake);
+    };
+  }, [address]);
 
   const networkOk = network == null || isSupportedNetwork(network);
 
