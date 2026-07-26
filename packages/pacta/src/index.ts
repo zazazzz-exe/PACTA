@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL",
+    contractId: "CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM",
   }
 } as const
 
@@ -111,6 +111,16 @@ export interface Client {
   post_bond: ({agreement_id}: {agreement_id: u64}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
 
   /**
+   * Construct and simulate a reclaim_bond transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Lets the recipient (the `trader` field) exit a Pending agreement and
+   * recover their bond if the sender never funds it. There is no deadline in
+   * Pending, so without this the bond could be stranded by an absent sender.
+   * Returns the bond to the recipient and any already-deposited capital to the
+   * sender, then cancels.
+   */
+  reclaim_bond: ({agreement_id}: {agreement_id: u64}, options?: MethodOptions) => Promise<AssembledTransaction<Result<void>>>
+
+  /**
    * Construct and simulate a get_agreement transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
    */
   get_agreement: ({agreement_id}: {agreement_id: u64}, options?: MethodOptions) => Promise<AssembledTransaction<Result<Agreement>>>
@@ -169,6 +179,7 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAAIY29tcGxldGUAAAABAAAAAAAAAAxhZ3JlZW1lbnRfaWQAAAAGAAAAAQAAA+kAAAACAAAAAw==",
         "AAAAAAAAAAAAAAAJZ2V0X2NvdW50AAAAAAAAAAAAAAEAAAAG",
         "AAAAAAAAAAAAAAAJcG9zdF9ib25kAAAAAAAAAQAAAAAAAAAMYWdyZWVtZW50X2lkAAAABgAAAAEAAAPpAAAAAgAAAAM=",
+        "AAAAAAAAATdMZXRzIHRoZSByZWNpcGllbnQgKHRoZSBgdHJhZGVyYCBmaWVsZCkgZXhpdCBhIFBlbmRpbmcgYWdyZWVtZW50IGFuZApyZWNvdmVyIHRoZWlyIGJvbmQgaWYgdGhlIHNlbmRlciBuZXZlciBmdW5kcyBpdC4gVGhlcmUgaXMgbm8gZGVhZGxpbmUgaW4KUGVuZGluZywgc28gd2l0aG91dCB0aGlzIHRoZSBib25kIGNvdWxkIGJlIHN0cmFuZGVkIGJ5IGFuIGFic2VudCBzZW5kZXIuClJldHVybnMgdGhlIGJvbmQgdG8gdGhlIHJlY2lwaWVudCBhbmQgYW55IGFscmVhZHktZGVwb3NpdGVkIGNhcGl0YWwgdG8gdGhlCnNlbmRlciwgdGhlbiBjYW5jZWxzLgAAAAAMcmVjbGFpbV9ib25kAAAAAQAAAAAAAAAMYWdyZWVtZW50X2lkAAAABgAAAAEAAAPpAAAAAgAAAAM=",
         "AAAAAAAAAEdSdW5zIG9uY2UgYXQgZGVwbG95LiBgYWRtaW5gIGlzIHJlc2VydmVkIGZvciBmdXR1cmUgZGlzcHV0ZSByZXNvbHV0aW9uLgAAAAANX19jb25zdHJ1Y3RvcgAAAAAAAAEAAAAAAAAABWFkbWluAAAAAAAAEwAAAAA=",
         "AAAAAAAAAAAAAAANZ2V0X2FncmVlbWVudAAAAAAAAAEAAAAAAAAADGFncmVlbWVudF9pZAAAAAYAAAABAAAD6QAAB9AAAAAJQWdyZWVtZW50AAAAAAAAAw==",
         "AAAAAAAAAAAAAAAOZ2V0X3JlcHV0YXRpb24AAAAAAAEAAAAAAAAABnRyYWRlcgAAAAAAEwAAAAEAAAfQAAAAClJlcHV0YXRpb24AAA==",
@@ -184,6 +195,7 @@ export class Client extends ContractClient {
         complete: this.txFromJSON<Result<void>>,
         get_count: this.txFromJSON<u64>,
         post_bond: this.txFromJSON<Result<void>>,
+        reclaim_bond: this.txFromJSON<Result<void>>,
         get_agreement: this.txFromJSON<Result<Agreement>>,
         get_reputation: this.txFromJSON<Reputation>,
         deposit_capital: this.txFromJSON<Result<void>>,

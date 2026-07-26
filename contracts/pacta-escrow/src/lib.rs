@@ -82,6 +82,7 @@ impl PactaEscrow {
     pub fn __constructor(env: Env, admin: Address) {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Counter, &0u64);
+        Self::bump_instance(&env);
     }
 
     pub fn create_agreement(
@@ -131,6 +132,7 @@ impl PactaEscrow {
 
         Self::save(&env, &agreement);
         env.storage().instance().set(&DataKey::Counter, &counter);
+        Self::bump_instance(&env);
 
         env.events().publish(
             (symbol_short!("created"), counter),
@@ -204,29 +206,54 @@ impl PactaEscrow {
         };
         a.released_amount += tranche;
 
-        token::Client::new(&env, &a.token).transfer(
-            &env.current_contract_address(),
-            &a.trader,
-            &tranche,
-        );
+        // Final milestone == full performance: return the bond and complete in the
+        // same call so emergency_refund can never seize a completed job's bond.
+        let is_final = a.released_milestones == a.milestones;
+        if is_final {
+            a.status = Status::Completed;
+        }
 
+        // Effects persisted before any token transfer (checks-effects-interactions).
         Self::save(&env, &a);
+        if is_final {
+            Self::bump_reputation(&env, &a.trader, true, a.capital);
+        }
+
+        let client = token::Client::new(&env, &a.token);
+        client.transfer(&env.current_contract_address(), &a.trader, &tranche);
+        if is_final && a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+
         env.events().publish(
             (symbol_short!("released"), agreement_id),
             (a.released_milestones, tranche),
         );
+        if is_final {
+            env.events()
+                .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
+        }
         Ok(tranche)
     }
 
     pub fn complete(env: Env, agreement_id: u64) -> Result<(), Error> {
         let mut a = Self::load(&env, agreement_id)?;
         a.investor.require_auth();
+        // The final milestone release now auto-completes and returns the bond, so a
+        // Completed agreement is a no-op here (keeps the existing ABI/UI call safe).
+        if a.status == Status::Completed {
+            return Ok(());
+        }
         if a.status != Status::Active {
             return Err(Error::InvalidState);
         }
         if a.released_milestones < a.milestones {
             return Err(Error::MilestonesIncomplete);
         }
+        // Normally unreachable given auto-complete; kept for safety.
+        a.status = Status::Completed;
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, true, a.capital);
         if a.bond > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -234,9 +261,6 @@ impl PactaEscrow {
                 &a.bond,
             );
         }
-        a.status = Status::Completed;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, true, a.capital);
         env.events()
             .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
         Ok(())
@@ -253,6 +277,10 @@ impl PactaEscrow {
         }
         let unreleased = a.capital - a.released_amount;
         let payout = unreleased + a.bond; // reclaim unreleased capital + seize bond
+        a.status = Status::Refunded;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, false, a.capital);
         if payout > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -260,9 +288,6 @@ impl PactaEscrow {
                 &payout,
             );
         }
-        a.status = Status::Refunded;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, false, a.capital);
         env.events().publish(
             (symbol_short!("refunded"), agreement_id),
             (a.investor.clone(), payout),
@@ -276,6 +301,9 @@ impl PactaEscrow {
         if a.status != Status::Pending {
             return Err(Error::InvalidState);
         }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
         let client = token::Client::new(&env, &a.token);
         if a.capital_deposited {
             client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
@@ -283,10 +311,37 @@ impl PactaEscrow {
         if a.bond_posted && a.bond > 0 {
             client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
         }
-        a.status = Status::Cancelled;
-        Self::save(&env, &a);
         env.events()
             .publish((symbol_short!("cancelled"), agreement_id), a.investor.clone());
+        Ok(())
+    }
+
+    /// Lets the recipient (the `trader` field) exit a Pending agreement and
+    /// recover their bond if the sender never funds it. There is no deadline in
+    /// Pending, so without this the bond could be stranded by an absent sender.
+    /// Returns the bond to the recipient and any already-deposited capital to the
+    /// sender, then cancels.
+    pub fn reclaim_bond(env: Env, agreement_id: u64) -> Result<(), Error> {
+        let mut a = Self::load(&env, agreement_id)?;
+        a.trader.require_auth();
+        if a.status != Status::Pending {
+            return Err(Error::InvalidState);
+        }
+        if !a.bond_posted {
+            return Err(Error::InvalidState);
+        }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        let client = token::Client::new(&env, &a.token);
+        if a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+        if a.capital_deposited {
+            client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
+        }
+        env.events()
+            .publish((symbol_short!("cancelled"), agreement_id), a.trader.clone());
         Ok(())
     }
 
@@ -316,6 +371,14 @@ impl PactaEscrow {
             .persistent()
             .get(&DataKey::Agreement(id))
             .ok_or(Error::NotFound)
+    }
+
+    // Keep the instance entry (Admin, Counter) alive so it is not archived during
+    // quiet periods; persistent entries bump their own TTL in save/bump_reputation.
+    fn bump_instance(env: &Env) {
+        env.storage()
+            .instance()
+            .extend_ttl(LIFETIME_THRESHOLD, BUMP_AMOUNT);
     }
 
     fn save(env: &Env, a: &Agreement) {

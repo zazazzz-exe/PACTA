@@ -109,7 +109,31 @@ the HIGH-1 seize-after-full-release scenario, or MEDIUM-1 bond lock. Expand befo
 
 ---
 
-## Recommendation
+## Resolution (2026-07-27)
+
+The owner chose to reopen the contract and fix the findings. Implemented on branch
+`escrow-security-hardening` (design: `docs/superpowers/specs/2026-07-27-escrow-security-hardening-design.md`;
+plan: `docs/superpowers/plans/2026-07-27-escrow-security-hardening.md`):
+
+- **HIGH-1 — Resolved.** The final `release_milestone` auto-returns the bond and sets `Completed`;
+  `emergency_refund` (Active-only) can no longer reach a fully-performed Pact. `complete` is now
+  idempotent. Test: `emergency_refund_cannot_seize_bond_after_full_release`.
+- **MEDIUM-1 — Resolved.** New `reclaim_bond` lets the recipient exit `Pending` and recover the
+  bond. Tests: `trader_reclaims_bond_when_investor_never_funds`, `reclaim_bond_rejected_*`.
+- **MEDIUM-2 — Accepted (no code).** No on-chain minimum duration, to preserve the 60s testnet
+  demo; mitigated in the frontend (mainnet default 1 week, 1-minute preset testnet-only) and by
+  recipient inspection. With HIGH-1 fixed, a completed Pact's bond is safe regardless of duration.
+- **MEDIUM-3 — Resolved.** All outbound-transfer functions persist state before transferring
+  (checks-effects-interactions).
+- **LOW-1 — Accepted (no code).** `profit_share_bps` stays informational/legacy per `PRD.md`.
+- **LOW-2 — Resolved.** Instance TTL bumped in the constructor and `create_agreement`.
+- **LOW-3 — Resolved.** Added input-validation and double-action guard tests (10 tests total).
+- **Informational (no admin powers, arbitrary token at create) — unchanged**, noted for the audit.
+
+Still required before mainnet: an **independent audit of the new WASM**, then the owner-run
+mainnet deploy. Do not enable `VITE_MAINNET_PACTS_ENABLED` until both are done.
+
+## Recommendation (original, pre-fix)
 
 The contract is functionally coherent and its arithmetic is safe under the confirmed build
 profile. The blocker for mainnet is **HIGH-1** plus the bond-lifecycle economics (MEDIUM-1/2):
