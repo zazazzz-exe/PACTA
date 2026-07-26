@@ -179,6 +179,14 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   filter: blur(20px);
 }
 
+/* Emerald backdrop panel the phone sits on (landing hero). */
+.phone-backdrop {
+  background:
+    radial-gradient(circle at 78% 12%, rgba(52, 227, 176, 0.30), transparent 50%),
+    radial-gradient(circle at 15% 88%, rgba(10, 51, 40, 0.55), transparent 55%),
+    linear-gradient(155deg, var(--color-accent) 0%, var(--color-accent-deep) 52%, var(--color-hero-panel) 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .phone-float, .chip-float-a, .chip-float-b { animation: none !important; }
 }

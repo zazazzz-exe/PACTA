@@ -125,7 +125,15 @@ function FloatChip({
 
 export function PhonePreview() {
   return (
-    <div className="relative mx-auto w-full max-w-[340px]" aria-hidden>
+    <div className="relative mx-auto w-full max-w-[360px] px-2" aria-hidden>
+      {/* Emerald backdrop panel the phone rests on */}
+      <div
+        className="phone-backdrop pointer-events-none absolute -inset-x-8 -top-8 bottom-4 rounded-[3rem] shadow-pop sm:-inset-x-12 lg:-inset-x-16"
+        aria-hidden
+      >
+        <div className="mesh-dots absolute inset-0 rounded-[3rem] opacity-30" aria-hidden />
+      </div>
+
       {/* Soft glow behind the device */}
       <div className="phone-glow pointer-events-none absolute inset-0" aria-hidden />
 
