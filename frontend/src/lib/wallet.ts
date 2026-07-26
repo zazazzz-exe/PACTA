@@ -9,6 +9,26 @@ import {
 } from '@creit.tech/stellar-wallets-kit';
 import { getActiveNetwork } from './activeNetwork';
 
+// Freighter's isAvailable() checks for the extension via window injection. On
+// newer Freighter versions or when the page loads before the extension injects,
+// this can return false even when Freighter IS installed. We override it to
+// always report available so the modal never shows "Not available" for Freighter.
+// If the user picks Freighter but genuinely doesn't have it, getAddress() will
+// fail and the error is caught in connectWallet().
+class AlwaysAvailableFreighterModule extends FreighterModule {
+  async isAvailable(): Promise<boolean> {
+    return true;
+  }
+}
+
+// Same approach for Hana — it's an extension wallet that may not be detected
+// immediately. Let users attempt the connection; fail gracefully if not installed.
+class AlwaysAvailableHanaModule extends HanaModule {
+  async isAvailable(): Promise<boolean> {
+    return true;
+  }
+}
+
 // The kit modal lists only wallets that support signMessage, because the whole
 // KYC / linked-identity ownership proof signs a challenge message. Albedo,
 // Lobstr, Rabet, and WalletConnect do NOT implement signMessage in this kit and
@@ -32,7 +52,7 @@ export function getKit(): StellarWalletsKit {
     _kit = new StellarWalletsKit({
       network: kitNetwork(),
       selectedWalletId: XBULL_ID,
-      modules: [new xBullModule(), new FreighterModule(), new HanaModule()],
+      modules: [new AlwaysAvailableFreighterModule(), new xBullModule(), new AlwaysAvailableHanaModule()],
     });
   }
   return _kit;
