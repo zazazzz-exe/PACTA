@@ -1,8 +1,8 @@
 import {
   StellarWalletsKit,
   WalletNetwork,
-  FREIGHTER_ID,
   FreighterModule,
+  XBULL_ID,
   xBullModule,
   HanaModule,
   type ISupportedWallet,
@@ -31,8 +31,8 @@ export function getKit(): StellarWalletsKit {
   if (!_kit) {
     _kit = new StellarWalletsKit({
       network: kitNetwork(),
-      selectedWalletId: FREIGHTER_ID,
-      modules: [new FreighterModule(), new xBullModule(), new HanaModule()],
+      selectedWalletId: XBULL_ID,
+      modules: [new xBullModule(), new FreighterModule(), new HanaModule()],
     });
   }
   return _kit;
@@ -51,7 +51,7 @@ export function syncKitNetwork(): void {
 
 // The wallet id the app is currently connected/acting as, so the link flow can
 // temporarily switch to another wallet and then restore this one.
-let _selectedWalletId: string = FREIGHTER_ID;
+let _selectedWalletId: string = XBULL_ID;
 
 export async function connectWallet(): Promise<string> {
   return new Promise((resolve, reject) => {
