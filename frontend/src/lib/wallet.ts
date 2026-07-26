@@ -43,9 +43,10 @@ export function getKit(): StellarWalletsKit {
 // network the user's wallet is actually on, preventing "wallet not available"
 // errors caused by a network mismatch.
 export function syncKitNetwork(): void {
-  if (_kit) {
-    _kit.setNetwork(kitNetwork());
-  }
+  // Recreate the kit with the correct network. The kit is lazy-constructed, so
+  // dropping it and letting getKit() rebuild on the next call is safe and avoids
+  // relying on a setNetwork method that may not exist on all versions.
+  _kit = null;
 }
 
 // The wallet id the app is currently connected/acting as, so the link flow can

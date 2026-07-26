@@ -21,11 +21,14 @@ const TESTNET_SACS: Record<string, string> = {
 
 // Mainnet SAC addresses. USDC SAC on mainnet is the env-provided settlement SAC
 // (same one used as the default). XLM native SAC on mainnet is well-known.
-const MAINNET_SACS: Record<string, string> = {
-  'XLM:native': 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
-  'USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN':
-    (import.meta.env as Record<string, string>).VITE_MAINNET_SETTLEMENT_SAC ?? '',
-};
+function getMainnetSacs(): Record<string, string> {
+  const env = import.meta.env as Record<string, string | undefined>;
+  return {
+    'XLM:native': 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC',
+    'USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN':
+      env.VITE_MAINNET_SETTLEMENT_SAC ?? '',
+  };
+}
 
 function assetToKey(asset: AssetKey): string {
   return `${asset.code}:${asset.issuer ?? 'native'}`;
@@ -37,6 +40,6 @@ function assetToKey(asset: AssetKey): string {
 export function resolveTokenSac(asset: AssetKey): string | null {
   const net = getActiveNetwork();
   const key = assetToKey(asset);
-  const map = net.key === 'public' ? MAINNET_SACS : TESTNET_SACS;
+  const map = net.key === 'public' ? getMainnetSacs() : TESTNET_SACS;
   return map[key] || null;
 }
