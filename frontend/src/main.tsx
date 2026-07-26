@@ -12,7 +12,7 @@ import './index.css';
 import App from './App';
 import { TourProvider } from './components/Tour';
 import { WalletContext, type WalletState } from './hooks/useWallet';
-import { connectWallet, getWalletNetworkPassphrase, getKit, syncKitNetwork } from './lib/wallet';
+import { connectWallet, getWalletNetworkPassphrase, getKit } from './lib/wallet';
 import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
@@ -29,6 +29,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [network, setNetwork] = useState<string | null>(null);
+  const [connectError, setConnectError] = useState<string | null>(null);
   const [lockNotice, setLockNotice] = useState<string | null>(null);
   const [kycStatus, setKycStatus] = useState<KycStatus>('unknown');
   const [kycLoading, setKycLoading] = useState(false);
@@ -42,6 +43,7 @@ function WalletProvider({ children }: { children: ReactNode }) {
     }
     setAddress(null);
     setNetwork(null);
+    setConnectError(null);
     setKycStatus('unknown');
     setKycLoading(false);
   }, []);
@@ -49,11 +51,11 @@ function WalletProvider({ children }: { children: ReactNode }) {
   const connect = useCallback(async () => {
     setConnecting(true);
     setLockNotice(null);
+    setConnectError(null);
     try {
       const addr = await connectWallet();
       const passphrase = await getWalletNetworkPassphrase();
       setActiveNetworkFromPassphrase(passphrase);
-      syncKitNetwork();
       setAddress(addr);
       setNetwork(passphrase);
       navigate('/home');
@@ -71,7 +73,12 @@ function WalletProvider({ children }: { children: ReactNode }) {
         setKycLoading(false);
       }
     } catch (e) {
-      console.warn('Wallet connect:', friendlyError(e));
+      // Surface the failure so the user knows why the connection did not
+      // complete (e.g. the wallet extension is not reachable or was declined),
+      // instead of silently doing nothing.
+      const msg = friendlyError(e);
+      console.warn('Wallet connect:', msg);
+      setConnectError(msg);
     } finally {
       setConnecting(false);
     }
@@ -116,6 +123,8 @@ function WalletProvider({ children }: { children: ReactNode }) {
     connecting,
     connect,
     disconnect,
+    connectError,
+    clearConnectError: () => setConnectError(null),
     lockNotice,
     clearLockNotice: () => setLockNotice(null),
     kycStatus,

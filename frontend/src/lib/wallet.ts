@@ -1,33 +1,13 @@
 import {
   StellarWalletsKit,
   WalletNetwork,
+  FREIGHTER_ID,
   FreighterModule,
-  XBULL_ID,
   xBullModule,
   HanaModule,
   type ISupportedWallet,
 } from '@creit.tech/stellar-wallets-kit';
 import { getActiveNetwork } from './activeNetwork';
-
-// Freighter's isAvailable() checks for the extension via window injection. On
-// newer Freighter versions or when the page loads before the extension injects,
-// this can return false even when Freighter IS installed. We override it to
-// always report available so the modal never shows "Not available" for Freighter.
-// If the user picks Freighter but genuinely doesn't have it, getAddress() will
-// fail and the error is caught in connectWallet().
-class AlwaysAvailableFreighterModule extends FreighterModule {
-  async isAvailable(): Promise<boolean> {
-    return true;
-  }
-}
-
-// Same approach for Hana — it's an extension wallet that may not be detected
-// immediately. Let users attempt the connection; fail gracefully if not installed.
-class AlwaysAvailableHanaModule extends HanaModule {
-  async isAvailable(): Promise<boolean> {
-    return true;
-  }
-}
 
 // The kit modal lists only wallets that support signMessage, because the whole
 // KYC / linked-identity ownership proof signs a challenge message. Albedo,
@@ -51,27 +31,16 @@ export function getKit(): StellarWalletsKit {
   if (!_kit) {
     _kit = new StellarWalletsKit({
       network: kitNetwork(),
-      selectedWalletId: XBULL_ID,
-      modules: [new AlwaysAvailableFreighterModule(), new xBullModule(), new AlwaysAvailableHanaModule()],
+      selectedWalletId: FREIGHTER_ID,
+      modules: [new FreighterModule(), new xBullModule(), new HanaModule()],
     });
   }
   return _kit;
 }
 
-// Update the kit's network when the wallet reports a different chain. Called
-// after setActiveNetworkFromPassphrase so the kit stays in sync with whichever
-// network the user's wallet is actually on, preventing "wallet not available"
-// errors caused by a network mismatch.
-export function syncKitNetwork(): void {
-  // Recreate the kit with the correct network. The kit is lazy-constructed, so
-  // dropping it and letting getKit() rebuild on the next call is safe and avoids
-  // relying on a setNetwork method that may not exist on all versions.
-  _kit = null;
-}
-
 // The wallet id the app is currently connected/acting as, so the link flow can
 // temporarily switch to another wallet and then restore this one.
-let _selectedWalletId: string = XBULL_ID;
+let _selectedWalletId: string = FREIGHTER_ID;
 
 export async function connectWallet(): Promise<string> {
   return new Promise((resolve, reject) => {

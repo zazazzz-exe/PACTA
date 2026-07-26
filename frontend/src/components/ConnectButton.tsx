@@ -4,7 +4,7 @@ import { shortAddr } from '../lib/format';
 import { Button } from './Button';
 
 export function ConnectButton() {
-  const { address, connecting, connect, disconnect } = useWallet();
+  const { address, connecting, connect, disconnect, connectError, clearConnectError } = useWallet();
 
   if (address) {
     return (
@@ -20,15 +20,25 @@ export function ConnectButton() {
   }
 
   return (
-    <Button variant="secondary" className="h-11 px-4 text-[13px]" onClick={connect} disabled={connecting}>
-      <Wallet size={16} aria-hidden />
-      {connecting ? (
-        'Connecting'
-      ) : (
-        <span>
-          Connect<span className="hidden sm:inline">&nbsp;wallet</span>
-        </span>
+    <div className="relative inline-block">
+      <Button variant="secondary" className="h-11 px-4 text-[13px]" onClick={connect} disabled={connecting}>
+        <Wallet size={16} aria-hidden />
+        {connecting ? (
+          'Connecting'
+        ) : (
+          <span>
+            Connect<span className="hidden sm:inline">&nbsp;wallet</span>
+          </span>
+        )}
+      </Button>
+      {connectError && (
+        <div className="absolute left-1/2 top-full z-10 mt-2 w-64 -translate-x-1/2 rounded-card border border-refund/40 bg-refund-tint px-3 py-2 text-left text-[12px] text-refund-deep shadow-card">
+          <p>{connectError}</p>
+          <button onClick={clearConnectError} className="mt-1 font-medium underline">
+            Dismiss
+          </button>
+        </div>
       )}
-    </Button>
+    </div>
   );
 }

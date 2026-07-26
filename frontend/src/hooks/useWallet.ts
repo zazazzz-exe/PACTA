@@ -10,6 +10,9 @@ export interface WalletState {
   connecting: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
+  /** Set when a wallet connection attempt fails; shown to the user so they know why. */
+  connectError: string | null;
+  clearConnectError: () => void;
   /** Set when the session was auto-locked for inactivity; shown as a notice. */
   lockNotice: string | null;
   clearLockNotice: () => void;
