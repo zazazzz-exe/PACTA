@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronDown, Minus, Plus, Loader2 } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { createAgreement } from '../lib/contract';
@@ -12,17 +12,28 @@ import { useRiskLens } from '../hooks/useRiskLens';
 import { useDebounce } from '../hooks/useDebounce';
 import { takePendingSend } from '../lib/pendingSend';
 import { resolveTokenSac } from '../lib/tokenSac';
+import { useActiveNetwork } from '../lib/activeNetwork';
 
-// Friendly deadline choices; value is the contract `duration` in seconds.
+// Friendly deadline choices; value is the contract `duration` in seconds. The
+// 1-minute option exists only so Emergency Refund can be shown during a live
+// testnet demo. It is NEVER offered on mainnet, where a Pact holds real funds
+// and a 1-minute deadline would arm the refund almost immediately.
+const DEMO_PRESET = { label: '1 minute (demo)', secs: '60' };
 const DEADLINE_PRESETS = [
-  { label: '1 minute (demo)', secs: '60' },
   { label: '1 hour', secs: '3600' },
   { label: '1 day', secs: '86400' },
   { label: '1 week', secs: '604800' },
 ];
+// Sensible starting deadline per network: the demo value on testnet, a realistic
+// 1 week on mainnet.
+const DEFAULT_DURATION: Record<string, string> = { testnet: '60' };
+const MAINNET_DEFAULT_DURATION = '604800';
 
 export function CreateAgreement() {
   const { address, connect, kycStatus, kycLoading } = useWallet();
+  const net = useActiveNetwork();
+  // Testnet gets the demo preset first; mainnet omits it entirely.
+  const presets = net.key === 'testnet' ? [DEMO_PRESET, ...DEADLINE_PRESETS] : DEADLINE_PRESETS;
   // If arriving from the Send screen's "Send protected" option, prefill the
   // recipient and amount. Consume-once so a later direct visit is not prefilled.
   const prefill = useRef(takePendingSend()).current;
@@ -33,7 +44,16 @@ export function CreateAgreement() {
   const [bond, setBond] = useState('20');
   const [milestones, setMilestones] = useState(4);
   const [share, setShare] = useState('20');
-  const [duration, setDuration] = useState('60');
+  const [duration, setDuration] = useState(
+    DEFAULT_DURATION[net.key] ?? MAINNET_DEFAULT_DURATION,
+  );
+
+  // If the wallet switches network mid-form, reset the deadline to that
+  // network's default so a testnet 1-minute value can never carry onto a real
+  // mainnet Pact (the 1-minute preset button does not even exist on mainnet).
+  useEffect(() => {
+    setDuration(DEFAULT_DURATION[net.key] ?? MAINNET_DEFAULT_DURATION);
+  }, [net.key]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -153,7 +173,7 @@ export function CreateAgreement() {
 
         <Field label="Deadline">
           <div className="flex flex-wrap gap-2">
-            {DEADLINE_PRESETS.map((p) => (
+            {presets.map((p) => (
               <button
                 key={p.secs}
                 type="button"
@@ -170,7 +190,8 @@ export function CreateAgreement() {
           </div>
         </Field>
         <p className="-mt-2 text-[12px] text-fog">
-          After the deadline you can refund any unreleased amount plus the bond. Use 1 minute for the live demo.
+          After the deadline you can refund any unreleased amount plus the bond.
+          {net.key === 'testnet' ? ' Use 1 minute for the live demo.' : ''}
         </p>
 
         {/* Advanced */}
