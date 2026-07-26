@@ -308,6 +308,8 @@ The **protected send** path does not go through `send`/`swap`; it calls the froz
 
 Contract crate name: `pacta-escrow`. Contract struct: `PactaEscrow`.
 
+> **Security reopen (2026-07-27).** This section was previously frozen. It was reopened to fix the fund-loss / fund-lock / griefing findings in `docs/PRE_AUDIT_REVIEW.md` (design: `docs/superpowers/specs/2026-07-27-escrow-security-hardening-design.md`; plan: `docs/superpowers/plans/2026-07-27-escrow-security-hardening.md`). Changes are ABI backward compatible: no changed signatures/structs, one additive method (`reclaim_bond`). Key behavior changes: the final `release_milestone` now auto-returns the bond and completes; `complete` is idempotent; the recipient can `reclaim_bond` from Pending; outbound transfers follow checks-effects-interactions. The rebuilt WASM is redeployed to testnet and must be re-audited before any mainnet deploy (`docs/MAINNET_RUNBOOK.md`). §8.6/§8.7 below mirror `contracts/pacta-escrow/src/{lib,test}.rs`, which are authoritative.
+
 ### 8.1 State machine
 
 ```
@@ -331,23 +333,24 @@ Contract crate name: `pacta-escrow`. Contract struct: `PactaEscrow`.
    release_milestone  │  (repeat until released_milestones == milestones)
               │       │
    ┌──────────┘       └──────────────────────────┐
-   │ all milestones released                      │ deadline passed, trader failed
-   ▼                                               ▼
-complete                                   emergency_refund
-   │                                               │
+   │ final milestone released                     │ deadline passed, trader failed
+   │ (auto-returns bond + completes)              │
    ▼                                               ▼
 ┌───────────┐                              ┌───────────┐
 │ Completed │  bond → trader               │ Refunded  │  unreleased capital + bond → investor
 └───────────┘  reputation.completed++      └───────────┘  reputation.refunded++
 ```
 
+`complete` remains callable as an idempotent no-op on an already-Completed Pact (kept for ABI/UI compatibility). A recipient stuck in `Pending` (sender never funds) can call `reclaim_bond` to recover their bond, which cancels the Pact.
+
 ### 8.2 Money rules (exact semantics)
 - On `deposit_capital`: investor transfers `capital` into the contract.
 - On `post_bond`: trader transfers `bond` into the contract.
-- On `release_milestone`: contract transfers one tranche (`capital / milestones`, last milestone gets the remainder to avoid rounding dust) to the trader. Tracks `released_amount`.
-- On `complete`: contract returns `bond` to the trader. (Investor confirms work is done. Profit settlement is roadmap.)
-- On `emergency_refund` (only after `deadline`): contract transfers `(capital − released_amount) + bond` to the investor. The trader forfeits the bond.
-- On `cancel` (only while `Pending`): refund any posted capital to investor and any posted bond to trader.
+- On `release_milestone`: contract transfers one tranche (`capital / milestones`, last milestone gets the remainder to avoid rounding dust) to the trader. Tracks `released_amount`. On the **final** milestone it also returns `bond` to the trader and sets `Completed` (so a fully-performed Pact's bond can never be seized by `emergency_refund`).
+- On `complete`: idempotent. On an already-`Completed` Pact it is a no-op; otherwise (all milestones released) it returns `bond` to the trader and sets `Completed`. (Profit settlement is roadmap.)
+- On `emergency_refund` (only after `deadline`, only while `Active`): contract transfers `(capital − released_amount) + bond` to the investor. The trader forfeits the bond.
+- On `cancel` (only while `Pending`, investor-authorized): refund any posted capital to investor and any posted bond to trader.
+- On `reclaim_bond` (only while `Pending`, trader-authorized, bond posted): return the bond to the trader and any deposited capital to the investor, then set `Cancelled`. Lets the recipient exit if the sender never funds the Pact.
 
 All amounts are `i128` in the token's base units. **SAC/USDC use 7 decimals**, so `10_000_000` = 1.0 token.
 
@@ -435,9 +438,10 @@ create_agreement(investor, trader, token, capital: i128, bond: i128,
 post_bond(agreement_id: u64)
 deposit_capital(agreement_id: u64)
 release_milestone(agreement_id: u64) -> i128   // returns tranche released
-complete(agreement_id: u64)
+complete(agreement_id: u64)              // idempotent; no-op if already Completed
 emergency_refund(agreement_id: u64)
 cancel(agreement_id: u64)
+reclaim_bond(agreement_id: u64)          // trader exit from Pending; returns bond
 get_agreement(agreement_id: u64) -> Agreement
 get_reputation(trader: Address) -> Reputation
 get_count() -> u64
@@ -445,7 +449,7 @@ get_count() -> u64
 
 Authorization:
 - `create_agreement`, `deposit_capital`, `release_milestone`, `complete`, `emergency_refund`, `cancel` → `require_auth(investor)`.
-- `post_bond` → `require_auth(trader)`.
+- `post_bond`, `reclaim_bond` → `require_auth(trader)`.
 
 ### 8.6 Full reference implementation
 
@@ -536,6 +540,7 @@ impl PactaEscrow {
     pub fn __constructor(env: Env, admin: Address) {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Counter, &0u64);
+        Self::bump_instance(&env);
     }
 
     pub fn create_agreement(
@@ -585,6 +590,7 @@ impl PactaEscrow {
 
         Self::save(&env, &agreement);
         env.storage().instance().set(&DataKey::Counter, &counter);
+        Self::bump_instance(&env);
 
         env.events().publish(
             (symbol_short!("created"), counter),
@@ -658,29 +664,54 @@ impl PactaEscrow {
         };
         a.released_amount += tranche;
 
-        token::Client::new(&env, &a.token).transfer(
-            &env.current_contract_address(),
-            &a.trader,
-            &tranche,
-        );
+        // Final milestone == full performance: return the bond and complete in the
+        // same call so emergency_refund can never seize a completed job's bond.
+        let is_final = a.released_milestones == a.milestones;
+        if is_final {
+            a.status = Status::Completed;
+        }
 
+        // Effects persisted before any token transfer (checks-effects-interactions).
         Self::save(&env, &a);
+        if is_final {
+            Self::bump_reputation(&env, &a.trader, true, a.capital);
+        }
+
+        let client = token::Client::new(&env, &a.token);
+        client.transfer(&env.current_contract_address(), &a.trader, &tranche);
+        if is_final && a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+
         env.events().publish(
             (symbol_short!("released"), agreement_id),
             (a.released_milestones, tranche),
         );
+        if is_final {
+            env.events()
+                .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
+        }
         Ok(tranche)
     }
 
     pub fn complete(env: Env, agreement_id: u64) -> Result<(), Error> {
         let mut a = Self::load(&env, agreement_id)?;
         a.investor.require_auth();
+        // The final milestone release now auto-completes and returns the bond, so a
+        // Completed agreement is a no-op here (keeps the existing ABI/UI call safe).
+        if a.status == Status::Completed {
+            return Ok(());
+        }
         if a.status != Status::Active {
             return Err(Error::InvalidState);
         }
         if a.released_milestones < a.milestones {
             return Err(Error::MilestonesIncomplete);
         }
+        // Normally unreachable given auto-complete; kept for safety.
+        a.status = Status::Completed;
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, true, a.capital);
         if a.bond > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -688,9 +719,6 @@ impl PactaEscrow {
                 &a.bond,
             );
         }
-        a.status = Status::Completed;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, true, a.capital);
         env.events()
             .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
         Ok(())
@@ -707,6 +735,10 @@ impl PactaEscrow {
         }
         let unreleased = a.capital - a.released_amount;
         let payout = unreleased + a.bond; // reclaim unreleased capital + seize bond
+        a.status = Status::Refunded;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, false, a.capital);
         if payout > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -714,9 +746,6 @@ impl PactaEscrow {
                 &payout,
             );
         }
-        a.status = Status::Refunded;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, false, a.capital);
         env.events().publish(
             (symbol_short!("refunded"), agreement_id),
             (a.investor.clone(), payout),
@@ -730,6 +759,9 @@ impl PactaEscrow {
         if a.status != Status::Pending {
             return Err(Error::InvalidState);
         }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
         let client = token::Client::new(&env, &a.token);
         if a.capital_deposited {
             client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
@@ -737,10 +769,37 @@ impl PactaEscrow {
         if a.bond_posted && a.bond > 0 {
             client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
         }
-        a.status = Status::Cancelled;
-        Self::save(&env, &a);
         env.events()
             .publish((symbol_short!("cancelled"), agreement_id), a.investor.clone());
+        Ok(())
+    }
+
+    /// Lets the recipient (the `trader` field) exit a Pending agreement and
+    /// recover their bond if the sender never funds it. There is no deadline in
+    /// Pending, so without this the bond could be stranded by an absent sender.
+    /// Returns the bond to the recipient and any already-deposited capital to the
+    /// sender, then cancels.
+    pub fn reclaim_bond(env: Env, agreement_id: u64) -> Result<(), Error> {
+        let mut a = Self::load(&env, agreement_id)?;
+        a.trader.require_auth();
+        if a.status != Status::Pending {
+            return Err(Error::InvalidState);
+        }
+        if !a.bond_posted {
+            return Err(Error::InvalidState);
+        }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        let client = token::Client::new(&env, &a.token);
+        if a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+        if a.capital_deposited {
+            client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
+        }
+        env.events()
+            .publish((symbol_short!("cancelled"), agreement_id), a.trader.clone());
         Ok(())
     }
 
@@ -770,6 +829,14 @@ impl PactaEscrow {
             .persistent()
             .get(&DataKey::Agreement(id))
             .ok_or(Error::NotFound)
+    }
+
+    // Keep the instance entry (Admin, Counter) alive so it is not archived during
+    // quiet periods; persistent entries bump their own TTL in save/bump_reputation.
+    fn bump_instance(env: &Env) {
+        env.storage()
+            .instance()
+            .extend_ttl(LIFETIME_THRESHOLD, BUMP_AMOUNT);
     }
 
     fn save(env: &Env, a: &Agreement) {
@@ -870,7 +937,7 @@ fn deploy_pacta(env: &Env, admin: &Address) -> Address {
 }
 
 #[test]
-fn happy_path_completes_and_returns_bond() {
+fn final_release_auto_completes_and_returns_bond() {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -881,7 +948,6 @@ fn happy_path_completes_and_returns_bond() {
     let (token_addr, token_admin) = setup_token(&env, &admin);
     let token_client = token::Client::new(&env, &token_addr);
 
-    // 1000 capital, 200 bond, 2 milestones
     let capital: i128 = 1_000;
     let bond: i128 = 200;
     token_admin.mint(&investor, &capital);
@@ -893,21 +959,19 @@ fn happy_path_completes_and_returns_bond() {
     let id = client.create_agreement(
         &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &3600u64,
     );
-
     client.post_bond(&id);
     client.deposit_capital(&id);
 
+    // First release: not final, still Active, no bond yet.
+    client.release_milestone(&id);
     let a = client.get_agreement(&id);
     assert_eq!(a.status, Status::Active);
-    assert_eq!(token_client.balance(&pacta), capital + bond);
+    assert_eq!(token_client.balance(&trader), 500);
 
-    // release both milestones -> trader receives full capital
+    // Final release: remaining capital + bond returned, status Completed.
     client.release_milestone(&id);
-    client.release_milestone(&id);
-    assert_eq!(token_client.balance(&trader), capital); // 1000 released
-
-    // complete -> bond returned to trader
-    client.complete(&id);
+    let a = client.get_agreement(&id);
+    assert_eq!(a.status, Status::Completed);
     assert_eq!(token_client.balance(&trader), capital + bond);
     assert_eq!(token_client.balance(&pacta), 0);
 
@@ -915,6 +979,79 @@ fn happy_path_completes_and_returns_bond() {
     assert_eq!(rep.completed, 1);
     assert_eq!(rep.refunded, 0);
     assert_eq!(rep.total_volume, capital);
+}
+
+#[test]
+fn complete_is_idempotent_after_auto_complete() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &3600u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    client.release_milestone(&id); // single milestone -> auto-completes
+
+    // complete() on an already-Completed agreement is a harmless no-op.
+    client.complete(&id);
+    assert_eq!(token_client.balance(&trader), capital + bond);
+    assert_eq!(token_client.balance(&pacta), 0);
+    let rep = client.get_reputation(&trader);
+    assert_eq!(rep.completed, 1); // not double-counted
+}
+
+#[test]
+fn emergency_refund_cannot_seize_bond_after_full_release() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // duration 0 => deadline reached immediately, but all milestones get released.
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &0u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    client.release_milestone(&id);
+    client.release_milestone(&id); // auto-completes
+
+    // The investor tries to seize the bond after the deadline. It must fail.
+    assert_eq!(
+        client.try_emergency_refund(&id),
+        Err(Ok(Error::InvalidState))
+    );
+    assert_eq!(token_client.balance(&trader), capital + bond); // trader keeps bond
+    assert_eq!(token_client.balance(&investor), 0);
 }
 
 #[test]
@@ -963,6 +1100,86 @@ fn emergency_refund_returns_unreleased_plus_bond() {
 }
 
 #[test]
+fn trader_reclaims_bond_when_investor_never_funds() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id); // trader bonds; investor never deposits.
+    assert_eq!(client.get_agreement(&id).status, Status::Pending);
+
+    client.reclaim_bond(&id);
+    assert_eq!(token_client.balance(&trader), bond); // bond back
+    assert_eq!(token_client.balance(&pacta), 0);
+    assert_eq!(client.get_agreement(&id).status, Status::Cancelled);
+}
+
+#[test]
+fn reclaim_bond_rejected_once_active() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id); // both in -> Active
+    // Once Active, the bond is committed; reclaim is rejected.
+    assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
+}
+
+#[test]
+fn reclaim_bond_rejected_without_bond() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, _token_admin) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &3600u64,
+    );
+    // No bond posted yet -> nothing to reclaim.
+    assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
+}
+
+#[test]
 fn cancel_while_pending_refunds_deposits() {
     let env = Env::default();
     env.mock_all_auths();
@@ -991,6 +1208,66 @@ fn cancel_while_pending_refunds_deposits() {
     assert_eq!(token_client.balance(&investor), capital);
     let a = client.get_agreement(&id);
     assert_eq!(a.status, Status::Cancelled);
+}
+
+#[test]
+fn create_agreement_rejects_invalid_inputs() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // capital <= 0
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &0i128, &10i128, &1u32, &0u32, &60u64),
+        Err(Ok(Error::InvalidAmount))
+    );
+    // milestones == 0
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &0u32, &0u32, &60u64),
+        Err(Ok(Error::InvalidMilestones))
+    );
+    // profit_share_bps > 10_000
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &10_001u32, &60u64),
+        Err(Ok(Error::InvalidAmount))
+    );
+}
+
+#[test]
+fn double_post_bond_and_double_deposit_are_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &(capital * 2));
+    token_admin.mint(&trader, &(bond * 2));
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id);
+    // Second bond post is rejected once bonded / Active.
+    assert!(client.try_post_bond(&id).is_err());
+
+    client.deposit_capital(&id);
+    // Second deposit is rejected (now Active).
+    assert!(client.try_deposit_capital(&id).is_err());
 }
 ```
 
