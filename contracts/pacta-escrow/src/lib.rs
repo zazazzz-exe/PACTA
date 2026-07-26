@@ -312,6 +312,35 @@ impl PactaEscrow {
         Ok(())
     }
 
+    /// Lets the recipient (the `trader` field) exit a Pending agreement and
+    /// recover their bond if the sender never funds it. There is no deadline in
+    /// Pending, so without this the bond could be stranded by an absent sender.
+    /// Returns the bond to the recipient and any already-deposited capital to the
+    /// sender, then cancels.
+    pub fn reclaim_bond(env: Env, agreement_id: u64) -> Result<(), Error> {
+        let mut a = Self::load(&env, agreement_id)?;
+        a.trader.require_auth();
+        if a.status != Status::Pending {
+            return Err(Error::InvalidState);
+        }
+        if !a.bond_posted {
+            return Err(Error::InvalidState);
+        }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        let client = token::Client::new(&env, &a.token);
+        if a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+        if a.capital_deposited {
+            client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
+        }
+        env.events()
+            .publish((symbol_short!("cancelled"), agreement_id), a.trader.clone());
+        Ok(())
+    }
+
     // ----------------- views -----------------
     pub fn get_agreement(env: Env, agreement_id: u64) -> Result<Agreement, Error> {
         Self::load(&env, agreement_id)

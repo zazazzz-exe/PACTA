@@ -177,6 +177,86 @@ fn emergency_refund_returns_unreleased_plus_bond() {
 }
 
 #[test]
+fn trader_reclaims_bond_when_investor_never_funds() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id); // trader bonds; investor never deposits.
+    assert_eq!(client.get_agreement(&id).status, Status::Pending);
+
+    client.reclaim_bond(&id);
+    assert_eq!(token_client.balance(&trader), bond); // bond back
+    assert_eq!(token_client.balance(&pacta), 0);
+    assert_eq!(client.get_agreement(&id).status, Status::Cancelled);
+}
+
+#[test]
+fn reclaim_bond_rejected_once_active() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id); // both in -> Active
+    // Once Active, the bond is committed; reclaim is rejected.
+    assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
+}
+
+#[test]
+fn reclaim_bond_rejected_without_bond() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, _token_admin) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &3600u64,
+    );
+    // No bond posted yet -> nothing to reclaim.
+    assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
+}
+
+#[test]
 fn cancel_while_pending_refunds_deposits() {
     let env = Env::default();
     env.mock_all_auths();
