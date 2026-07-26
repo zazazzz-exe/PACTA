@@ -14,7 +14,7 @@ fn deploy_pacta(env: &Env, admin: &Address) -> Address {
 }
 
 #[test]
-fn happy_path_completes_and_returns_bond() {
+fn final_release_auto_completes_and_returns_bond() {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -25,7 +25,6 @@ fn happy_path_completes_and_returns_bond() {
     let (token_addr, token_admin) = setup_token(&env, &admin);
     let token_client = token::Client::new(&env, &token_addr);
 
-    // 1000 capital, 200 bond, 2 milestones
     let capital: i128 = 1_000;
     let bond: i128 = 200;
     token_admin.mint(&investor, &capital);
@@ -37,21 +36,19 @@ fn happy_path_completes_and_returns_bond() {
     let id = client.create_agreement(
         &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &3600u64,
     );
-
     client.post_bond(&id);
     client.deposit_capital(&id);
 
+    // First release: not final, still Active, no bond yet.
+    client.release_milestone(&id);
     let a = client.get_agreement(&id);
     assert_eq!(a.status, Status::Active);
-    assert_eq!(token_client.balance(&pacta), capital + bond);
+    assert_eq!(token_client.balance(&trader), 500);
 
-    // release both milestones -> trader receives full capital
+    // Final release: remaining capital + bond returned, status Completed.
     client.release_milestone(&id);
-    client.release_milestone(&id);
-    assert_eq!(token_client.balance(&trader), capital); // 1000 released
-
-    // complete -> bond returned to trader
-    client.complete(&id);
+    let a = client.get_agreement(&id);
+    assert_eq!(a.status, Status::Completed);
     assert_eq!(token_client.balance(&trader), capital + bond);
     assert_eq!(token_client.balance(&pacta), 0);
 
@@ -59,6 +56,79 @@ fn happy_path_completes_and_returns_bond() {
     assert_eq!(rep.completed, 1);
     assert_eq!(rep.refunded, 0);
     assert_eq!(rep.total_volume, capital);
+}
+
+#[test]
+fn complete_is_idempotent_after_auto_complete() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &3600u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    client.release_milestone(&id); // single milestone -> auto-completes
+
+    // complete() on an already-Completed agreement is a harmless no-op.
+    client.complete(&id);
+    assert_eq!(token_client.balance(&trader), capital + bond);
+    assert_eq!(token_client.balance(&pacta), 0);
+    let rep = client.get_reputation(&trader);
+    assert_eq!(rep.completed, 1); // not double-counted
+}
+
+#[test]
+fn emergency_refund_cannot_seize_bond_after_full_release() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // duration 0 => deadline reached immediately, but all milestones get released.
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &0u64,
+    );
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    client.release_milestone(&id);
+    client.release_milestone(&id); // auto-completes
+
+    // The investor tries to seize the bond after the deadline. It must fail.
+    assert_eq!(
+        client.try_emergency_refund(&id),
+        Err(Ok(Error::InvalidState))
+    );
+    assert_eq!(token_client.balance(&trader), capital + bond); // trader keeps bond
+    assert_eq!(token_client.balance(&investor), 0);
 }
 
 #[test]

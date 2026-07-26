@@ -204,29 +204,54 @@ impl PactaEscrow {
         };
         a.released_amount += tranche;
 
-        token::Client::new(&env, &a.token).transfer(
-            &env.current_contract_address(),
-            &a.trader,
-            &tranche,
-        );
+        // Final milestone == full performance: return the bond and complete in the
+        // same call so emergency_refund can never seize a completed job's bond.
+        let is_final = a.released_milestones == a.milestones;
+        if is_final {
+            a.status = Status::Completed;
+        }
 
+        // Effects persisted before any token transfer (checks-effects-interactions).
         Self::save(&env, &a);
+        if is_final {
+            Self::bump_reputation(&env, &a.trader, true, a.capital);
+        }
+
+        let client = token::Client::new(&env, &a.token);
+        client.transfer(&env.current_contract_address(), &a.trader, &tranche);
+        if is_final && a.bond > 0 {
+            client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
+        }
+
         env.events().publish(
             (symbol_short!("released"), agreement_id),
             (a.released_milestones, tranche),
         );
+        if is_final {
+            env.events()
+                .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
+        }
         Ok(tranche)
     }
 
     pub fn complete(env: Env, agreement_id: u64) -> Result<(), Error> {
         let mut a = Self::load(&env, agreement_id)?;
         a.investor.require_auth();
+        // The final milestone release now auto-completes and returns the bond, so a
+        // Completed agreement is a no-op here (keeps the existing ABI/UI call safe).
+        if a.status == Status::Completed {
+            return Ok(());
+        }
         if a.status != Status::Active {
             return Err(Error::InvalidState);
         }
         if a.released_milestones < a.milestones {
             return Err(Error::MilestonesIncomplete);
         }
+        // Normally unreachable given auto-complete; kept for safety.
+        a.status = Status::Completed;
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, true, a.capital);
         if a.bond > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -234,9 +259,6 @@ impl PactaEscrow {
                 &a.bond,
             );
         }
-        a.status = Status::Completed;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, true, a.capital);
         env.events()
             .publish((symbol_short!("completed"), agreement_id), a.trader.clone());
         Ok(())
