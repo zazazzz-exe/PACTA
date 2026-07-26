@@ -13,7 +13,7 @@ describe('escrowConfigFor', () => {
   it('returns the known testnet escrow values', () => {
     const cfg = escrowConfigFor(TESTNET, {});
     expect(cfg).not.toBeNull();
-    expect(cfg!.contractId).toBe('CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL');
+    expect(cfg!.contractId).toBe('CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM');
     expect(cfg!.passphrase).toBe('Test SDF Network ; September 2015');
     expect(cfg!.rpcUrl).toBe('https://soroban-testnet.stellar.org');
     expect(cfg!.settlementSac).toBe('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC');
