@@ -82,6 +82,7 @@ impl PactaEscrow {
     pub fn __constructor(env: Env, admin: Address) {
         env.storage().instance().set(&DataKey::Admin, &admin);
         env.storage().instance().set(&DataKey::Counter, &0u64);
+        Self::bump_instance(&env);
     }
 
     pub fn create_agreement(
@@ -131,6 +132,7 @@ impl PactaEscrow {
 
         Self::save(&env, &agreement);
         env.storage().instance().set(&DataKey::Counter, &counter);
+        Self::bump_instance(&env);
 
         env.events().publish(
             (symbol_short!("created"), counter),
@@ -369,6 +371,14 @@ impl PactaEscrow {
             .persistent()
             .get(&DataKey::Agreement(id))
             .ok_or(Error::NotFound)
+    }
+
+    // Keep the instance entry (Admin, Counter) alive so it is not archived during
+    // quiet periods; persistent entries bump their own TTL in save/bump_reputation.
+    fn bump_instance(env: &Env) {
+        env.storage()
+            .instance()
+            .extend_ttl(LIFETIME_THRESHOLD, BUMP_AMOUNT);
     }
 
     fn save(env: &Env, a: &Agreement) {
