@@ -286,3 +286,63 @@ fn cancel_while_pending_refunds_deposits() {
     let a = client.get_agreement(&id);
     assert_eq!(a.status, Status::Cancelled);
 }
+
+#[test]
+fn create_agreement_rejects_invalid_inputs() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // capital <= 0
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &0i128, &10i128, &1u32, &0u32, &60u64),
+        Err(Ok(Error::InvalidAmount))
+    );
+    // milestones == 0
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &0u32, &0u32, &60u64),
+        Err(Ok(Error::InvalidMilestones))
+    );
+    // profit_share_bps > 10_000
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &10_001u32, &60u64),
+        Err(Ok(Error::InvalidAmount))
+    );
+}
+
+#[test]
+fn double_post_bond_and_double_deposit_are_rejected() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &(capital * 2));
+    token_admin.mint(&trader, &(bond * 2));
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+    );
+    client.post_bond(&id);
+    // Second bond post is rejected once bonded / Active.
+    assert!(client.try_post_bond(&id).is_err());
+
+    client.deposit_capital(&id);
+    // Second deposit is rejected (now Active).
+    assert!(client.try_deposit_capital(&id).is_err());
+}
