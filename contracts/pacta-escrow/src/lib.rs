@@ -275,6 +275,10 @@ impl PactaEscrow {
         }
         let unreleased = a.capital - a.released_amount;
         let payout = unreleased + a.bond; // reclaim unreleased capital + seize bond
+        a.status = Status::Refunded;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
+        Self::bump_reputation(&env, &a.trader, false, a.capital);
         if payout > 0 {
             token::Client::new(&env, &a.token).transfer(
                 &env.current_contract_address(),
@@ -282,9 +286,6 @@ impl PactaEscrow {
                 &payout,
             );
         }
-        a.status = Status::Refunded;
-        Self::save(&env, &a);
-        Self::bump_reputation(&env, &a.trader, false, a.capital);
         env.events().publish(
             (symbol_short!("refunded"), agreement_id),
             (a.investor.clone(), payout),
@@ -298,6 +299,9 @@ impl PactaEscrow {
         if a.status != Status::Pending {
             return Err(Error::InvalidState);
         }
+        a.status = Status::Cancelled;
+        // Effects persisted before any token transfer (checks-effects-interactions).
+        Self::save(&env, &a);
         let client = token::Client::new(&env, &a.token);
         if a.capital_deposited {
             client.transfer(&env.current_contract_address(), &a.investor, &a.capital);
@@ -305,8 +309,6 @@ impl PactaEscrow {
         if a.bond_posted && a.bond > 0 {
             client.transfer(&env.current_contract_address(), &a.trader, &a.bond);
         }
-        a.status = Status::Cancelled;
-        Self::save(&env, &a);
         env.events()
             .publish((symbol_short!("cancelled"), agreement_id), a.investor.clone());
         Ok(())
