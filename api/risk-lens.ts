@@ -1,6 +1,6 @@
 // PACTA Risk Lens — serverless endpoint (Vercel Edge). The Gemini key stays
 // server-side here; the client only ever sends already-computed stats.
-// Spec: FEATURE_RISK_LENS.md §6. Lives at the repo root so Vercel serves it at
+// Spec: docs/product/FEATURE_RISK_LENS.md §6. Lives at the repo root so Vercel serves it at
 // /api/risk-lens (the Vercel root is the repo root; see vercel.json).
 export const config = { runtime: 'edge' };
 

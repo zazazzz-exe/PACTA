@@ -203,7 +203,7 @@ It is a deliberate, documented exception to "no backend": off-chain, holds no fu
 - **Chain-adapter layer** (`frontend/src/lib/adapters/`): every wallet surface depends only on the `ChainAdapter` interface, never on the Stellar SDK directly. `StellarAdapter` is the only implementation this cycle; the seam is what keeps the multi-chain vision cheap later.
 - **Smart contract** (`contracts/pacta-escrow`): the escrow logic, bonds, staged release, refunds, and reputation. Frozen and unchanged by the wallet reframe. See the [reference](#smart-contract-reference).
 - **Frontend** (`frontend/`): a Vite SPA. Wallet connection via Stellar Wallets Kit; contract calls via type-safe generated bindings.
-- **Design system** (`DESIGN.md`): a "Calm Trust" core (warm neutrals, a single emerald accent, monospace for all on-chain data) with a dark "proof panel" reused as the on-chain receipt.
+- **Design system** (`docs/product/DESIGN.md`): a "Calm Trust" core (warm neutrals, a single emerald accent, monospace for all on-chain data) with a dark "proof panel" reused as the on-chain receipt.
 
 ## Tech stack
 
@@ -324,8 +324,11 @@ pacta/
 │       ├── pages/           # Home, Send, Receive, Convert, Pacts, PactDetail, Activity, Profile
 │       └── hooks/           # useWallet, useBalances, useConvert, usePacts, useRiskLens
 ├── docs/
+│   ├── product/             # DESIGN.md, FEATURE_RISK_LENS.md, LANDING_HERO.md
 │   ├── kyc.md
-│   └── architecture/chain-adapter.md
+│   ├── architecture/chain-adapter.md
+│   └── superpowers/         # design specs and implementation plans (shipped ones in archive/)
+├── pitch/                   # pitch decks, demo pages, demo ad
 └── scripts/
     └── deploy.sh            # one-command testnet deploy + bindings regen
 ```
@@ -403,7 +406,7 @@ How this project meets the Level 4 requirements:
 | Loading states + error handling | [Features](#features): skeletons, tx-pending, contract-error messages, graceful AI fallback |
 | Production deployment | [Live app](https://pacta-zarrah.vercel.app) |
 | Monitoring + analytics | [Monitoring and analytics](#monitoring-and-analytics) |
-| Optimized UX | "Calm Trust" design system (`DESIGN.md`), wallet-first, mobile-first |
+| Optimized UX | "Calm Trust" design system (`docs/product/DESIGN.md`), wallet-first, mobile-first |
 | Project structure + documentation | [Project structure](#project-structure) + this README + `PRD.md` |
 | Contract on Stellar testnet | `CBLSIW2L5BV2KOM73EGXPZBO7DCVVW5TF2ROMYJZSZUTMSMGIFFEL3HL` |
 | 15+ meaningful commits | See the repository commit history |

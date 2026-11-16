@@ -1450,7 +1450,7 @@ The app is **mobile-first** (many primary users are on phones) and also a comfor
 - **Profile / Verify.** Stay in a comfortably narrow centered column on all sizes.
 - **Quality floor (DESIGN §10).** Tap targets stay at least 44px, every interactive element shows a visible focus ring, motion respects `prefers-reduced-motion`, and amounts use tabular mono with thousands separators.
 
-> Visual tokens, components, and exact styling live in **DESIGN.md** (which supersedes §12). This section captures only the behavioral/layout contract.
+> Visual tokens, components, and exact styling live in **`docs/product/DESIGN.md`** (which supersedes §12). This section captures only the behavioral/layout contract.
 
 ---
 
@@ -1742,7 +1742,7 @@ Set up beforehand: two browser profiles (or two wallets in Freighter) — **send
 
 ## 17. AI Risk Lens (add-on feature — implemented)
 
-An add-on that reads a Provider's on-chain track record and gives the Client a plain-language counterparty reputation read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
+An add-on that reads a Provider's on-chain track record and gives the Client a plain-language counterparty reputation read plus a defensive milestone suggestion. It changes nothing in the core protocol or flows; it is a read-only interpretation layer on top of the existing contract data and design tokens. The complete spec is in **`docs/product/FEATURE_RISK_LENS.md`** (authoritative); this section records that the feature exists and how it is wired.
 
 **What it does.** When a sender chooses **Send protected** and enters the recipient (or views a recipient's profile), PACTA computes that recipient's stats from chain data (completed/refunded counts, completion rate, volume, recency, and how the contemplated payment compares to history) and shows: a risk level, the specific signals behind it, and a concrete suggestion for structuring *this* Pact more safely. "Apply suggested protection" sets the milestone count in the Send-protected terms (more milestones = smaller equal tranches = less first-release exposure).
 
