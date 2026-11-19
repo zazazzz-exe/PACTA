@@ -10,9 +10,9 @@ const css = readFileSync(fileURLToPath(new URL('../index.css', import.meta.url))
 const results = checkContrast(css);
 
 describe('design tokens meet WCAG AA', () => {
-  it('checks both themes and the proof panel', () => {
+  it('checks both app themes, the landing palette and the proof panel', () => {
     const themes = new Set(results.map((r) => r.theme));
-    expect([...themes].sort()).toEqual(['dark', 'light', 'panel']);
+    expect([...themes].sort()).toEqual(['dark', 'landing', 'light', 'panel']);
     expect(results.length).toBeGreaterThan(100);
   });
 

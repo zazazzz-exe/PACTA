@@ -110,19 +110,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Ambient glow — full on mobile landing, subtle on all other pages. */}
-      {route.name === 'landing' ? (
-        <>
-          <div className="hidden lg:block">
-            <AmbientBackground variant="subtle" />
-          </div>
-          <div className="lg:hidden">
-            <AmbientBackground variant="full" />
-          </div>
-        </>
-      ) : (
-        <AmbientBackground variant="subtle" />
-      )}
+      {route.name !== 'landing' && <AmbientBackground variant="subtle" />}
+      {/* The landing page renders its own nav (pages/landing/LandingNav). */}
+      {route.name !== 'landing' && (
       <header
         className={`sticky top-0 z-20 border-b backdrop-blur transition-shadow duration-200 ${
           scrolled ? 'border-hairline bg-canvas/90 shadow-card' : 'border-transparent bg-canvas/70'
@@ -151,6 +141,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      )}
 
       <NetworkGuard />
       <LockNotice />
@@ -178,8 +169,8 @@ export default function App() {
         </PageTransition>
       </main>
 
-      {!address && (
-      <footer className={`relative z-10 bg-hero-navy text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-12'}`}>
+      {!address && route.name !== 'landing' && (
+      <footer className="relative z-10 mt-12 bg-hero-navy text-panel-ink">
         <div className="mx-auto max-w-6xl px-5 py-9">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             {/* Brand */}

@@ -79,6 +79,9 @@ export function checkContrast(cssText: string): PairResult[] {
     dark: { ...shared, ...blockVars(css, ":root,\n:root[data-theme='dark']") },
     light: { ...shared, ...blockVars(css, ":root[data-theme='light']") },
   };
+  // The landing page's scoped palette (.lp), inheriting anything it does not set.
+  const LP = '\n.lp {';
+  if (css.includes(LP)) themes.landing = { ...themes.dark, ...blockVars(css, LP) };
   const results: PairResult[] = [];
 
   for (const [theme, v] of Object.entries(themes)) {

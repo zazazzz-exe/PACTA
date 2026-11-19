@@ -106,6 +106,57 @@
   --shadow-pop: 0 10px 28px rgba(26, 28, 34, 0.1);
 }
 
+/* Landing page exception (owner-approved 2026-11-20, CLAUDE.md "Landing page"):
+   the marketing page keeps PACTA's navy / electric-blue identity and is always
+   dark, regardless of the app theme. Scoped to .lp so app screens keep the calm
+   Midnight / Paper tokens. Checked by scripts/check-contrast.ts as "landing". */
+.lp {
+  color-scheme: dark;
+  --canvas: 6 10 28;             /* #060A1C midnight navy */
+  --paper: 13 22 56;             /* #0D1638 deep blue */
+  --mist: 20 33 79;              /* #14214F */
+  --hairline: rgba(160, 190, 255, 0.14);
+  --hairline-strong: rgba(160, 190, 255, 0.24);
+  --glow: rgba(61, 107, 255, 0.22);
+
+  --ink: 255 255 255;            /* white type */
+  --slate: 176 190 228;          /* #B0BEE4 */
+  --fog: 140 156 204;            /* #8C9CCC */
+
+  --accent: 53 99 245;           /* #3563F5 electric blue fill (white text 4.9:1) */
+  --accent-deep: 47 91 234;      /* #2F5BEA */
+  --accent-tint: 22 38 96;       /* #162660 */
+  --accent-text: 140 175 255;    /* #8CAFFF */
+  --accent-text-strong: 207 224 255; /* #CFE0FF icy blue */
+  --on-accent: 255 255 255;
+
+  --mint: 79 199 154;
+  --mint-soft: 18 46 58;
+  --apricot: 242 166 124;
+  --apricot-soft: 52 40 54;
+  --lilac: 169 155 240;
+  --lilac-soft: 34 36 84;
+  --deadline: 232 176 75;
+  --deadline-deep: 232 176 75;
+  --deadline-tint: 46 40 42;
+  --refund: 239 122 107;
+  --refund-deep: 239 122 107;
+  --refund-tint: 48 30 44;
+
+  --card-border: rgba(160, 190, 255, 0.16);
+  --shadow-card: 0 20px 50px rgba(2, 6, 23, 0.55);
+  --shadow-pop: 0 28px 70px rgba(2, 6, 23, 0.65);
+  --balance-card: linear-gradient(140deg, #18308F 0%, #0F2370 55%, #0B1640 100%);
+
+  /* landing-only accents */
+  --lp-electric: #3D6BFF;
+  --lp-ice: #CFE0FF;
+  --lp-cyan: #5FD4F4;
+
+  background-color: rgb(var(--canvas));
+  color: rgb(var(--ink));
+}
+
 /* Theme-independent tokens */
 :root {
   /* proof panel: the one always-dark instrument surface */

@@ -11,14 +11,14 @@ export const landingSteps: TourStep[] = [
   },
   {
     target: '[data-tour="network"]',
-    title: 'Runs on Stellar testnet',
+    title: 'Built on Stellar',
     body: 'No sign up and no passwords. Everything happens on chain, and your wallet is your login.',
     placement: 'bottom',
   },
   {
     target: '[data-tour="proof"]',
-    title: 'How PACTA works',
-    body: 'Connect a wallet, move real balances, and send protected when a payment needs to be safe.',
+    title: 'Protected payments',
+    body: 'Send a payment as a Pact: the contract holds it and releases it milestone by milestone, with a bond and a deadline that protect you.',
     placement: 'top',
   },
   {

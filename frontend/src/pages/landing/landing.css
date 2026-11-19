@@ -1,0 +1,142 @@
+/* Landing page only (.lp). Owner-approved exception to the calm app rules:
+   gentle floating, a marquee, flow particles and soft glows are allowed here.
+   Everything animates transform/opacity only, and all of it stops under
+   prefers-reduced-motion (content stays fully readable and usable). */
+
+.lp .lp-grad-text {
+  background: linear-gradient(92deg, #8CAFFF 0%, var(--lp-cyan) 55%, var(--lp-ice) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.lp .lp-hero-bg {
+  background:
+    radial-gradient(60% 55% at 78% 30%, rgba(61, 107, 255, 0.28), transparent 70%),
+    radial-gradient(40% 40% at 12% 8%, rgba(95, 212, 244, 0.1), transparent 70%),
+    rgb(var(--canvas));
+}
+
+.lp .lp-glass {
+  background: linear-gradient(160deg, rgba(120, 150, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(160, 190, 255, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.lp .lp-card {
+  background: linear-gradient(170deg, rgba(20, 33, 79, 0.9) 0%, rgba(13, 22, 56, 0.9) 100%);
+  border: 1px solid var(--card-border);
+}
+
+.lp .lp-glow-shield {
+  filter: drop-shadow(0 0 18px rgba(95, 212, 244, 0.45));
+}
+
+/* Gentle floating (hero mockup and badges) */
+@keyframes lp-float {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
+}
+@keyframes lp-float-sm {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -6px, 0) rotate(-1.5deg); }
+}
+.lp .lp-float { animation: lp-float 7s ease-in-out infinite; }
+.lp .lp-float-a { animation: lp-float-sm 6s ease-in-out infinite; }
+.lp .lp-float-b { animation: lp-float-sm 7.5s ease-in-out infinite 0.8s; }
+.lp .lp-float-c { animation: lp-float-sm 8.5s ease-in-out infinite 1.6s; }
+
+/* Slow 3D-ish token sway (stays within +-25deg so the label never mirrors) */
+@keyframes lp-spin-y {
+  0%, 100% { transform: rotateY(-25deg); }
+  50% { transform: rotateY(25deg); }
+}
+.lp .lp-spin { animation: lp-spin-y 9s ease-in-out infinite; transform-style: preserve-3d; }
+
+/* Particles drifting upward */
+@keyframes lp-rise {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.6; }
+  100% { transform: translate3d(0, -220px, 0); opacity: 0; }
+}
+.lp .lp-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--lp-cyan);
+  box-shadow: 0 0 8px rgba(95, 212, 244, 0.8);
+  animation: lp-rise linear infinite;
+}
+
+/* Marquee */
+@keyframes lp-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
+}
+.lp .lp-marquee-track { animation: lp-marquee 40s linear infinite; }
+.lp .lp-marquee:hover .lp-marquee-track { animation-play-state: paused; }
+
+/* Payment flow: a fund particle travels along a connector once the flow is in view */
+@keyframes lp-travel {
+  0% { left: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+.lp .lp-connector { position: relative; height: 2px; background: rgba(140, 175, 255, 0.22); overflow: visible; }
+.lp .lp-connector-fill {
+  position: absolute; inset: 0; transform-origin: left center;
+  background: linear-gradient(90deg, var(--lp-electric), var(--lp-cyan));
+}
+.lp .lp-fund {
+  position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 999px;
+  background: var(--lp-cyan); box-shadow: 0 0 12px rgba(95, 212, 244, 0.9);
+  animation: lp-travel 2.4s ease-in-out infinite;
+}
+
+/* QR scanning line */
+@keyframes lp-scan {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, 96px, 0); }
+}
+.lp .lp-scan { animation: lp-scan 3.2s ease-in-out infinite; }
+
+/* Swap arrows */
+@keyframes lp-swap {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(180deg); }
+}
+.lp .lp-swap { animation: lp-swap 4s ease-in-out infinite; }
+
+/* Upward arrow pulse */
+@keyframes lp-up {
+  0%, 100% { transform: translate3d(0, 2px, 0); opacity: 0.85; }
+  50% { transform: translate3d(0, -4px, 0); opacity: 1; }
+}
+.lp .lp-up { animation: lp-up 2.4s ease-in-out infinite; }
+
+/* Network light trails (trust section) */
+@keyframes lp-trail { to { stroke-dashoffset: -240; } }
+.lp .lp-trail { stroke-dasharray: 14 226; animation: lp-trail 6s linear infinite; }
+
+/* Final CTA soft glow breathing */
+@keyframes lp-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+.lp .lp-breathe { animation: lp-breathe 8s ease-in-out infinite; }
+
+.lp .lp-no-scrollbar { scrollbar-width: none; }
+.lp .lp-no-scrollbar::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .lp .lp-float, .lp .lp-float-a, .lp .lp-float-b, .lp .lp-float-c, .lp .lp-spin,
+  .lp .lp-marquee-track, .lp .lp-fund, .lp .lp-scan, .lp .lp-swap, .lp .lp-up,
+  .lp .lp-trail, .lp .lp-breathe {
+    animation: none !important;
+  }
+  .lp .lp-particle, .lp .lp-fund { display: none; }
+}
