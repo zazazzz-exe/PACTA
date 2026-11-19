@@ -1,8 +1,24 @@
-// PACTA Risk Lens — serverless endpoint (Vercel Edge). The Gemini key stays
-// server-side here; the client only ever sends already-computed stats.
+// PACTA Risk Lens — serverless endpoint (Vercel Node function). The Gemini key
+// stays server-side here; the client only ever sends already-computed stats.
 // Spec: docs/product/FEATURE_RISK_LENS.md §6. Lives at the repo root so Vercel serves it at
 // /api/risk-lens (the Vercel root is the repo root; see vercel.json).
-export const config = { runtime: 'edge' };
+//
+// Hardening (PRD §17): requires the wallet-ownership session cookie, is
+// rate-limited per session wallet and per (hashed) client IP, and validates the
+// shape and size of the stats body before the model is ever called. Runs on
+// Node (not Edge) because the session check uses jsonwebtoken.
+import { db } from './_lib/db';
+import { clientIp, logError } from './_lib/http';
+import { readSession } from './_lib/session';
+import { overLimit } from './_lib/ratelimit';
+import { hmacHex } from './_lib/kyc/hash';
+import { validateRiskLensBody, MAX_BODY_BYTES } from './_lib/riskLensInput';
+
+// Per 10 minutes. The client caches reads and debounces input, so honest use
+// stays far below these.
+export const RISK_LENS_WINDOW_MS = 10 * 60 * 1000;
+export const RISK_LENS_LIMIT_PER_WALLET = 30;
+export const RISK_LENS_LIMIT_PER_IP = 60;
 
 const MODEL = 'gemini-2.5-flash'; // fast + cheap, generous free tier
 
@@ -29,8 +45,51 @@ Output ONLY valid JSON, no markdown and no preamble, matching exactly:
   "suggested_first_milestone_pct": 5-100 integer, approx 100/suggested_milestones
 }`;
 
-export default async function handler(req: Request): Promise<Response> {
+// Fails OPEN on limiter errors (same policy as overLimit): a database hiccup
+// must not take the lens down, and the session check already gates access.
+async function rateLimited(req: Request, wallet: string): Promise<boolean> {
+  try {
+    const supa = db();
+    const ip = clientIp(req);
+    const ipHash = ip ? hmacHex(ip) : null;
+    const limited =
+      (await overLimit(supa, 'risk_lens_call', { wallet_address: wallet }, RISK_LENS_WINDOW_MS, RISK_LENS_LIMIT_PER_WALLET)) ||
+      (ipHash !== null &&
+        (await overLimit(supa, 'risk_lens_call', { ip_hash: ipHash }, RISK_LENS_WINDOW_MS, RISK_LENS_LIMIT_PER_IP)));
+    if (limited) return true;
+    const { error } = await supa.from('risk_lens_call').insert({ wallet_address: wallet, ip_hash: ipHash });
+    if (error) logError('risk-lens-ratelimit', error);
+    return false;
+  } catch (e) {
+    logError('risk-lens-ratelimit', e);
+    return false;
+  }
+}
+
+function sessionWallet(req: Request): string | null {
+  try {
+    return readSession(req);
+  } catch (e) {
+    // SESSION_JWT_SECRET missing: treat as unauthenticated, never as open.
+    logError('risk-lens-session', e);
+    return null;
+  }
+}
+
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
+
+  const wallet = sessionWallet(req);
+  if (!wallet) return json({ error: 'unauthorized' }, 401);
+
+  const declared = Number(req.headers.get('content-length') ?? '0');
+  if (declared > MAX_BODY_BYTES) return json({ error: 'too_large' }, 413);
+  const input = validateRiskLensBody(await req.text());
+  if (!input.ok) {
+    return json({ error: input.error, ...(input.field ? { field: input.field } : {}) }, input.error === 'too_large' ? 413 : 400);
+  }
+
+  if (await rateLimited(req, wallet)) return json({ error: 'rate_limited' }, 429);
 
   // Fail clearly when the key is not configured (the #1 cause of "Risk read
   // unavailable"). The key must live ONLY in the Vercel env, never in the repo.
@@ -41,7 +100,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   try {
-    const { stats } = await req.json();
+    const { stats } = input;
     const user = `Trader on-chain statistics (already computed and correct):\n\n${JSON.stringify(stats, null, 2)}\n\nReturn the risk read as JSON.`;
 
     const r = await fetch(
@@ -91,3 +150,5 @@ function json(body: unknown, status: number): Response {
     headers: { 'content-type': 'application/json' },
   });
 }
+
+export default { fetch: handler };

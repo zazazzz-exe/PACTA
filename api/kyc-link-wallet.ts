@@ -1,6 +1,7 @@
 import { db } from './_lib/db';
 import { json, isValidAddress, logError } from './_lib/http';
 import { readSession } from './_lib/session';
+import { kycUnavailable } from './_lib/kyc';
 import { verifyWalletSignature } from './_lib/kyc/verifySignature';
 import { overLimit } from './_lib/ratelimit';
 import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
@@ -12,6 +13,8 @@ import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
+  const unavailable = kycUnavailable();
+  if (unavailable) return unavailable;
 
   const sessionAddr = readSession(req);
   if (!sessionAddr) return json({ error: 'unauthorized' }, 401);

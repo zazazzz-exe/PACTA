@@ -65,9 +65,31 @@ baseline (versioned consent, minimization, erasure, PII-free logs).
 
 ## Rate limiting
 
-Basic per-address DB brakes: 5 nonce requests/min; block wallet verification
-after 10 failed signatures in 10 min. These are abuse brakes only — put the real
-DDoS/IP control at the edge (Vercel WAF / IP rate limits).
+DB-backed abuse brakes (all fail open on a limiter error):
+- **Nonce requests** (`kyc-request-nonce`), per minute: 5 per (address, client
+  IP) pair, 20 per client IP across addresses, 30 per address across all IPs
+  (backstop). Counting per (address, IP) means a caller spamming a victim's
+  address only exhausts their own bucket and cannot lock the victim out. Only a
+  keyed HMAC of the IP (`kyc_challenge.ip_hash`, `KYC_HASH_SECRET`) is stored,
+  never the raw IP. With no IP header, the plain 5 per address limit applies.
+- **Wallet verification** (`kyc-verify-wallet`): blocked after 10 failed
+  signatures in 10 min, per address. Known gap: this one is still per address
+  only, so an attacker could lock a victim out of signing in for 10 minutes.
+- **Risk Lens** (`/api/risk-lens`), per 10 min: 30 per session wallet, 60 per
+  hashed client IP (`risk_lens_call`).
+
+These are abuse brakes only; put the real DDoS/IP control at the edge (Vercel
+WAF / IP rate limits).
+
+## Fail closed in production
+
+In production (`VERCEL_ENV=production` or `NODE_ENV=production`) the server
+refuses KYC when `KYC_PROVIDER` is unset or `mock`: `kyc-status`,
+`kyc-start-verification`, `kyc-submit-media`, `kyc-refresh`, `kyc-webhook` and
+`kyc-link-wallet` answer `503 { "error": "kyc_not_configured" }` and log the
+reason. Wallet sign-in (`kyc-request-nonce`, `kyc-verify-wallet`) and the
+data-removing endpoints (`kyc-erase`, `kyc-unlink-wallet`) stay available. In
+development, `mock` remains the default. See `api/_lib/kyc/index.ts`.
 
 ## Roadmap: linked identity across wallets (Phase 4, not yet built)
 
@@ -143,8 +165,12 @@ One-time setup in the **Didit Business Console** (https://business.didit.me):
 Notes:
 - The Didit API paths used are `POST /v3/session/` and
   `GET /v3/session/{id}/decision/` with the `x-api-key` header; the webhook is
-  verified with `X-Signature-V2` / `X-Signature` / `X-Signature-Simple` and an
-  `X-Timestamp` freshness check (±300s). See `api/_lib/kyc/didit.ts`.
+  verified with `X-Signature-V2` / `X-Signature` / `X-Signature-Simple`.
+  Freshness (±300s) is checked against the **signed body `timestamp`**, never
+  the unsigned `X-Timestamp` header, and each signed delivery's digest is stored
+  in `kyc_webhook_seen` so an exact repeat is rejected with 409 (the record is
+  removed if applying the outcome fails, so a genuine retry still works). See
+  `api/_lib/kyc/didit.ts` and `api/kyc-webhook.ts`.
 - Decision field names (document number, name, expiry, country) are read
   defensively in `mapDecision`. Confirm them against your first real decision
   payload and adjust if a field is named differently in your workflow.

@@ -44,6 +44,9 @@ export interface ProviderResult {
   fullName?: string;
   livenessPassed?: boolean;
   reasonCode?: string; // non-PII
+  // Webhooks only: a stable digest of the SIGNED delivery content. The webhook
+  // endpoint stores it and rejects repeats (replay protection). No PII.
+  webhookId?: string;
 }
 
 export interface WebhookRequest {

@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import type {
   KycProvider,
   KycOutcome,
@@ -75,6 +75,13 @@ function mapDecision(providerRef: string, d: Record<string, any>): ProviderResul
   };
 }
 
+// Signed deliveries older or newer than this (seconds) are rejected.
+export const WEBHOOK_MAX_AGE_S = 300;
+
+function sha256Hex(msg: string): string {
+  return createHash('sha256').update(msg, 'utf8').digest('hex');
+}
+
 function hmacHex(secret: string, msg: string): string {
   return createHmac('sha256', secret).update(msg, 'utf8').digest('hex');
 }
@@ -142,10 +149,6 @@ export const diditProvider: KycProvider = {
 
     const h = (name: string) => req.headers[name] ?? req.headers[name.toLowerCase()];
 
-    // Replay defense: X-Timestamp must be within 5 minutes.
-    const ts = Number(h('x-timestamp'));
-    if (!ts || Math.abs(Date.now() / 1000 - ts) > 300) throw new Error('stale_webhook');
-
     const body = JSON.parse(req.rawBody) as Record<string, any>;
     const v2 = h('x-signature-v2');
     const raw = h('x-signature');
@@ -157,9 +160,20 @@ export const diditProvider: KycProvider = {
     const okSimple = simple && safeEqualHex(simple, hmacHex(secret, simpleStr));
     if (!okV2 && !okRaw && !okSimple) throw new Error('invalid_webhook_signature');
 
+    // Replay defense, part 1: freshness from the SIGNED body timestamp. The
+    // X-Timestamp header is not covered by any signature, so it is ignored: an
+    // attacker replaying a captured delivery could otherwise just set it to now.
+    const ts = Number(body.timestamp);
+    if (!Number.isFinite(ts) || ts <= 0 || Math.abs(Date.now() / 1000 - ts) > WEBHOOK_MAX_AGE_S) {
+      throw new Error('stale_webhook');
+    }
+
     return {
       providerRef: body.session_id,
       outcome: mapStatus(body.status),
+      // Replay defense, part 2: the endpoint stores this and rejects repeats.
+      // Built only from fields every signature scheme covers.
+      webhookId: sha256Hex(`didit:${simpleStr}`),
     };
   },
 };

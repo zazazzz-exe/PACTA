@@ -1,4 +1,4 @@
-import { randomUUID, createHmac, timingSafeEqual } from 'crypto';
+import { randomUUID, createHash, createHmac, timingSafeEqual } from 'crypto';
 import type {
   KycProvider,
   KycOutcome,
@@ -91,6 +91,9 @@ export const mockProvider: KycProvider = {
     }
     const body = JSON.parse(req.rawBody) as { providerRef?: string; outcome?: KycOutcome };
     if (!body.providerRef || !body.outcome) throw new Error('invalid_webhook_body');
-    return syntheticResult(body.providerRef, body.outcome);
+    return {
+      ...syntheticResult(body.providerRef, body.outcome),
+      webhookId: createHash('sha256').update(`mock:${req.rawBody}`, 'utf8').digest('hex'),
+    };
   },
 };

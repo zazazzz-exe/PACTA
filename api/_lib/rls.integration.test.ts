@@ -8,7 +8,14 @@ const url = process.env.SUPABASE_URL;
 const anon = process.env.SUPABASE_ANON_KEY;
 
 describe.skipIf(!url || !anon)('RLS deny-by-default (integration)', () => {
-  for (const table of ['kyc_profile', 'kyc_challenge', 'kyc_consent', 'kyc_event']) {
+  for (const table of [
+    'kyc_profile',
+    'kyc_challenge',
+    'kyc_consent',
+    'kyc_event',
+    'kyc_webhook_seen',
+    'risk_lens_call',
+  ]) {
     it(`anon cannot read ${table}`, async () => {
       const supa = createClient(url!, anon!, { auth: { persistSession: false } });
       const { data, error } = await supa.from(table).select('*').limit(1);

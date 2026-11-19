@@ -1,7 +1,7 @@
 import { db } from './_lib/db';
 import { json, logError } from './_lib/http';
 import { readSession } from './_lib/session';
-import { getProvider } from './_lib/kyc';
+import { getProvider, kycUnavailable } from './_lib/kyc';
 import { CONSENT_VERSION, CONSENT_TEXT } from './_lib/kyc/consent';
 import { hmacHex } from './_lib/kyc/hash';
 import type { DocType } from './_lib/kyc/types';
@@ -15,6 +15,8 @@ const DOC_TYPES: DocType[] = ['passport', 'national_id', 'drivers_license'];
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
+  const unavailable = kycUnavailable();
+  if (unavailable) return unavailable;
 
   const address = readSession(req);
   if (!address) return json({ error: 'unauthorized' }, 401);

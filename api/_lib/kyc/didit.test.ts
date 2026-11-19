@@ -65,4 +65,36 @@ describe('diditProvider', () => {
   it('rejects a stale timestamp', async () => {
     await expect(diditProvider.parseWebhook(webhook('Approved', {}, nowTs() - 1000))).rejects.toThrow();
   });
+
+  it('ignores a forged X-Timestamp header: a stale signed body is still rejected', async () => {
+    // Captured old delivery, replayed with the unsigned header bumped to "now".
+    const old = webhook('Approved', {}, nowTs() - 3600);
+    old.headers['x-timestamp'] = String(nowTs());
+    await expect(diditProvider.parseWebhook(old)).rejects.toThrow('stale_webhook');
+  });
+
+  it('uses the signed body timestamp even without an X-Timestamp header', async () => {
+    const w = webhook('Approved');
+    delete (w.headers as Record<string, string>)['x-timestamp'];
+    const r = await diditProvider.parseWebhook(w);
+    expect(r.outcome).toBe('verified');
+  });
+
+  it('rejects a body with a missing or non-numeric timestamp', async () => {
+    const body = { webhook_type: 'status.updated', session_id: 'sess_123', status: 'Approved', timestamp: 'soon' };
+    const raw = JSON.stringify(body);
+    await expect(
+      diditProvider.parseWebhook({ headers: { 'x-signature': hmacHex(raw) }, rawBody: raw }),
+    ).rejects.toThrow('stale_webhook');
+  });
+
+  it('returns a stable webhookId per signed delivery', async () => {
+    const ts = nowTs();
+    const a = await diditProvider.parseWebhook(webhook('Approved', {}, ts));
+    const b = await diditProvider.parseWebhook(webhook('Approved', {}, ts));
+    const c = await diditProvider.parseWebhook(webhook('Declined', {}, ts));
+    expect(a.webhookId).toMatch(/^[0-9a-f]{64}$/);
+    expect(b.webhookId).toBe(a.webhookId); // a repeat is recognizable
+    expect(c.webhookId).not.toBe(a.webhookId); // a new status is a new delivery
+  });
 });

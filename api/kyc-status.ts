@@ -1,7 +1,7 @@
 import { db } from './_lib/db';
 import { json, logError } from './_lib/http';
 import { readSession } from './_lib/session';
-import { getProvider } from './_lib/kyc';
+import { getProvider, kycUnavailable } from './_lib/kyc';
 import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
 
 // Return the connected wallet's KYC status. Session-authed: the address comes
@@ -11,6 +11,8 @@ import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
 
 async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return json({ error: 'method' }, 405);
+  const unavailable = kycUnavailable();
+  if (unavailable) return unavailable;
 
   const address = readSession(req);
   if (!address) return json({ error: 'unauthorized' }, 401);

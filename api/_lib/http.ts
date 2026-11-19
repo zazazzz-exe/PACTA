@@ -24,3 +24,14 @@ export function logError(tag: string, e: unknown): void {
   const msg = e instanceof Error ? e.message : String(e);
   console.error(`[${tag}] ${msg}`);
 }
+
+// Best-effort client IP for rate limiting. On Vercel, `x-forwarded-for` and
+// `x-real-ip` are set by the platform (client-supplied values are overwritten),
+// so the first `x-forwarded-for` entry is the caller. Returns null when unknown.
+export function clientIp(req: Request): string | null {
+  const xff = req.headers.get('x-forwarded-for');
+  const first = xff?.split(',')[0]?.trim();
+  if (first) return first;
+  const real = req.headers.get('x-real-ip')?.trim();
+  return real || null;
+}
