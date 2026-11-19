@@ -206,7 +206,7 @@ export function Dashboard() {
               role="radio"
               aria-checked={filter === r.id}
               onClick={() => setFilter(r.id)}
-              className={`min-h-tap rounded-pill border px-3 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`min-h-tap min-w-tap rounded-pill border px-3 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
                 filter === r.id ? 'border-accent bg-accent-tint text-ink' : 'border-card text-slate hover:text-ink'
               }`}
             >

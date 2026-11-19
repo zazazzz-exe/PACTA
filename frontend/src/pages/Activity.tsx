@@ -1,62 +1,13 @@
-import { ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { useState } from 'react';
 import { useWallet } from '../hooks/useWallet';
 import { useActivity } from '../hooks/useActivity';
 import type { ActivityItem } from '../lib/activity';
-import { timeAgo, groupByDay } from '../lib/activity';
-import { shortAddr } from '../lib/format';
-import { txExplorerUrl } from '../lib/config';
+import { groupByDay } from '../lib/activity';
+import { useDisplayCurrency } from '../lib/displayCurrency';
+import { ActivityReceipt, ActivityRow } from '../components/ActivityRow';
 import { ConnectButton } from '../components/ConnectButton';
 import { useOffline } from '../lib/outbox';
 import { OfflineNotice } from '../components/OfflineNotice';
-
-// A small colored asset chip, matching the wallet's asset styling.
-function assetTone(code: string): string {
-  if (code === 'XLM') return 'bg-accent text-on-accent';
-  if (code === 'USDC') return 'bg-accent-deep text-on-accent';
-  return 'bg-mist text-slate';
-}
-
-function Row({ item, now }: { item: ActivityItem; now: number }) {
-  const received = item.kind === 'received';
-  return (
-    <a
-      href={txExplorerUrl(item.hash)}
-      target="_blank"
-      rel="noreferrer"
-      className="flex items-center gap-3 rounded-card border border-hairline bg-paper p-3.5 transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-    >
-      <span className="relative shrink-0">
-        <span
-          className={`grid h-9 w-9 place-items-center rounded-pill text-[11px] font-semibold ${assetTone(item.assetCode)}`}
-        >
-          {item.assetCode.slice(0, 2)}
-        </span>
-        <span
-          className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-pill border-2 border-paper ${
-            received ? 'bg-accent text-on-accent' : 'bg-slate text-on-accent'
-          }`}
-        >
-          {received ? <ArrowDownLeft size={9} aria-hidden /> : <ArrowUpRight size={9} aria-hidden />}
-        </span>
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-medium text-ink">
-          {received ? 'Received' : 'Sent'} {item.assetCode}
-        </span>
-        <span className="mono block truncate text-[12px] text-slate">
-          {received ? 'from' : 'to'} {shortAddr(item.counterparty)}
-        </span>
-      </span>
-      <span className="shrink-0 text-right">
-        <span className={`mono block text-[15px] ${received ? 'text-accent-deep' : 'text-ink'}`}>
-          {received ? '+' : '-'}
-          {item.amount} {item.assetCode}
-        </span>
-        <span className="block text-[12px] text-slate">{timeAgo(item.createdAt, now)}</span>
-      </span>
-    </a>
-  );
-}
 
 export function Activity() {
   const { address } = useWallet();
@@ -64,11 +15,13 @@ export function Activity() {
   const offline = useOffline();
   const now = Date.now();
   const groups = groupByDay(items, now);
+  const [currency] = useDisplayCurrency();
+  const [open, setOpen] = useState<ActivityItem | null>(null);
 
   if (!address) {
     return (
       <div className="mx-auto max-w-app px-1 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight text-ink">Activity</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-ink">Activity</h1>
         <p className="mt-2 text-[14px] text-slate">Connect a wallet to see your history.</p>
         <div className="mt-6 flex justify-center">
           <ConnectButton />
@@ -79,7 +32,7 @@ export function Activity() {
 
   return (
     <div className="mx-auto max-w-app space-y-5 px-1">
-      <h1 className="text-[22px] font-semibold tracking-tight text-ink">Activity</h1>
+      <h1 className="text-[22px] font-bold tracking-tight text-ink">Activity</h1>
 
       {offline ? (
         <OfflineNotice />
@@ -98,7 +51,7 @@ export function Activity() {
       )}
 
       {!loading && !error && items.length === 0 && (
-        <div className="rounded-card border border-hairline bg-paper p-6 text-center text-[14px] text-slate">
+        <div className="rounded-card border border-card bg-paper p-6 text-center text-[14px] text-slate shadow-card">
           No activity yet. Your sends, receives, and swaps will show up here.
         </div>
       )}
@@ -108,13 +61,15 @@ export function Activity() {
           <h2 className="mb-2 px-1 text-[12px] font-semibold uppercase tracking-wider text-slate">
             {group.label}
           </h2>
-          <div className="space-y-2.5">
-            {group.items.map((it) => (
-              <Row key={it.id} item={it} now={now} />
+          <ul className="divide-y divide-[var(--hairline)] overflow-hidden rounded-card border border-card bg-paper shadow-card">
+            {group.items.map((it, i) => (
+              <ActivityRow key={it.id} item={it} currency={currency} index={i} onOpen={setOpen} />
             ))}
-          </div>
+          </ul>
         </div>
       ))}
+
+      <ActivityReceipt item={open} currency={currency} onClose={() => setOpen(null)} />
     </div>
   );
 }

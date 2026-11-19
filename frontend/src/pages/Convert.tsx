@@ -376,7 +376,7 @@ function AssetPicker({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 cursor-pointer opacity-0 disabled:cursor-not-allowed"
+        className="absolute -inset-px cursor-pointer rounded-pill opacity-0 disabled:cursor-not-allowed"
       >
         {options.map((o) => (
           <option key={o.key} value={o.key}>
