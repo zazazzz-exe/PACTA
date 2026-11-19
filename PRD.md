@@ -283,7 +283,7 @@ Pact metrics are readable directly from on-chain data (contract state + events).
 | Wallet (optional path) | **`@creit.tech/stellar-wallets-kit`** | Multi-wallet (Freighter, xBull, Albedo) + WalletConnect for mobile. The "connect wallet" path. |
 | Wallet (default) | **Passkey (WebAuthn) signer** | Signs for the user's smart-wallet contract account. Passkeys stay on the device. See §22.1. |
 | Contract calls | **Generated TypeScript bindings** via `stellar contract bindings typescript` | Type-safe; avoids manual XDR/ScVal handling. |
-| Stellar SDK | `@stellar/stellar-sdk` (v13+) | Pulled in transitively by the bindings; used directly only inside `StellarAdapter` and `lib/contract.ts`. |
+| Stellar SDK | `@stellar/stellar-sdk` (v17; needs Node ≥ 22.12) | Pulled in transitively by the bindings; used directly only inside `StellarAdapter` and `lib/contract.ts`. |
 | Data fetching | TanStack Query (optional) or plain hooks | Plain `useState`/`useEffect` is fine for MVP. |
 | Numbers | `bigint` | `i128`/`u64` contract types map to `bigint` in bindings. Pass `1n`, `BigInt(amount)`, etc. |
 

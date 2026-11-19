@@ -4,7 +4,6 @@ import {
   Operation,
   BASE_FEE,
   Asset,
-  Account,
   Transaction,
 } from '@stellar/stellar-sdk';
 import { getActiveNetwork } from '../activeNetwork';
@@ -96,7 +95,7 @@ export class StellarAdapter implements ChainAdapter {
       )
       .setTimeout(180)
       .build();
-    return this.signAndSubmit(tx.toXDR());
+    return this.signAndSubmit(tx.toXdr());
   }
 
   async getQuote({ from, to, amount, slippageBps }: QuoteParams): Promise<Quote> {
@@ -129,7 +128,7 @@ export class StellarAdapter implements ChainAdapter {
       path: quote.path.map(assetFromId),
       addTrust,
     });
-    return this.signAndSubmit(tx.toXDR());
+    return this.signAndSubmit(tx.toXdr());
   }
 
   // Live account updates via a Horizon payments stream (cursor 'now'), with a
@@ -223,7 +222,7 @@ export class StellarAdapter implements ChainAdapter {
     // Single signing chokepoint for every write path. The wallet returns a
     // signed XDR; submit it via Horizon and surface the hash + explorer link.
     const { signedTxXdr } = await signTransaction(xdr);
-    const signed = TransactionBuilder.fromXDR(signedTxXdr, getActiveNetwork().passphrase);
+    const signed = TransactionBuilder.fromXdr(signedTxXdr, getActiveNetwork().passphrase);
     const resp = await this.server.submitTransaction(signed);
     return { hash: resp.hash, explorerUrl: txExplorerUrl(resp.hash), status: 'success' };
   }
@@ -232,8 +231,13 @@ export class StellarAdapter implements ChainAdapter {
 // Pure: builds the Convert transaction (one path-payment, optionally preceded by
 // a changeTrust op). Exported so the operation shape is unit-testable without a
 // network round-trip. Signing happens via signAndSubmit, never here.
+// Any source TransactionBuilder accepts: a plain Account (tests) or a Horizon
+// AccountResponse from loadAccount(). SDK v17 no longer treats AccountResponse
+// as an Account, so type the parameter by what the builder takes.
+type TxSource = ConstructorParameters<typeof TransactionBuilder>[0];
+
 export function buildConvertTx(
-  account: Account,
+  account: TxSource,
   opts: {
     sendAsset: Asset;
     sendAmount: string;
