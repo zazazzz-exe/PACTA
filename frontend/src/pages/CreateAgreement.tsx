@@ -13,6 +13,7 @@ import { useDebounce } from '../hooks/useDebounce';
 import { takePendingSend } from '../lib/pendingSend';
 import { resolveTokenSac } from '../lib/tokenSac';
 import { useActiveNetwork } from '../lib/activeNetwork';
+import { minPactDuration } from '../lib/escrowConfig';
 
 // Friendly deadline choices; value is the contract `duration` in seconds. The
 // 1-minute option exists only so Emergency Refund can be shown during a live
@@ -32,8 +33,12 @@ const MAINNET_DEFAULT_DURATION = '604800';
 export function CreateAgreement() {
   const { address, connect, kycStatus, kycLoading } = useWallet();
   const net = useActiveNetwork();
-  // Testnet gets the demo preset first; mainnet omits it entirely.
-  const presets = net.key === 'testnet' ? [DEMO_PRESET, ...DEADLINE_PRESETS] : DEADLINE_PRESETS;
+  // Testnet gets the demo preset first; mainnet omits it entirely. Presets below
+  // the contract's on-chain minimum duration are never offered.
+  const minDuration = minPactDuration(net.key);
+  const presets = (net.key === 'testnet' ? [DEMO_PRESET, ...DEADLINE_PRESETS] : DEADLINE_PRESETS).filter(
+    (p) => Number(p.secs) >= minDuration,
+  );
   // If arriving from the Send screen's "Send protected" option, prefill the
   // recipient and amount. Consume-once so a later direct visit is not prefilled.
   const prefill = useRef(takePendingSend()).current;
@@ -95,6 +100,7 @@ export function CreateAgreement() {
     const sh = Number(share);
     if (sh < 0 || sh > 100) return 'Profit share must be between 0 and 100 percent.';
     if (Number(duration) < 0) return 'Duration cannot be negative.';
+    if (Number(duration) < minDuration) return 'That deadline is too short for a Pact. Pick a longer one.';
     return null;
   }
 

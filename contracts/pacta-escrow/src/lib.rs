@@ -8,6 +8,15 @@ const DAY_IN_LEDGERS: u32 = 17_280;
 const BUMP_AMOUNT: u32 = 30 * DAY_IN_LEDGERS;
 const LIFETIME_THRESHOLD: u32 = BUMP_AMOUNT - DAY_IN_LEDGERS;
 
+// ---------- Minimum Pact duration (seconds) ----------
+// The shortest `duration` create_agreement accepts, so Emergency Refund can never
+// be armed the moment a Pact activates. Default (mainnet) build: 1 day. The
+// `testnet` cargo feature compiles a 60-second minimum for live demos only.
+#[cfg(not(feature = "testnet"))]
+pub const MIN_DURATION: u64 = 86_400;
+#[cfg(feature = "testnet")]
+pub const MIN_DURATION: u64 = 60;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -23,6 +32,8 @@ pub enum Error {
     NoMilestonesLeft = 9,
     DeadlineNotReached = 10,
     MilestonesIncomplete = 11,
+    DurationTooShort = 12,
+    SameParty = 13,
 }
 
 #[contracttype]
@@ -105,6 +116,13 @@ impl PactaEscrow {
         }
         if profit_share_bps > 10_000 {
             return Err(Error::InvalidAmount);
+        }
+        // A Pact with yourself would only farm reputation.
+        if investor == trader {
+            return Err(Error::SameParty);
+        }
+        if duration < MIN_DURATION {
+            return Err(Error::DurationTooShort);
         }
 
         let mut counter: u64 = env.storage().instance().get(&DataKey::Counter).unwrap_or(0);

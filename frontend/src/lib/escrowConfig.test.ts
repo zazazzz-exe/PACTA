@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TESTNET, MAINNET } from './networks';
-import { escrowConfigFor } from './escrowConfig';
+import { escrowConfigFor, minPactDuration } from './escrowConfig';
 
 const mainnetEnv = {
   VITE_MAINNET_PACTS_ENABLED: 'true',
@@ -38,5 +38,12 @@ describe('escrowConfigFor', () => {
     // A read source is required: without it, reads made while disconnected would
     // simulate against an empty account and fail.
     expect(escrowConfigFor(enabledMainnet, { ...mainnetEnv, VITE_MAINNET_READ_SOURCE: '' })).toBeNull();
+  });
+});
+
+describe('minPactDuration', () => {
+  it('mirrors the contract MIN_DURATION per build', () => {
+    expect(minPactDuration('testnet')).toBe(60); // `testnet` cargo feature
+    expect(minPactDuration('public')).toBe(86_400); // default (mainnet) build
   });
 });

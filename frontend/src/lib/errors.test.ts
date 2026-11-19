@@ -82,3 +82,12 @@ describe('friendlyError - Horizon result_codes', () => {
     ).toMatch(/little more XLM/i);
   });
 });
+
+describe('friendlyError - escrow min duration and same party', () => {
+  it('maps contract errors 12 and 13', () => {
+    expect(friendlyError(new Error('Error(Contract, #12)'))).toBe(
+      'That deadline is too short for a Pact. Pick a longer one.',
+    );
+    expect(friendlyError(new Error('Error(Contract, #13)'))).toBe('You cannot send a Pact to yourself.');
+  });
+});

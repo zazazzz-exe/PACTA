@@ -13,6 +13,19 @@ export interface EscrowConfig {
   readSource: string; // funded account for read simulation when disconnected
 }
 
+// Shortest Pact `duration` (seconds) the escrow accepts, mirroring the contract's
+// compiled MIN_DURATION (PRD §8.2): the testnet build uses the `testnet` cargo
+// feature (60 s, for live demos); the mainnet build uses the default (1 day).
+// The contract enforces this on-chain (error 12); the UI checks it first.
+export const MIN_PACT_DURATION_SECS: Record<'testnet' | 'mainnet', number> = {
+  testnet: 60,
+  mainnet: 86_400,
+};
+
+export function minPactDuration(netKey: string): number {
+  return netKey === 'testnet' ? MIN_PACT_DURATION_SECS.testnet : MIN_PACT_DURATION_SECS.mainnet;
+}
+
 function str(v: unknown): string {
   return typeof v === 'string' ? v : '';
 }

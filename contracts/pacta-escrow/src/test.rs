@@ -1,6 +1,9 @@
 #![cfg(test)]
 use super::*;
-use soroban_sdk::{testutils::Address as _, token, Address, Env};
+use soroban_sdk::{
+    testutils::{Address as _, Ledger},
+    token, Address, Env,
+};
 
 fn setup_token<'a>(env: &Env, admin: &Address) -> (Address, token::StellarAssetClient<'a>) {
     let sac = env.register_stellar_asset_contract_v2(admin.clone());
@@ -11,6 +14,11 @@ fn setup_token<'a>(env: &Env, admin: &Address) -> (Address, token::StellarAssetC
 
 fn deploy_pacta(env: &Env, admin: &Address) -> Address {
     env.register(PactaEscrow, (admin.clone(),))
+}
+
+// Moves the ledger clock forward so a Pact's deadline has passed.
+fn advance_time(env: &Env, secs: u64) {
+    env.ledger().with_mut(|l| l.timestamp += secs);
 }
 
 #[test]
@@ -34,7 +42,7 @@ fn final_release_auto_completes_and_returns_bond() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -79,7 +87,7 @@ fn complete_is_idempotent_after_auto_complete() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -113,14 +121,15 @@ fn emergency_refund_cannot_seize_bond_after_full_release() {
     let pacta = deploy_pacta(&env, &admin);
     let client = PactaEscrowClient::new(&env, &pacta);
 
-    // duration 0 => deadline reached immediately, but all milestones get released.
+    // Shortest allowed duration; all milestones get released, then the deadline passes.
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &0u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
     client.release_milestone(&id);
     client.release_milestone(&id); // auto-completes
+    advance_time(&env, MIN_DURATION);
 
     // The investor tries to seize the bond after the deadline. It must fail.
     assert_eq!(
@@ -151,9 +160,9 @@ fn emergency_refund_returns_unreleased_plus_bond() {
     let pacta = deploy_pacta(&env, &admin);
     let client = PactaEscrowClient::new(&env, &pacta);
 
-    // duration 0 => deadline == activation time => refund allowed immediately
+    // Shortest allowed duration; the deadline is passed below before the refund.
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &4u32, &1_000u32, &0u64,
+        &investor, &trader, &token_addr, &capital, &bond, &4u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -163,7 +172,9 @@ fn emergency_refund_returns_unreleased_plus_bond() {
     assert_eq!(tranche, 250);
     assert_eq!(token_client.balance(&trader), 250);
 
-    // trader "disappears" -> investor refunds: unreleased (750) + bond (200) = 950
+    // trader "disappears" until the deadline passes
+    advance_time(&env, MIN_DURATION);
+    // investor refunds: unreleased (750) + bond (200) = 950
     client.emergency_refund(&id);
     assert_eq!(token_client.balance(&investor), 950);
     assert_eq!(token_client.balance(&pacta), 0);
@@ -196,7 +207,7 @@ fn trader_reclaims_bond_when_investor_never_funds() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id); // trader bonds; investor never deposits.
     assert_eq!(client.get_agreement(&id).status, Status::Pending);
@@ -227,7 +238,7 @@ fn reclaim_bond_rejected_once_active() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id); // both in -> Active
@@ -250,7 +261,7 @@ fn reclaim_bond_rejected_without_bond() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &MIN_DURATION,
     );
     // No bond posted yet -> nothing to reclaim.
     assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
@@ -277,7 +288,7 @@ fn cancel_while_pending_refunds_deposits() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.deposit_capital(&id); // only investor deposits, still Pending
     client.cancel(&id);
@@ -336,7 +347,7 @@ fn double_post_bond_and_double_deposit_are_rejected() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     // Second bond post is rejected once bonded / Active.
@@ -345,4 +356,102 @@ fn double_post_bond_and_double_deposit_are_rejected() {
     client.deposit_capital(&id);
     // Second deposit is rejected (now Active).
     assert!(client.try_deposit_capital(&id).is_err());
+}
+
+#[test]
+fn create_agreement_enforces_min_duration() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // Below the minimum (including 0): rejected, nothing stored.
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &(MIN_DURATION - 1)),
+        Err(Ok(Error::DurationTooShort))
+    );
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &0u64),
+        Err(Ok(Error::DurationTooShort))
+    );
+    assert_eq!(client.get_count(), 0);
+
+    // Exactly the minimum, and above it: accepted.
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &MIN_DURATION,
+    );
+    assert_eq!(id, 1);
+    let id2 = client.create_agreement(
+        &investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &(MIN_DURATION * 7),
+    );
+    assert_eq!(id2, 2);
+    assert_eq!(client.get_count(), 2);
+}
+
+#[test]
+fn min_duration_holds_from_activation() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    env.ledger().with_mut(|l| l.timestamp = 1_000);
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
+    );
+
+    // Activation happens later; the deadline is a full MIN_DURATION after it.
+    env.ledger().with_mut(|l| l.timestamp = 5_000);
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    assert_eq!(client.get_agreement(&id).deadline, 5_000 + MIN_DURATION);
+
+    // One second early: refused.
+    env.ledger().with_mut(|l| l.timestamp = 5_000 + MIN_DURATION - 1);
+    assert_eq!(client.try_emergency_refund(&id), Err(Ok(Error::DeadlineNotReached)));
+
+    // At the deadline: capital + bond return to the investor.
+    env.ledger().with_mut(|l| l.timestamp = 5_000 + MIN_DURATION);
+    client.emergency_refund(&id);
+    assert_eq!(token_client.balance(&investor), capital + bond);
+}
+
+#[test]
+fn create_agreement_rejects_same_party() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let me = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    assert_eq!(
+        client.try_create_agreement(&me, &me, &token_addr, &100i128, &10i128, &1u32, &0u32, &MIN_DURATION),
+        Err(Ok(Error::SameParty))
+    );
+    assert_eq!(client.get_count(), 0);
+    // Reputation is untouched.
+    let rep = client.get_reputation(&me);
+    assert_eq!((rep.completed, rep.refunded, rep.total_volume), (0, 0, 0));
 }

@@ -35,6 +35,19 @@ want the sharpest scrutiny.
 | Testnet contract | `CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM` |
 | Testnet admin / deployer | `GCO474RPUM4AOF5T4JA55YIFJKP5B3743F6AXD5M65WBB4SNLFTL43PS` |
 
+> **2026-11-19 reopen (min duration + same party), not yet audited.** The table above
+> describes the previously reviewed build. The reopened source (branch `escrow-min-duration`)
+> builds two artifacts that differ only in `MIN_DURATION`:
+>
+> | Build | Command | MIN_DURATION | WASM sha256 | Size |
+> |---|---|---|---|---|
+> | **Mainnet (default, the one to audit)** | `stellar contract build` | 86,400 s | `c88a21535350bb0fb9542d4fe7dbb21d65053214eb6ac3e146049f82332e66a7` | 14,748 bytes |
+> | Testnet only | `stellar contract build --features testnet` | 60 s | `3c24a3763bc454581ff1c422b9ec7e981e05b1c5e685f2177cdf960d55ff105e` | 14,746 bytes |
+>
+> The testnet contract id above is replaced when the reopened build is redeployed to
+> testnet (pending owner approval). Hashes were produced with the toolchain in this table;
+> re-verify after any toolchain change. **Only the default build may ever go to mainnet.**
+
 Release profile (root `Cargo.toml`) sets `overflow-checks = true`, `panic = "abort"`,
 `lto = true`. Arithmetic overflow therefore traps (reverts) rather than wrapping.
 
@@ -43,9 +56,11 @@ Release profile (root `Cargo.toml`) sets `overflow-checks = true`, `panic = "abo
 ```bash
 # from repo root
 rustup target add wasm32v1-none
-stellar contract build                      # -> target/wasm32v1-none/release/pacta_escrow.wasm
-( cd contracts/pacta-escrow && cargo test ) # 10 tests, must pass
+stellar contract build                      # mainnet/default build -> target/wasm32v1-none/release/pacta_escrow.wasm
 sha256sum target/wasm32v1-none/release/pacta_escrow.wasm   # compare to §2
+( cd contracts/pacta-escrow && cargo test && cargo test --features testnet ) # 13 tests each, must pass
+# Testnet-only artifact (60 s MIN_DURATION), never for mainnet:
+stellar contract build --features testnet
 ```
 
 The full, canonical contract source is also mirrored in `PRD.md` §8.6/§8.7; the crate is
@@ -94,7 +109,7 @@ create_agreement ─▶ Pending ──(cancel | reclaim_bond)──▶ Cancelled
 
 | Function | Auth required | State precondition |
 |----------|---------------|--------------------|
-| `create_agreement` | `investor` | — (creates) |
+| `create_agreement` | `investor` | — (creates); `investor != trader`, `duration >= MIN_DURATION` |
 | `post_bond` | `trader` | Pending, not yet bonded |
 | `deposit_capital` | `investor` | Pending, not yet deposited |
 | `release_milestone` | `investor` | Active, milestones remain |
@@ -145,14 +160,34 @@ compatible: no changed signatures/structs; one additive method (`reclaim_bond`).
   post-completion refund rejection, `reclaim_bond` paths, input validation, and double-action
   guards (10 tests total).
 
+## 8a. Change history — 2026-11-19 reopen (tracker tasks #2, #3)
+
+ABI backward compatible: no changed signatures, structs, storage keys, or constructor; two
+additive error codes. `PRD.md` §8 updated first.
+
+- **MEDIUM-2 (fixed) — no minimum duration.** `create_agreement` now rejects
+  `duration < MIN_DURATION` with `DurationTooShort = 12`. `MIN_DURATION` is a compiled
+  constant: 86,400 s (1 day) in the default build, 60 s only with the `testnet` cargo feature
+  so demo Pacts still reach Emergency Refund. The deadline is still recomputed at activation,
+  so the floor applies from activation.
+- **New — self-Pacts blocked.** `create_agreement` rejects `investor == trader` with
+  `SameParty = 13`, so one address cannot farm its own reputation. (Two addresses controlled by
+  one person are not detectable on-chain; that is an app-level / KYC concern.)
+- **Tests:** 3 new tests (min-duration bounds, floor holds from activation, same-party
+  rejection); existing tests use `MIN_DURATION` and advance the ledger clock instead of
+  `duration = 0`, with unchanged assertions. 13 tests pass under both builds.
+- **Auditor focus:** confirm the feature flag cannot leak into the default build, that the
+  mainnet artifact hash in §2 is the one reviewed, and that error precedence in
+  `create_agreement` is unchanged for codes 5 and 6.
+
 ## 9. Known and accepted risks (owner-accepted; please still assess)
 
-- **MEDIUM-2 — no minimum duration.** The sender chooses `duration`; a very short value
-  shortens the recipient's window before a post-deadline refund. Accepted to preserve a
-  60-second testnet demo; mitigated in the frontend (mainnet default 1 week, 1-minute preset
-  testnet-only) and by recipient inspection before posting bond. With HIGH-1 fixed, a
-  *completed* Pact's bond is safe regardless of duration. **Question: is caveat-emptor
-  acceptable here, or do you recommend an on-chain floor?**
+- **Build variants (new).** The testnet and mainnet WASM differ by one compiled constant. The
+  audited artifact is the default build; `scripts/deploy-mainnet.sh` builds without features
+  and can pin `EXPECTED_WASM_SHA256`. Please confirm this is sufficient.
+- **No dispute path.** Once Active, every outcome is in the sender's hands; a sender can still
+  refund after the deadline even if the recipient delivered. Options are compared in
+  `docs/DISPUTES.md`; none is implemented yet.
 - **LOW-1 — `profit_share_bps` unused.** Validated (`<= 10_000`) and stored but never applied
   to any payout; documented as informational/roadmap in `PRD.md`.
 - **No admin powers / no recovery.** `admin` has no pause, upgrade, or dispute-resolution

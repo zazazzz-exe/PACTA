@@ -31,8 +31,10 @@ stellar keys generate --fund "$DEPLOYER" --network "$NETWORK" 2>/dev/null || tru
 ADMIN="$(stellar keys address "$DEPLOYER")"
 echo "    deployer / admin: $ADMIN"
 
-echo "==> Building contract"
-stellar contract build
+echo "==> Building contract (testnet feature: 60 s MIN_DURATION for demo Pacts)"
+# The `testnet` cargo feature is for TESTNET ONLY. Mainnet uses the default
+# build (1 day MIN_DURATION) via scripts/deploy-mainnet.sh.
+stellar contract build --features testnet
 
 WASM="$(find . -path '*wasm32v1-none/release/pacta_escrow.wasm' | head -n 1)"
 if [ -z "$WASM" ]; then
@@ -42,7 +44,7 @@ fi
 echo "    wasm: $WASM"
 
 echo "==> Running tests (GATE — must pass)"
-( cd "$CONTRACT_DIR" && cargo test )
+( cd "$CONTRACT_DIR" && cargo test && cargo test --features testnet )
 
 echo "==> Deploying to $NETWORK (constructor admin = $ADMIN)"
 CONTRACT_ID="$(stellar contract deploy \

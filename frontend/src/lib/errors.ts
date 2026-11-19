@@ -11,6 +11,8 @@ const FRIENDLY: Record<number, string> = {
   9: 'All milestones have already been released.',
   10: 'The agreement deadline has not passed yet.',
   11: 'Release all milestones before completing.',
+  12: 'That deadline is too short for a Pact. Pick a longer one.',
+  13: 'You cannot send a Pact to yourself.',
 };
 
 // Friendly text for known Horizon submitTransaction result_codes.

@@ -403,6 +403,8 @@ Contract crate name: `pacta-escrow`. Contract struct: `PactaEscrow`.
 
 > **Security reopen (2026-07-27).** This section was previously frozen. It was reopened to fix the fund-loss / fund-lock / griefing findings in `docs/PRE_AUDIT_REVIEW.md` (design: `docs/superpowers/specs/2026-07-27-escrow-security-hardening-design.md`; plan: `docs/superpowers/plans/2026-07-27-escrow-security-hardening.md`). Changes are ABI backward compatible: no changed signatures/structs, one additive method (`reclaim_bond`). Key behavior changes: the final `release_milestone` now auto-returns the bond and completes; `complete` is idempotent; the recipient can `reclaim_bond` from Pending; outbound transfers follow checks-effects-interactions. The rebuilt WASM is redeployed to testnet and must be re-audited before any mainnet deploy (`docs/MAINNET_RUNBOOK.md`). §8.6/§8.7 below mirror `contracts/pacta-escrow/src/{lib,test}.rs`, which are authoritative.
 
+> **Minimum duration + same-party reopen (2026-11-19).** Reopened by tracker tasks #2 and #3. `create_agreement` now rejects `investor == trader` (new error `SameParty = 13`) and any `duration` below `MIN_DURATION` (new error `DurationTooShort = 12`). `MIN_DURATION` is a compiled constant: 86,400 s in the default build, 60 s behind the testnet-only `testnet` cargo feature (`stellar contract build --features testnet`) so demo Pacts still reach Emergency Refund. ABI backward compatible: no changed signatures, structs, storage keys, or constructor; two additive error codes. The testnet and mainnet WASM therefore differ: **only the default (no-feature) build may ever be deployed to mainnet, and it must be independently re-audited first** (`docs/MAINNET_RUNBOOK.md`, `docs/AUDIT_BRIEF.md`). Dispute options are compared in `docs/DISPUTES.md`; none is implemented.
+
 ### 8.1 State machine
 
 ```
@@ -443,6 +445,7 @@ Contract crate name: `pacta-escrow`. Contract struct: `PactaEscrow`.
 - On `complete`: idempotent. On an already-`Completed` Pact it is a no-op; otherwise (all milestones released) it returns `bond` to the trader and sets `Completed`. (Profit settlement is roadmap.)
 - On `emergency_refund` (only after `deadline`, only while `Active`): contract transfers `(capital − released_amount) + bond` to the investor. The trader forfeits the bond.
 - On `cancel` (only while `Pending`, investor-authorized): refund any posted capital to investor and any posted bond to trader.
+- On `create_agreement`: rejected with `SameParty` (13) when `investor == trader` (no self-Pacts, so reputation cannot be farmed with one address), and with `DurationTooShort` (12) when `duration < MIN_DURATION`. `MIN_DURATION` is a compiled constant: **86,400 s (1 day)** in the default build used for mainnet, **60 s** only when built with the `testnet` cargo feature. The deadline is recomputed at activation as `activation time + duration`, so the minimum always applies from activation.
 - On `reclaim_bond` (only while `Pending`, trader-authorized, bond posted): return the bond to the trader and any deposited capital to the investor, then set `Cancelled`. Lets the recipient exit if the sender never funds the Pact.
 
 All amounts are `i128` in the token's base units. **SAC/USDC use 7 decimals**, so `10_000_000` = 1.0 token.
@@ -519,6 +522,8 @@ pub enum Error {
     NoMilestonesLeft = 9,
     DeadlineNotReached = 10,
     MilestonesIncomplete = 11,
+    DurationTooShort = 12,
+    SameParty = 13,
 }
 ```
 
@@ -559,6 +564,15 @@ const DAY_IN_LEDGERS: u32 = 17_280;
 const BUMP_AMOUNT: u32 = 30 * DAY_IN_LEDGERS;
 const LIFETIME_THRESHOLD: u32 = BUMP_AMOUNT - DAY_IN_LEDGERS;
 
+// ---------- Minimum Pact duration (seconds) ----------
+// The shortest `duration` create_agreement accepts, so Emergency Refund can never
+// be armed the moment a Pact activates. Default (mainnet) build: 1 day. The
+// `testnet` cargo feature compiles a 60-second minimum for live demos only.
+#[cfg(not(feature = "testnet"))]
+pub const MIN_DURATION: u64 = 86_400;
+#[cfg(feature = "testnet")]
+pub const MIN_DURATION: u64 = 60;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -574,6 +588,8 @@ pub enum Error {
     NoMilestonesLeft = 9,
     DeadlineNotReached = 10,
     MilestonesIncomplete = 11,
+    DurationTooShort = 12,
+    SameParty = 13,
 }
 
 #[contracttype]
@@ -656,6 +672,13 @@ impl PactaEscrow {
         }
         if profit_share_bps > 10_000 {
             return Err(Error::InvalidAmount);
+        }
+        // A Pact with yourself would only farm reputation.
+        if investor == trader {
+            return Err(Error::SameParty);
+        }
+        if duration < MIN_DURATION {
+            return Err(Error::DurationTooShort);
         }
 
         let mut counter: u64 = env.storage().instance().get(&DataKey::Counter).unwrap_or(0);
@@ -990,6 +1013,11 @@ edition = "2021"
 crate-type = ["cdylib"]
 doctest = false
 
+[features]
+# Testnet-only build: shortens MIN_DURATION so live demo Pacts can reach
+# Emergency Refund quickly. NEVER enable for a mainnet build.
+testnet = []
+
 [dependencies]
 soroban-sdk = "22"
 
@@ -1016,7 +1044,10 @@ Create `contracts/pacta-escrow/src/test.rs`. These tests cover the happy path an
 ```rust
 #![cfg(test)]
 use super::*;
-use soroban_sdk::{testutils::Address as _, token, Address, Env};
+use soroban_sdk::{
+    testutils::{Address as _, Ledger},
+    token, Address, Env,
+};
 
 fn setup_token<'a>(env: &Env, admin: &Address) -> (Address, token::StellarAssetClient<'a>) {
     let sac = env.register_stellar_asset_contract_v2(admin.clone());
@@ -1027,6 +1058,11 @@ fn setup_token<'a>(env: &Env, admin: &Address) -> (Address, token::StellarAssetC
 
 fn deploy_pacta(env: &Env, admin: &Address) -> Address {
     env.register(PactaEscrow, (admin.clone(),))
+}
+
+// Moves the ledger clock forward so a Pact's deadline has passed.
+fn advance_time(env: &Env, secs: u64) {
+    env.ledger().with_mut(|l| l.timestamp += secs);
 }
 
 #[test]
@@ -1050,7 +1086,7 @@ fn final_release_auto_completes_and_returns_bond() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -1095,7 +1131,7 @@ fn complete_is_idempotent_after_auto_complete() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &1u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -1129,14 +1165,15 @@ fn emergency_refund_cannot_seize_bond_after_full_release() {
     let pacta = deploy_pacta(&env, &admin);
     let client = PactaEscrowClient::new(&env, &pacta);
 
-    // duration 0 => deadline reached immediately, but all milestones get released.
+    // Shortest allowed duration; all milestones get released, then the deadline passes.
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &0u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
     client.release_milestone(&id);
     client.release_milestone(&id); // auto-completes
+    advance_time(&env, MIN_DURATION);
 
     // The investor tries to seize the bond after the deadline. It must fail.
     assert_eq!(
@@ -1167,9 +1204,9 @@ fn emergency_refund_returns_unreleased_plus_bond() {
     let pacta = deploy_pacta(&env, &admin);
     let client = PactaEscrowClient::new(&env, &pacta);
 
-    // duration 0 => deadline == activation time => refund allowed immediately
+    // Shortest allowed duration; the deadline is passed below before the refund.
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &4u32, &1_000u32, &0u64,
+        &investor, &trader, &token_addr, &capital, &bond, &4u32, &1_000u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id);
@@ -1179,7 +1216,9 @@ fn emergency_refund_returns_unreleased_plus_bond() {
     assert_eq!(tranche, 250);
     assert_eq!(token_client.balance(&trader), 250);
 
-    // trader "disappears" -> investor refunds: unreleased (750) + bond (200) = 950
+    // trader "disappears" until the deadline passes
+    advance_time(&env, MIN_DURATION);
+    // investor refunds: unreleased (750) + bond (200) = 950
     client.emergency_refund(&id);
     assert_eq!(token_client.balance(&investor), 950);
     assert_eq!(token_client.balance(&pacta), 0);
@@ -1212,7 +1251,7 @@ fn trader_reclaims_bond_when_investor_never_funds() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id); // trader bonds; investor never deposits.
     assert_eq!(client.get_agreement(&id).status, Status::Pending);
@@ -1243,7 +1282,7 @@ fn reclaim_bond_rejected_once_active() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     client.deposit_capital(&id); // both in -> Active
@@ -1266,7 +1305,7 @@ fn reclaim_bond_rejected_without_bond() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &1_000i128, &200i128, &2u32, &0u32, &MIN_DURATION,
     );
     // No bond posted yet -> nothing to reclaim.
     assert_eq!(client.try_reclaim_bond(&id), Err(Ok(Error::InvalidState)));
@@ -1293,7 +1332,7 @@ fn cancel_while_pending_refunds_deposits() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.deposit_capital(&id); // only investor deposits, still Pending
     client.cancel(&id);
@@ -1352,7 +1391,7 @@ fn double_post_bond_and_double_deposit_are_rejected() {
     let client = PactaEscrowClient::new(&env, &pacta);
 
     let id = client.create_agreement(
-        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &3600u64,
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
     );
     client.post_bond(&id);
     // Second bond post is rejected once bonded / Active.
@@ -1361,6 +1400,104 @@ fn double_post_bond_and_double_deposit_are_rejected() {
     client.deposit_capital(&id);
     // Second deposit is rejected (now Active).
     assert!(client.try_deposit_capital(&id).is_err());
+}
+
+#[test]
+fn create_agreement_enforces_min_duration() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    // Below the minimum (including 0): rejected, nothing stored.
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &(MIN_DURATION - 1)),
+        Err(Ok(Error::DurationTooShort))
+    );
+    assert_eq!(
+        client.try_create_agreement(&investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &0u64),
+        Err(Ok(Error::DurationTooShort))
+    );
+    assert_eq!(client.get_count(), 0);
+
+    // Exactly the minimum, and above it: accepted.
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &MIN_DURATION,
+    );
+    assert_eq!(id, 1);
+    let id2 = client.create_agreement(
+        &investor, &trader, &token_addr, &100i128, &10i128, &1u32, &0u32, &(MIN_DURATION * 7),
+    );
+    assert_eq!(id2, 2);
+    assert_eq!(client.get_count(), 2);
+}
+
+#[test]
+fn min_duration_holds_from_activation() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let investor = Address::generate(&env);
+    let trader = Address::generate(&env);
+    let (token_addr, token_admin) = setup_token(&env, &admin);
+    let token_client = token::Client::new(&env, &token_addr);
+
+    let capital: i128 = 1_000;
+    let bond: i128 = 200;
+    token_admin.mint(&investor, &capital);
+    token_admin.mint(&trader, &bond);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    env.ledger().with_mut(|l| l.timestamp = 1_000);
+    let id = client.create_agreement(
+        &investor, &trader, &token_addr, &capital, &bond, &2u32, &0u32, &MIN_DURATION,
+    );
+
+    // Activation happens later; the deadline is a full MIN_DURATION after it.
+    env.ledger().with_mut(|l| l.timestamp = 5_000);
+    client.post_bond(&id);
+    client.deposit_capital(&id);
+    assert_eq!(client.get_agreement(&id).deadline, 5_000 + MIN_DURATION);
+
+    // One second early: refused.
+    env.ledger().with_mut(|l| l.timestamp = 5_000 + MIN_DURATION - 1);
+    assert_eq!(client.try_emergency_refund(&id), Err(Ok(Error::DeadlineNotReached)));
+
+    // At the deadline: capital + bond return to the investor.
+    env.ledger().with_mut(|l| l.timestamp = 5_000 + MIN_DURATION);
+    client.emergency_refund(&id);
+    assert_eq!(token_client.balance(&investor), capital + bond);
+}
+
+#[test]
+fn create_agreement_rejects_same_party() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let me = Address::generate(&env);
+    let (token_addr, _t) = setup_token(&env, &admin);
+
+    let pacta = deploy_pacta(&env, &admin);
+    let client = PactaEscrowClient::new(&env, &pacta);
+
+    assert_eq!(
+        client.try_create_agreement(&me, &me, &token_addr, &100i128, &10i128, &1u32, &0u32, &MIN_DURATION),
+        Err(Ok(Error::SameParty))
+    );
+    assert_eq!(client.get_count(), 0);
+    // Reputation is untouched.
+    let rep = client.get_reputation(&me);
+    assert_eq!((rep.completed, rep.refunded, rep.total_volume), (0, 0, 0));
 }
 ```
 
@@ -1669,9 +1806,10 @@ stellar keys address deployer
 **3. Build the contract**
 ```bash
 cd contracts/pacta-escrow
-stellar contract build
+stellar contract build --features testnet   # TESTNET ONLY: 60 s MIN_DURATION for demo Pacts
+# mainnet uses the default build (no features, 1 day MIN_DURATION): stellar contract build
 # wasm at target/wasm32v1-none/release/pacta_escrow.wasm
-cargo test                 # all §8.7 tests must pass
+cargo test && cargo test --features testnet # all §8.7 tests must pass under both builds
 ```
 
 **4. Upload + deploy (constructor takes admin = deployer's address)**

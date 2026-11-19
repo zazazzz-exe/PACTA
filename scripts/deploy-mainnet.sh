@@ -49,7 +49,9 @@ echo "==> Resolving deployer / admin address (must be funded on mainnet)"
 ADMIN="$(stellar keys address "$DEPLOYER")"
 echo "    deployer / admin: $ADMIN"
 
-echo "==> Building contract"
+echo "==> Building contract (DEFAULT features only: 1 day MIN_DURATION)"
+# Never pass `--features testnet` here: that build shortens MIN_DURATION to 60 s
+# and must never reach mainnet. A plain build always rebuilds without it.
 stellar contract build
 
 WASM="$(find . -path '*wasm32v1-none/release/pacta_escrow.wasm' | head -n 1)"
@@ -58,6 +60,15 @@ if [ -z "$WASM" ]; then
   exit 1
 fi
 echo "    wasm: $WASM"
+
+# Optional but strongly recommended: pin the audited artifact. Set
+# EXPECTED_WASM_SHA256 to the hash the auditor signed off (docs/AUDIT_BRIEF.md §2).
+WASM_SHA256="$(sha256sum "$WASM" | cut -d' ' -f1)"
+echo "    sha256: $WASM_SHA256"
+if [ -n "${EXPECTED_WASM_SHA256:-}" ] && [ "$WASM_SHA256" != "$EXPECTED_WASM_SHA256" ]; then
+  echo "ERROR: wasm hash does not match EXPECTED_WASM_SHA256 (not the audited build)." >&2
+  exit 1
+fi
 
 echo "==> Running tests (GATE — must pass)"
 ( cd "$CONTRACT_DIR" && cargo test )
