@@ -31,14 +31,14 @@ export function InstallPrompt({ variant }: { variant: 'banner' | 'row' }) {
             <span className="flex-1">Install PACTA for one-tap access, even offline.</span>
             <button
               onClick={onInstall}
-              className="rounded-pill bg-accent px-3 py-1 text-[12px] font-semibold text-white hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="inline-flex min-h-tap items-center rounded-pill bg-btn-primary shadow-glow px-4 text-[13px] font-semibold text-on-accent hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
             >
               Download app
             </button>
             <button
               onClick={dismiss}
               aria-label="Dismiss"
-              className="grid h-7 w-7 place-items-center rounded-pill hover:bg-white/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="grid h-11 w-11 place-items-center rounded-pill hover:bg-white/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               <X size={14} aria-hidden />
             </button>
@@ -58,7 +58,7 @@ export function InstallPrompt({ variant }: { variant: 'banner' | 'row' }) {
         </div>
         <button
           onClick={onInstall}
-          className="inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="inline-flex min-h-tap items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <Download size={15} aria-hidden /> Install app
         </button>
@@ -91,7 +91,7 @@ function IosHelp({ onClose }: { onClose: () => void }) {
         </ol>
         <button
           onClick={onClose}
-          className="mt-4 w-full rounded-control bg-accent px-4 py-2 text-[13px] font-medium text-white hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="mt-4 w-full min-h-tap rounded-pill bg-btn-primary shadow-glow px-4 py-2 text-[13px] font-medium text-on-accent hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
         >
           Got it
         </button>

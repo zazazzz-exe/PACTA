@@ -12,7 +12,7 @@ export function HowItWorks() {
     <div className="grid gap-4 sm:grid-cols-3">
       {steps.map((s) => (
         <div key={s.title} className="rounded-card border border-hairline bg-paper p-5">
-          <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent text-white">{s.icon}</span>
+          <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent text-on-accent">{s.icon}</span>
           <h3 className="mt-3 text-[15px] font-semibold text-ink">{s.title}</h3>
           <p className="mt-1.5 text-[13px] leading-relaxed text-slate">{s.body}</p>
         </div>

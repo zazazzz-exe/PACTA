@@ -2,6 +2,8 @@
 
 > Visual + interaction spec for the PACTA frontend. **This supersedes PRD.md §12.** Use this file for all visual decisions; use PRD.md for everything functional (contract interface, flows, screens-as-behavior).
 
+> **2026-11 "electric glow" (supersedes the emerald / warm-neutral visuals below).** The live design system is the one in CLAUDE.md and PRD.md §12: dark by default with a light mode, accent `#2B5CFF`, glass cards, a radial hero card, a floating pill nav, Plus Jakarta Sans + JetBrains Mono. §2 and §6.0 below describe it and point at the code, which is the source of truth (`frontend/src/index.css`, `frontend/tailwind.config.js`, `frontend/src/components/ui/`). Where older sections mention emerald, warm cream neutrals, Hanken Grotesk, "the only dark surface", 16px cards or the bottom tab bar, read them as superseded; their layout and behavior guidance still applies.
+
 ---
 
 ## 0. How Claude Code should use this file
@@ -35,185 +37,50 @@ PACTA holds people's money. Most users are cautious, mobile-first, low on crypto
 
 ---
 
-## 2. Design tokens (drop-in)
+## 2. Design tokens ("electric glow")
 
-### 2.1 `frontend/src/index.css`
+The tokens live in code; do not copy values into components.
+- **`frontend/src/index.css`**: CSS variables. Dark is the base (`:root` and `:root[data-theme='dark']`), light overrides under `:root[data-theme='light']`, theme-independent tokens (proof panel, hero, radii, fonts) in a separate `:root` block. Colors are stored as RGB channels (`--accent: 43 92 255`).
+- **`frontend/tailwind.config.js`**: maps every token to a Tailwind name as `rgb(var(--x) / <alpha-value>)`, so opacity modifiers (`ring-accent/40`, `bg-canvas/95`) work. Before this change they silently produced no CSS.
+- **`frontend/src/lib/contrast.test.ts`**: reads the variables and fails the build if any text/surface pair drops below WCAG AA (4.5:1) in either theme.
 
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+### 2.1 Palette
 
-:root {
-  /* surfaces */
-  --color-canvas: #F4F2EC;
-  --color-paper: #FFFFFF;
-  --color-mist: #F8F6F1;
-  --color-hairline: #E6E2D8;
-  --color-hairline-strong: #D8D3C6;
+| Token (Tailwind) | Dark | Light | Use |
+|---|---|---|---|
+| `canvas` | `#05060B` + top radial glow `rgba(43,92,255,0.38)` | `#F5F4EF` + glow `rgba(43,92,255,0.2)` | page background (glow is on `body`) |
+| `paper` | `#0D1122` | `#FFFFFF` | solid card surface |
+| `mist` | `#12172E` | `#ECEFFA` | subtle fills, inactive chips |
+| `hairline` / `hairline-strong` | `rgba(124,155,255,.16/.28)` | `rgba(43,92,255,.14/.26)` | dividers, borders |
+| `ink` | `#F5F4EF` | `#0A0A0B` | primary text |
+| `slate` | `#9AA0B4` | `#5A5E70` | muted text |
+| `fog` | `#8A91A8` | `#585C6E` | tertiary text (light value is the lightest that passes AA on the glow) |
+| `accent` (fill) | `#2B5CFF` | `#2B5CFF` | buttons, active states |
+| `text-accent` | `#7C9BFF` | `#1F4FE0` | blue text and links. `#2B5CFF` as text fails AA on dark, so the text utility maps to the blue-text token |
+| `accent-tint` / `text-accent-deep` | `#17214F` / `#A9BEFF` | `#E4EAFF` / `#1738AA` | tinted chips and their text |
+| `on-accent` | `#F5F4EF` | `#F5F4EF` | text on accent and hero fills |
+| `deadline` / `refund` | `#F2B442` / `#FF7A6B` | `#965800` / `#B4281E` | states (with `-tint` and `-deep`) |
+| `carbon`, `onyx`, `panel-*`, `signal*` | always dark | same | proof panel |
 
-  /* ink + text */
-  --color-ink: #1A201D;
-  --color-slate: #586059;
-  --color-fog: #8C918A;
+### 2.2 Surfaces and effects
 
-  /* accent — emerald (primary + "protected") */
-  --color-accent: #0B7A63;
-  --color-accent-deep: #0A5A49;
-  --color-accent-tint: #E2F2EC;
-
-  /* state — deadline (amber) */
-  --color-deadline: #C77D11;
-  --color-deadline-deep: #8A560A;
-  --color-deadline-tint: #FAEED6;
-
-  /* state — refund / destructive (clay) */
-  --color-refund: #B43A2C;
-  --color-refund-deep: #8C2C21;
-  --color-refund-tint: #F8E8E4;
-
-  /* proof panel — the one dark surface */
-  --color-carbon: #0B0F0E;
-  --color-onyx: #121916;
-  --color-grid: #233029;
-  --color-panel-ink: #E7ECE9;
-  --color-panel-muted: #7C8B85;
-  --color-signal: #34E3B0;
-  --color-signal-amber: #F2B442;
-  --color-signal-red: #FB6A57;
-
-  /* radius */
-  --radius-card: 16px;
-  --radius-control: 12px;
-  --radius-pill: 999px;
-
-  /* elevation (soft, warm-tinted) */
-  --shadow-card: 0 1px 2px rgba(26,32,29,0.04), 0 6px 16px rgba(26,32,29,0.05);
-  --shadow-pop: 0 8px 28px rgba(26,32,29,0.12);
-
-  /* type */
-  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-html, body { background: var(--color-canvas); color: var(--color-ink); }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
-
-/* tabular, aligned numbers everywhere money/data appears */
-.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
-}
-```
-
-### 2.2 `frontend/tailwind.config.js`
-
-Tokens live in CSS so they can be re-themed at runtime (dark mode). Tailwind maps semantic names to them.
-
-```js
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
-  darkMode: ['selector', '[data-theme="dark"]'],
-  theme: {
-    extend: {
-      colors: {
-        canvas: 'var(--color-canvas)',
-        paper: 'var(--color-paper)',
-        mist: 'var(--color-mist)',
-        hairline: { DEFAULT: 'var(--color-hairline)', strong: 'var(--color-hairline-strong)' },
-        ink: 'var(--color-ink)',
-        slate: 'var(--color-slate)',
-        fog: 'var(--color-fog)',
-        accent: {
-          DEFAULT: 'var(--color-accent)',
-          deep: 'var(--color-accent-deep)',
-          tint: 'var(--color-accent-tint)',
-        },
-        deadline: {
-          DEFAULT: 'var(--color-deadline)',
-          deep: 'var(--color-deadline-deep)',
-          tint: 'var(--color-deadline-tint)',
-        },
-        refund: {
-          DEFAULT: 'var(--color-refund)',
-          deep: 'var(--color-refund-deep)',
-          tint: 'var(--color-refund-tint)',
-        },
-        carbon: 'var(--color-carbon)',
-        onyx: 'var(--color-onyx)',
-        grid: 'var(--color-grid)',
-        'panel-ink': 'var(--color-panel-ink)',
-        'panel-muted': 'var(--color-panel-muted)',
-        signal: {
-          DEFAULT: 'var(--color-signal)',
-          amber: 'var(--color-signal-amber)',
-          red: 'var(--color-signal-red)',
-        },
-      },
-      fontFamily: {
-        sans: 'var(--font-sans)',
-        mono: 'var(--font-mono)',
-      },
-      borderRadius: {
-        card: 'var(--radius-card)',
-        control: 'var(--radius-control)',
-        pill: 'var(--radius-pill)',
-      },
-      boxShadow: {
-        card: 'var(--shadow-card)',
-        pop: 'var(--shadow-pop)',
-      },
-      maxWidth: { app: '480px', 'app-wide': '560px' },
-    },
-  },
-  plugins: [],
-};
-```
+| Name | Value |
+|---|---|
+| Primary button (`bg-btn-primary`) | `linear-gradient(180deg, #5B86FF 0%, #2B5CFF 32%)`, pill radius, glow `0 8px 24px rgba(43,92,255,0.5)` (`shadow-glow`), off-white text. Top-lit so the label always sits on `#2B5CFF` (4.68:1). A left-to-right gradient would put the label on `#5B86FF` (3.0:1, fails AA). |
+| Glass card (`bg-glass border-card`) | dark: `linear-gradient(160deg, rgba(77,124,255,0.14), rgba(255,255,255,0.03))`, border `rgba(124,155,255,0.22)`; light: white, border `rgba(43,92,255,0.14)`, soft shadow. Radius 22px (`rounded-card`). |
+| Hero card (`bg-hero`) | `radial-gradient(120% 120% at 88% 0%, #5B86FF, #2B4BE8 32%, #14208A 68%, #0B0F33)`, radius 26px (`rounded-hero`). The bright center sits top-right so labels land on `#2B4BE8` or darker. Translucent text on the hero needs at least 85% opacity (use `text-on-accent/90`). |
+| Radius | card 22px, hero 26px, control 14px, pill 999px |
 
 ### 2.3 Fonts
 
-Install and import the two faces (no external network at runtime — bundled):
+Plus Jakarta Sans (400/500/600/700) for UI, JetBrains Mono (400/500) for numbers, amounts and addresses (`.mono`, tabular numerals). Loaded via `@fontsource` in `frontend/src/main.tsx`.
 
-```bash
-npm i @fontsource/plus-jakarta-sans @fontsource/jetbrains-mono
-```
+### 2.4 Theme switching
 
-In `frontend/src/main.tsx`:
-
-```ts
-import '@fontsource/plus-jakarta-sans/400.css';
-import '@fontsource/plus-jakarta-sans/500.css';
-import '@fontsource/plus-jakarta-sans/600.css';
-import '@fontsource/jetbrains-mono/400.css';
-import '@fontsource/jetbrains-mono/500.css';
-import './index.css';
-```
-
-> Type rationale: Plus Jakarta Sans is humanist and warm without being childish — it carries the "calm, human, trustworthy" register. JetBrains Mono is sharp and engineered — it carries the "verifiable, on-chain" register. The two faces *are* the two halves of the thesis. Don't swap in Inter + a generic mono; that's the default pairing this brief is trying to avoid. If you must substitute, keep the humanist-sans + engineered-mono contrast.
-
-### 2.4 Dark mode (stretch — ship light first)
-
-Only build this after the light app is done and the demo path works. Add to `index.css`:
-
-```css
-:root[data-theme="dark"] {
-  --color-canvas: #0E1311;
-  --color-paper: #161D1A;
-  --color-mist: #121815;
-  --color-hairline: #283029;
-  --color-hairline-strong: #354039;
-  --color-ink: #ECF1EE;
-  --color-slate: #9BA39D;
-  --color-fog: #6E766F;
-  --color-accent: #2CC79E;       /* emerald lifts toward signal mint for contrast on dark */
-  --color-accent-deep: #6FE9C6;
-  --color-accent-tint: #143029;
-}
-```
-
-The proof panel keeps its literal carbon/signal values in both modes — it is dark by design, not by theme.
+- `data-theme` on `<html>`. Set before first paint by `frontend/public/theme-init.js`, an external file because the CSP blocks inline scripts.
+- Choice order: saved per-device choice (`localStorage` key `pacta-theme`), else the OS `prefers-color-scheme`, else dark.
+- Controls: Profile → Appearance (System / Dark / Light) and a sun/moon button in the header. Logic in `frontend/src/lib/theme.ts`.
+- The proof panel and the hero card stay dark in both themes.
 
 ---
 
@@ -259,6 +126,23 @@ Wallet set: `ArrowUpRight` (send), `ArrowDownLeft` (receive), `Repeat` / `ArrowL
 ## 6. Components
 
 Patterns below are Tailwind + React. Build them as real components in `frontend/src/components`. Keep variants minimal.
+
+### 6.0 Shared components (electric glow)
+
+All in `frontend/src/components/ui/` (index re-exports). Live gallery: `#/design` on the Vite dev server only (`frontend/src/pages/DesignGallery.tsx`; never shipped).
+
+| Component | Variants / notes |
+|---|---|
+| `Button` | `primary` (gradient pill + glow), `secondary` (glass pill), `ghost` (blue text), `danger` (refund outline); sizes `md` 48px, `sm` 44px. Defaults to `type="button"`. |
+| `Card` | `glass` (default) and `hero` |
+| `Chip` / `Pill` | tones `neutral`, `accent`, `deadline`, `refund`; static label, or a 44px choice chip when given `onClick` (`selected` = filled, `aria-pressed`) |
+| `IconButton` | always 44x44, required `label` (aria-label + tooltip); `ghost`, `glass`, `primary` |
+| `Avatar` | gradient ring around initials; `sm`, `md`, `lg` |
+| `ListRow` | leading / title / subtitle / trailing (mono); a 56px button when clickable |
+| `FloatingNav` | floating glass pill above the safe area; same five tabs |
+| `ThemeToggle`, `ThemeQuickToggle` | appearance radio group (Profile) and header shortcut |
+
+Rules: tap targets at least 44px (inline links inside a sentence are exempt, per WCAG 2.5.8); visible focus ring `ring-accent-text/70` on every control; WCAG AA in both themes (enforced by `contrast.test.ts` for tokens, axe for screens).
 
 ### 6.1 Button
 

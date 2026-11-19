@@ -54,7 +54,7 @@ export function Send() {
   if (sentHash) {
     return (
       <div className="mx-auto max-w-app space-y-5 px-1 text-center">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-pill bg-accent text-white">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-pill bg-accent text-on-accent">
           <CheckCircle2 size={28} aria-hidden />
         </span>
         <div>
@@ -67,7 +67,7 @@ export function Send() {
           href={txExplorerUrl(sentHash)}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[13px] text-accent-deep hover:opacity-80"
+          className="inline-flex min-h-tap items-center gap-1 text-[13px] text-accent hover:opacity-80"
         >
           View on Stellar Expert <ArrowUpRight size={14} aria-hidden />
         </a>
@@ -231,7 +231,7 @@ export function Send() {
             onClick={doSendProtected}
             className="flex w-full items-start gap-3 rounded-card border border-accent/30 bg-accent-tint p-4 text-left transition hover:border-accent/50 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-accent text-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-pill bg-accent text-on-accent">
               <ShieldCheck size={18} aria-hidden />
             </span>
             <span>

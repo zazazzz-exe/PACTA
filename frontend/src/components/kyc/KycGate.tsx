@@ -52,7 +52,7 @@ export function KycGate({ status, loading }: { status: KycStatus; loading?: bool
       <div className="relative overflow-hidden rounded-card border border-accent/20 bg-gradient-to-br from-accent-tint to-paper p-8 text-center shadow-card">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-accent/10 blur-2xl" aria-hidden />
         <div className="relative">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-accent text-white shadow-pop">
+          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-accent shadow-pop">
             <ShieldCheck size={24} aria-hidden />
           </span>
           <h1 className="text-[18px] font-medium text-ink">{c.title}</h1>

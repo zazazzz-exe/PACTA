@@ -297,7 +297,7 @@ function EmptyState() {
     <div className="relative overflow-hidden rounded-card border border-accent/20 bg-accent-tint/50 p-8 text-center shadow-card">
       <div className="mesh-dots pointer-events-none absolute inset-0" aria-hidden />
       <div className="relative">
-        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-white shadow-card">
+        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-on-accent shadow-card">
           <Plus size={22} aria-hidden />
         </span>
         <h2 className="text-[16px] font-medium text-ink">No Pacts yet</h2>
@@ -317,7 +317,7 @@ function ConnectGate() {
       <div className="relative overflow-hidden rounded-card border border-accent/20 bg-gradient-to-br from-accent-tint to-paper p-8 text-center shadow-card">
         <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-accent/10 blur-2xl" aria-hidden />
         <div className="relative">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-accent text-white shadow-pop">
+          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-full bg-accent text-on-accent shadow-pop">
             <Wallet size={24} aria-hidden />
           </span>
           <h1 className="text-[18px] font-medium text-ink">Connect your wallet</h1>

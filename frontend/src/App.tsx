@@ -22,7 +22,8 @@ import { Receive } from './pages/Receive';
 import { Send } from './pages/Send';
 import { Convert } from './pages/Convert';
 import { Activity } from './pages/Activity';
-import { BottomTabs } from './components/BottomTabs';
+import { FloatingNav } from './components/ui/FloatingNav';
+import { ThemeQuickToggle } from './components/ui/ThemeQuickToggle';
 import { Toaster } from './components/Toaster';
 import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
@@ -79,7 +80,7 @@ function LockNotice() {
         <button
           onClick={clearLockNotice}
           aria-label="Dismiss"
-          className="grid h-8 w-8 place-items-center rounded-control hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="grid h-11 w-11 place-items-center rounded-control hover:bg-paper focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           <X size={16} aria-hidden />
         </button>
@@ -141,6 +142,7 @@ export default function App() {
           </div>
           <div className="flex items-center gap-2">
             {address && <IdentityBadge status={kycStatus} className="hidden sm:inline-flex" />}
+            <ThemeQuickToggle />
             <button
               onClick={startTour}
               aria-label="Take a tour"
@@ -164,7 +166,7 @@ export default function App() {
       <main
         className={`relative z-10 flex-1 ${
           route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'
-        } ${showTabs ? 'pb-24' : ''}`}
+        } ${showTabs ? 'pb-32' : ''}`}
       >
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}
@@ -183,7 +185,7 @@ export default function App() {
       </main>
 
       {!address && (
-      <footer className={`relative z-10 bg-[#0A3328] text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-12'}`}>
+      <footer className={`relative z-10 bg-hero-navy text-panel-ink ${route.name === 'landing' ? 'mt-0' : 'mt-12'}`}>
         <div className="mx-auto max-w-6xl px-5 py-9">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
             {/* Brand */}
@@ -241,7 +243,7 @@ export default function App() {
                 href="https://stellar.org/soroban"
                 target="_blank"
                 rel="noreferrer"
-                className="font-medium text-signal hover:opacity-80 focus:outline-none focus-visible:opacity-80"
+                className="inline-flex min-h-tap items-center font-medium text-signal hover:opacity-80 focus:outline-none focus-visible:underline"
               >
                 Stellar Soroban
               </a>
@@ -251,7 +253,7 @@ export default function App() {
       </footer>
       )}
 
-      {showTabs && <BottomTabs current={route.name} />}
+      {showTabs && <FloatingNav current={route.name} />}
       <Toaster />
     </div>
   );
@@ -261,7 +263,8 @@ function FooterBtn({ onClick, children }: { onClick: () => void; children: strin
   return (
     <button
       onClick={onClick}
-      className="text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+      type="button"
+      className="inline-flex min-h-tap min-w-tap items-center text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink focus-visible:underline"
     >
       {children}
     </button>
@@ -274,7 +277,7 @@ function FooterExt({ href, children }: { href: string; children: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-1 text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
+      className="inline-flex min-h-tap items-center gap-1 text-[13px] text-panel-muted transition-colors hover:text-panel-ink focus:outline-none focus-visible:text-panel-ink"
     >
       {children}
       <ArrowUpRight size={13} aria-hidden />

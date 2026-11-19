@@ -58,7 +58,7 @@ export function TraderProfile({ address }: { address: string }) {
       {/* Identity + reputation summary */}
       <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
         <div className="flex items-center gap-3">
-          <Avatar addr={address} className="h-12 w-12 text-base" />
+          <Avatar addr={address} size="lg" />
           <div className="min-w-0">
             <p className="mono text-sm text-ink truncate">{shortAddr(address, 8, 8)}</p>
             {me === address && (

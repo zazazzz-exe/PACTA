@@ -18,6 +18,7 @@ import { ConnectButton } from '../components/ConnectButton';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { Button } from '../components/Button';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { ThemeToggle } from '../components/ui/ThemeToggle';
 import { navigate } from '../lib/router';
 import { shortAddr, formatAmount, formatPhp } from '../lib/format';
 import { friendlyError } from '../lib/errors';
@@ -152,6 +153,13 @@ export function Profile() {
       {/* App install: renders nothing when already installed or unavailable */}
       <InstallPrompt variant="row" />
 
+      {/* Appearance: saved on this device */}
+      <div className="rounded-card border border-hairline bg-paper p-4">
+        <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Appearance</h2>
+        <p className="mt-1 text-[13px] text-slate">Saved on this device. System follows your phone or computer setting.</p>
+        <ThemeToggle className="mt-3" />
+      </div>
+
       {/* KYC */}
       <div className="rounded-card border border-hairline bg-paper p-4">
         <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Identity verification</h2>
@@ -206,7 +214,7 @@ export function Profile() {
                   }
                   disabled={busyAddr === w.address}
                   aria-label={`Remove ${shortAddr(w.address)}`}
-                  className="grid h-7 w-7 shrink-0 place-items-center rounded-pill text-slate hover:bg-mist hover:text-refund disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+                  className="grid h-11 w-11 shrink-0 place-items-center rounded-pill text-slate hover:bg-mist hover:text-refund disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
                 >
                   {busyAddr === w.address ? <Loader2 size={14} className="animate-spin" aria-hidden /> : <X size={14} aria-hidden />}
                 </button>
@@ -217,7 +225,7 @@ export function Profile() {
           <button
             onClick={doLink}
             disabled={linking}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="mt-3 inline-flex min-h-tap items-center gap-1.5 rounded-control border border-hairline bg-paper px-3 py-2 text-[13px] text-accent-deep transition hover:border-accent/30 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             {linking ? <Loader2 size={15} className="animate-spin" aria-hidden /> : <Plus size={15} aria-hidden />}
             {linking ? 'Linking...' : 'Link a wallet'}

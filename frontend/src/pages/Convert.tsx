@@ -103,7 +103,7 @@ export function Convert() {
   if (doneHash) {
     return (
       <div className="mx-auto max-w-app space-y-5 px-1 text-center">
-        <span className="mx-auto grid h-14 w-14 place-items-center rounded-pill bg-accent text-white">
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-pill bg-accent text-on-accent">
           <CheckCircle2 size={28} aria-hidden />
         </span>
         <div>
@@ -116,7 +116,7 @@ export function Convert() {
           href={txExplorerUrl(doneHash)}
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1 text-[13px] text-accent-deep hover:opacity-80"
+          className="inline-flex min-h-tap items-center gap-1 text-[13px] text-accent hover:opacity-80"
         >
           View on Stellar Expert <ArrowUpRight size={14} aria-hidden />
         </a>
@@ -284,7 +284,7 @@ export function Convert() {
       <button
         disabled={!ready}
         onClick={() => setConfirming(true)}
-        className="flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 py-3.5 text-[15px] font-medium text-white transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+        className="flex w-full items-center justify-center gap-2 rounded-control bg-accent px-4 py-3.5 text-[15px] font-medium text-on-accent transition hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
       >
         <ArrowDownUp size={18} aria-hidden /> Convert
       </button>

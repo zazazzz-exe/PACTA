@@ -2,64 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ===================================================================
+   PACTA "electric glow" design tokens (CLAUDE.md, docs/product/DESIGN.md).
+   Colors are RGB channels so Tailwind opacity modifiers work
+   (e.g. ring-accent/40). Dark is the base; light overrides below.
+   The theme is set on <html data-theme> by public/theme-init.js before
+   first paint. Contrast pairs are enforced by src/lib/contrast.test.ts.
+   =================================================================== */
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
   /* surfaces */
-  --color-canvas: #F4F2EC;
-  --color-paper: #FFFFFF;
-  --color-mist: #F8F6F1;
-  --color-hairline: #E6E2D8;
-  --color-hairline-strong: #D8D3C6;
+  --canvas: 5 6 11;              /* #05060B */
+  --paper: 13 17 34;             /* #0D1122 solid card surface */
+  --mist: 18 23 46;              /* #12172E subtle fill */
+  --hairline: rgba(124, 155, 255, 0.16);
+  --hairline-strong: rgba(124, 155, 255, 0.28);
+  --glow: rgba(43, 92, 255, 0.38);
 
-  /* ink + text */
-  --color-ink: #1A201D;
-  --color-slate: #586059;
-  --color-fog: #8C918A;
+  /* text */
+  --ink: 245 244 239;            /* #F5F4EF */
+  --slate: 154 160 180;          /* #9AA0B4 muted */
+  --fog: 138 145 168;            /* #8A91A8 tertiary */
 
-  /* accent — emerald (primary + "protected") */
-  --color-accent: #0B7A63;
-  --color-accent-deep: #0A5A49;
-  --color-accent-tint: #E2F2EC;
+  /* accent: fills use --accent, text uses --accent-text */
+  --accent: 43 92 255;           /* #2B5CFF */
+  --accent-deep: 31 69 214;      /* #1F45D6 fill hover/pressed */
+  --accent-tint: 23 33 79;       /* #17214F */
+  --accent-text: 124 155 255;    /* #7C9BFF blue text */
+  --accent-text-strong: 169 190 255; /* #A9BEFF on tint */
+  --on-accent: 245 244 239;      /* off-white on accent fills */
 
-  /* state — deadline (amber) */
-  --color-deadline: #C77D11;
-  --color-deadline-deep: #8A560A;
-  --color-deadline-tint: #FAEED6;
+  /* state: deadline (amber) */
+  --deadline: 242 180 66;        /* #F2B442 */
+  --deadline-deep: 255 207 115;  /* text on tint */
+  --deadline-tint: 42 33 18;
+  /* state: refund / destructive */
+  --refund: 255 122 107;         /* #FF7A6B */
+  --refund-deep: 255 166 155;
+  --refund-tint: 46 20 22;
 
-  /* state — refund / destructive (clay) */
-  --color-refund: #B43A2C;
-  --color-refund-deep: #8C2C21;
-  --color-refund-tint: #F8E8E4;
+  /* cards */
+  --card-border: rgba(124, 155, 255, 0.22);
+  --glass: linear-gradient(160deg, rgba(77, 124, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
+}
 
-  /* proof panel — the one dark surface */
-  --color-carbon: #0B0F0E;
-  --color-onyx: #121916;
-  --color-grid: #233029;
-  --color-panel-ink: #E7ECE9;
-  --color-panel-muted: #7C8B85;
-  --color-signal: #34E3B0;
-  --color-signal-amber: #F2B442;
-  --color-signal-red: #FB6A57;
+:root[data-theme='light'] {
+  color-scheme: light;
 
-  /* hero marketing panel (landing split — navy like PalengkePay reference) */
-  --color-hero-panel: #0A3328;
-  --color-hero-navy: #0B1F3A;
+  --canvas: 245 244 239;         /* #F5F4EF */
+  --paper: 255 255 255;          /* #FFFFFF cards */
+  --mist: 236 239 250;           /* #ECEFFA */
+  --hairline: rgba(43, 92, 255, 0.14);
+  --hairline-strong: rgba(43, 92, 255, 0.26);
+  --glow: rgba(43, 92, 255, 0.2);
+
+  --ink: 10 10 11;               /* #0A0A0B */
+  --slate: 90 94 112;            /* #5A5E70 muted */
+  --fog: 88 92 110;              /* #585C6E tertiary; anything lighter fails AA on the glow */
+
+  --accent: 43 92 255;
+  --accent-deep: 31 79 224;      /* #1F4FE0 */
+  --accent-tint: 228 234 255;    /* #E4EAFF */
+  --accent-text: 31 79 224;      /* #1F4FE0 blue text */
+  --accent-text-strong: 23 56 170;
+  --on-accent: 245 244 239;
+
+  --deadline: 150 88 0;          /* #965800 */
+  --deadline-deep: 112 64 0;
+  --deadline-tint: 253 240 214;
+  --refund: 180 40 30;           /* #B4281E */
+  --refund-deep: 138 28 20;
+  --refund-tint: 252 232 230;
+
+  --card-border: rgba(43, 92, 255, 0.14);
+  --glass: linear-gradient(#FFFFFF, #FFFFFF); /* light cards are plain white + border + soft shadow */
+  --shadow-card: 0 1px 2px rgba(10, 20, 60, 0.04), 0 8px 24px rgba(43, 92, 255, 0.08);
+  --shadow-pop: 0 16px 40px rgba(10, 20, 60, 0.14);
+}
+
+/* Theme-independent tokens */
+:root {
+  /* proof panel: the one always-dark surface */
+  --carbon: 8 10 22;             /* #080A16 */
+  --onyx: 14 18 38;
+  --grid: 33 44 88;
+  --panel-ink: 231 236 255;
+  --panel-muted: 150 160 196;
+  --signal: 124 155 255;         /* #7C9BFF */
+  --signal-amber: 242 180 66;
+  --signal-red: 255 122 107;
+
+  /* hero card: the bright #5B86FF center sits top-right, away from text,
+     so labels land on #2B4BE8 or darker (AA). */
+  --hero-panel: 20 32 138;       /* #14208A */
+  --hero-navy: 11 15 51;         /* #0B0F33 */
+  --hero-gradient: radial-gradient(120% 120% at 88% 0%, #5B86FF 0%, #2B4BE8 32%, #14208A 68%, #0B0F33 100%);
+  --btn-primary: linear-gradient(180deg, #5B86FF 0%, #2B5CFF 32%);
+  --btn-glow: 0 8px 24px rgba(43, 92, 255, 0.5);
 
   /* radius */
-  --radius-card: 16px;
-  --radius-control: 12px;
+  --radius-card: 22px;
+  --radius-hero: 26px;
+  --radius-control: 14px;
   --radius-pill: 999px;
 
-  /* elevation (soft, warm-tinted) */
-  --shadow-card: 0 1px 2px rgba(26,32,29,0.04), 0 6px 16px rgba(26,32,29,0.05);
-  --shadow-pop: 0 8px 28px rgba(26,32,29,0.12);
-
   /* type */
-  --font-sans: 'Hanken Grotesk', system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-html, body { background: var(--color-canvas); color: var(--color-ink); }
-body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+html {
+  background-color: rgb(var(--canvas));
+}
+body {
+  min-height: 100vh;
+  color: rgb(var(--ink));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* top radial glow over the canvas */
+  background:
+    radial-gradient(ellipse 110% 520px at 50% -80px, var(--glow), transparent 70%) no-repeat,
+    rgb(var(--canvas));
+}
 
 /* tabular, aligned numbers everywhere money/data appears */
 .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -120,7 +188,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   position: absolute;
   bottom: -6vh;
   border-radius: 9999px;
-  background: var(--color-accent);
+  background: rgb(var(--accent));
   will-change: transform, opacity;
   animation: float-up linear infinite;
 }
@@ -134,8 +202,8 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(var(--color-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
+    linear-gradient(rgb(var(--grid)) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--grid)) 1px, transparent 1px);
   background-size: 24px 24px;
   opacity: 0.28;
   -webkit-mask-image: radial-gradient(circle at 25% 15%, black, transparent 78%);
@@ -146,7 +214,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   left: 0;
   right: 0;
   height: 45%;
-  background: linear-gradient(to bottom, transparent, rgba(52, 227, 176, 0.12), transparent);
+  background: linear-gradient(to bottom, transparent, rgba(124, 155, 255, 0.12), transparent);
   animation: sheen-sweep 4.5s ease-in-out infinite;
 }
 .pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
@@ -175,16 +243,16 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 .chip-float-a { animation: chip-bob-a 4.5s ease-in-out infinite; will-change: transform; }
 .chip-float-b { animation: chip-bob-b 5.5s ease-in-out infinite 0.4s; will-change: transform; }
 .phone-glow {
-  background: radial-gradient(circle at 50% 42%, rgba(52, 227, 176, 0.28), transparent 62%);
+  background: radial-gradient(circle at 50% 42%, rgba(91, 134, 255, 0.32), transparent 62%);
   filter: blur(20px);
 }
 
 /* Emerald backdrop panel the phone sits on (landing hero). */
 .phone-backdrop {
   background:
-    radial-gradient(circle at 78% 12%, rgba(52, 227, 176, 0.30), transparent 50%),
-    radial-gradient(circle at 15% 88%, rgba(10, 51, 40, 0.55), transparent 55%),
-    linear-gradient(155deg, var(--color-accent) 0%, var(--color-accent-deep) 52%, var(--color-hero-panel) 100%);
+    radial-gradient(circle at 78% 12%, rgba(91, 134, 255, 0.34), transparent 50%),
+    radial-gradient(circle at 15% 88%, rgba(11, 15, 51, 0.6), transparent 55%),
+    linear-gradient(155deg, rgb(var(--accent)) 0%, rgb(var(--accent-deep)) 52%, rgb(var(--hero-panel)) 100%);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -242,7 +310,7 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 
 /* Subtle mesh dot pattern for sections. */
 .mesh-dots {
-  background-image: radial-gradient(circle, var(--color-accent) 1px, transparent 1px);
+  background-image: radial-gradient(circle, rgb(var(--accent)) 1px, transparent 1px);
   background-size: 24px 24px;
   opacity: 0.07;
 }
@@ -256,15 +324,15 @@ body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
 
 /* Landing — green wash backgrounds (token-based). */
 .landing-hero-left {
-  background: linear-gradient(135deg, var(--color-accent-tint) 0%, var(--color-canvas) 45%, rgba(226,242,236,0.85) 100%);
+  background: linear-gradient(135deg, rgb(var(--accent-tint)) 0%, rgb(var(--canvas)) 45%, rgb(var(--accent-tint) / 0.85) 100%);
 }
 .landing-section-green {
-  background: linear-gradient(180deg, rgba(226,242,236,0.55) 0%, var(--color-accent-tint) 50%, rgba(226,242,236,0.4) 100%);
+  background: linear-gradient(180deg, rgb(var(--accent-tint) / 0.55) 0%, rgb(var(--accent-tint)) 50%, rgb(var(--accent-tint) / 0.4) 100%);
 }
 .landing-section-mint {
-  background: linear-gradient(180deg, var(--color-accent-tint) 0%, var(--color-canvas) 100%);
+  background: linear-gradient(180deg, rgb(var(--accent-tint)) 0%, rgb(var(--canvas)) 100%);
 }
 .landing-hero-panel {
-  background: linear-gradient(145deg, var(--color-accent-deep) 0%, var(--color-hero-panel) 45%, var(--color-accent) 100%);
+  background: linear-gradient(145deg, rgb(var(--accent-deep)) 0%, rgb(var(--hero-panel)) 45%, rgb(var(--accent)) 100%);
 }
 

@@ -16,7 +16,7 @@ export function AmbientBackground({ variant = 'full' }: { variant?: 'full' | 'su
           left: '2%',
           width: subtle ? '28vw' : '38vw',
           height: subtle ? '28vw' : '38vw',
-          background: `radial-gradient(circle, rgba(11,122,99,${blobOpacity}), transparent 65%)`,
+          background: `radial-gradient(circle, rgba(43,92,255,${blobOpacity}), transparent 65%)`,
         }}
       />
       <div
@@ -26,7 +26,7 @@ export function AmbientBackground({ variant = 'full' }: { variant?: 'full' | 'su
           right: '-4%',
           width: subtle ? '26vw' : '36vw',
           height: subtle ? '26vw' : '36vw',
-          background: `radial-gradient(circle, rgba(52,227,176,${signalOpacity}), transparent 65%)`,
+          background: `radial-gradient(circle, rgba(91,134,255,${signalOpacity}), transparent 65%)`,
         }}
       />
       <div
@@ -36,7 +36,7 @@ export function AmbientBackground({ variant = 'full' }: { variant?: 'full' | 'su
           left: '28%',
           width: subtle ? '26vw' : '36vw',
           height: subtle ? '26vw' : '36vw',
-          background: `radial-gradient(circle, rgba(10,90,73,${deepOpacity}), transparent 65%)`,
+          background: `radial-gradient(circle, rgba(20,32,138,${deepOpacity}), transparent 65%)`,
         }}
       />
     </div>

@@ -31,13 +31,13 @@ const CAPABILITIES = [
     icon: Wallet,
     title: 'Hold',
     body: 'A multi-asset portfolio with live peso values. Your keys and funds never leave your wallet.',
-    tint: 'bg-gradient-to-br from-accent to-accent-deep text-white',
+    tint: 'bg-gradient-to-br from-accent to-accent-deep text-on-accent',
   },
   {
     icon: Send,
     title: 'Send',
     body: 'Pay anyone on Stellar in seconds. Send now, or send protected when it matters.',
-    tint: 'bg-gradient-to-br from-deadline to-deadline-deep text-white',
+    tint: 'bg-gradient-to-br from-deadline to-deadline-deep text-on-accent',
   },
   {
     icon: QrCode,
@@ -49,7 +49,7 @@ const CAPABILITIES = [
     icon: Repeat,
     title: 'Convert',
     body: 'Swap one asset for another on the Stellar DEX, at the best on-chain rate.',
-    tint: 'bg-gradient-to-br from-accent-deep to-accent text-white',
+    tint: 'bg-gradient-to-br from-accent-deep to-accent text-on-accent',
   },
 ] as const;
 
@@ -163,7 +163,7 @@ export function Landing() {
                 <button
                   onClick={connect}
                   data-tour="connect"
-                  className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white shadow-card transition hover:bg-accent-deep active:scale-[0.98] sm:w-auto"
+                  className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-btn-primary shadow-glow px-8 text-[15px] font-medium text-on-accent transition hover:brightness-110 active:scale-[0.98] sm:w-auto"
                 >
                   <Wallet size={20} aria-hidden />
                   Connect wallet
@@ -271,7 +271,7 @@ export function Landing() {
               <li key={title}>
                 <Reveal delay={i * 80}>
                   <div className="group step-card flex h-full items-start gap-4 rounded-card border border-hairline bg-paper p-6 shadow-card">
-                    <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-white shadow-card">
+                    <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-on-accent shadow-card">
                       <Icon size={24} aria-hidden />
                     </div>
                     <div>
@@ -300,7 +300,7 @@ export function Landing() {
           className="pointer-events-none absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 82% 18%, rgba(52,227,176,0.16), transparent 45%), radial-gradient(circle at 12% 90%, rgba(11,122,99,0.28), transparent 45%)',
+              'radial-gradient(circle at 82% 18%, rgba(91,134,255,0.16), transparent 45%), radial-gradient(circle at 12% 90%, rgba(43,92,255,0.28), transparent 45%)',
           }}
           aria-hidden
         />
@@ -342,7 +342,7 @@ export function Landing() {
                 className="pointer-events-none absolute inset-0 opacity-70"
                 style={{
                   backgroundImage:
-                    'radial-gradient(circle at 70% 25%, rgba(52,227,176,0.35), transparent 55%)',
+                    'radial-gradient(circle at 70% 25%, rgba(91,134,255,0.35), transparent 55%)',
                 }}
                 aria-hidden
               />
@@ -361,7 +361,7 @@ export function Landing() {
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={connect}
-                    className="inline-flex h-14 items-center gap-2 rounded-[14px] bg-accent px-8 text-[15px] font-medium text-white transition hover:bg-accent-deep active:scale-[0.98]"
+                    className="inline-flex h-14 items-center gap-2 rounded-pill bg-btn-primary shadow-glow px-8 text-[15px] font-medium text-on-accent transition hover:brightness-110 active:scale-[0.98]"
                   >
                     <Wallet size={18} aria-hidden />
                     Connect wallet

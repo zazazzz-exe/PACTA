@@ -3,9 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Buffer } from 'buffer';
-import '@fontsource/hanken-grotesk/400.css';
-import '@fontsource/hanken-grotesk/500.css';
-import '@fontsource/hanken-grotesk/600.css';
+import '@fontsource/plus-jakarta-sans/400.css';
+import '@fontsource/plus-jakarta-sans/500.css';
+import '@fontsource/plus-jakarta-sans/600.css';
+import '@fontsource/plus-jakarta-sans/700.css';
 import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/500.css';
 import './index.css';
@@ -171,14 +172,28 @@ function WalletProvider({ children }: { children: ReactNode }) {
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <WalletProvider>
-      <TourProvider>
-        <App />
-      </TourProvider>
-    </WalletProvider>
-    <Analytics />
-    <SpeedInsights />
-  </StrictMode>,
-);
+const root = createRoot(document.getElementById('root')!);
+
+// Dev-only design gallery (#/design on the Vite dev server). import.meta.env.DEV
+// is false in production builds, so this branch and its import are removed.
+if (import.meta.env.DEV && window.location.hash === '#/design') {
+  void import('./pages/DesignGallery').then(({ DesignGallery }) =>
+    root.render(
+      <StrictMode>
+        <DesignGallery />
+      </StrictMode>,
+    ),
+  );
+} else {
+  root.render(
+    <StrictMode>
+      <WalletProvider>
+        <TourProvider>
+          <App />
+        </TourProvider>
+      </WalletProvider>
+      <Analytics />
+      <SpeedInsights />
+    </StrictMode>,
+  );
+}

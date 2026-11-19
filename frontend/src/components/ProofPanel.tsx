@@ -85,7 +85,7 @@ export function ProofPanel({
           href={explorerUrl}
           target="_blank"
           rel="noreferrer"
-          className="mono text-xs text-panel-muted inline-flex items-center gap-1.5 hover:text-signal focus:outline-none focus-visible:text-signal"
+          className="mono text-xs text-panel-muted inline-flex min-h-tap items-center gap-1.5 hover:text-signal focus:outline-none focus-visible:text-signal"
         >
           {contractShort} <ExternalLink size={13} aria-hidden />
         </a>
