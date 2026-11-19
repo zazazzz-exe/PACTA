@@ -51,6 +51,18 @@ describe('vercel.json security headers', () => {
     expect(hsts).toContain('includeSubDomains');
   });
 
+  it('blocks framing in older browsers and limits powerful features', () => {
+    expect(header('X-Frame-Options')).toBe('DENY');
+    const pp = header('Permissions-Policy') ?? '';
+    expect(pp).toContain('camera=(self)'); // KYC liveness capture needs the camera
+    expect(pp).toContain('microphone=()');
+    expect(pp).toContain('geolocation=()');
+  });
+
+  it('does not enable HSTS preload (hard to undo; opt in deliberately)', () => {
+    expect(header('Strict-Transport-Security')).not.toContain('preload');
+  });
+
   it('keeps the service worker and manifest cache rules', () => {
     expect(cfg.headers.some((h) => h.source === '/sw.js')).toBe(true);
     expect(cfg.headers.some((h) => h.source === '/manifest.webmanifest')).toBe(true);

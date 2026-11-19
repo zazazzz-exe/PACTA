@@ -1,13 +1,38 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { rpcCspError } from './src/lib/cspGuard';
+
+// Fails `vite build` when VITE_MAINNET_RPC_URL points at a host the CSP in
+// ../vercel.json does not allow, so a misconfigured RPC breaks the deploy
+// loudly instead of silently breaking every mainnet RPC call in the browser.
+function cspRpcGuard(): Plugin {
+  return {
+    name: 'pacta-csp-rpc-guard',
+    apply: 'build',
+    configResolved(config) {
+      const env = loadEnv(config.mode, config.envDir || process.cwd(), 'VITE_');
+      const vercel = JSON.parse(
+        readFileSync(fileURLToPath(new URL('../vercel.json', import.meta.url)), 'utf8'),
+      ) as { headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }> };
+      const csp =
+        vercel.headers
+          .find((h) => h.source === '/(.*)')
+          ?.headers.find((h) => h.key === 'Content-Security-Policy')?.value ?? '';
+      const err = rpcCspError(env.VITE_MAINNET_RPC_URL, csp);
+      if (err) throw new Error(err);
+    },
+  };
+}
 
 // The generated bindings live in ../packages/pacta. We alias the package name
 // "pacta" to its built output (dist); its own node_modules resolves the
 // @stellar/stellar-sdk subpath imports the bindings depend on.
 export default defineConfig({
   plugins: [
+    cspRpcGuard(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
