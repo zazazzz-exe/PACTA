@@ -24,6 +24,10 @@ export interface PactSummary {
   nextIndex: number | null;
   /** base units of the next tranche, or null when none left */
   nextAmount: bigint | null;
+  /** total agreement amount, base units */
+  capital: bigint;
+  /** funds currently held by the contract for this Pact, base units */
+  secured: bigint;
 }
 
 // SAC contract address -> asset code ("XLM", "USDC"), across both networks.
@@ -34,7 +38,7 @@ export function tokenCodeForSac(sac: string): string {
   return 'tokens';
 }
 
-const statusOf = (a: Agreement): number => {
+export const statusOf = (a: Agreement): number => {
   const s = (a as { status: unknown }).status;
   if (typeof s === 'number') return s;
   const byName = (n: string) => (NAMES.includes(n as keyof typeof Status) ? Status[n as keyof typeof Status] : -1);
@@ -77,5 +81,7 @@ export function summarizePact(a: Agreement, me: string): PactSummary | null {
     phase,
     nextIndex: left ? released + 1 : null,
     nextAmount,
+    capital,
+    secured: a.capital_deposited && s === Status.Active ? capital - releasedAmount : 0n,
   };
 }

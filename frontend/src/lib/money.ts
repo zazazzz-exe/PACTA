@@ -113,3 +113,19 @@ export function relativeTime(iso: string, now: Date = new Date(), locale?: strin
   if (abs < 7 * 86_400) return rtf.format(Math.round(diffSec / 86_400), 'day');
   return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(then));
 }
+
+// Value of a human amount of an asset in the display currency, or undefined
+// when there is no indicative rate for it.
+export function amountValue(
+  code: string,
+  amount: number,
+  currency: DisplayCurrency,
+  rates: Record<string, number> = PHP_RATES,
+): number | undefined {
+  const rate = rates[code];
+  if (rate === undefined || !Number.isFinite(amount)) return undefined;
+  const php = amount * rate;
+  if (currency === 'PHP') return php;
+  const perUsd = phpPerUsd(rates);
+  return perUsd ? php / perUsd : undefined;
+}

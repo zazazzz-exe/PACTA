@@ -10,8 +10,7 @@ import { navigate } from '../lib/router';
 import { useOffline } from '../lib/outbox';
 import { t } from '../lib/strings';
 import { isOpenPact, summarizePact, type PactSummary } from '../lib/pactSummary';
-import { useStoredState } from '../lib/useStoredState';
-import type { DisplayCurrency } from '../lib/money';
+import { useDisplayCurrency } from '../lib/displayCurrency';
 import { ConnectButton } from '../components/ConnectButton';
 import { OfflineNotice } from '../components/OfflineNotice';
 import { Greeting } from '../components/home/Greeting';
@@ -43,7 +42,7 @@ export function Home() {
   const activity = useActivity(address);
   const pacts = useAgreements(address ?? undefined, net.supportsPacts && !!address);
   const offline = useOffline();
-  const [currency, setCurrency] = useStoredState<DisplayCurrency>('pacta.home.currency', 'USD');
+  const [currency, setCurrency] = useDisplayCurrency();
   const [sheet, setSheet] = useState<'send' | 'receive' | null>(null);
 
   const openPacts = useMemo<PactSummary[]>(() => {
@@ -75,67 +74,77 @@ export function Home() {
 
   return (
     <>
-      <m.div variants={list} initial="hidden" animate="show" className="mx-auto max-w-app space-y-6 px-1">
-        <m.div variants={item}>
-          <Greeting address={address} />
-        </m.div>
-
-        <m.div variants={item}>
-          <BalanceCard address={address} balances={balances} loading={loading} currency={currency} onCurrency={setCurrency} />
-        </m.div>
-
-        {offline ? (
+      <m.div
+        variants={list}
+        initial="hidden"
+        animate="show"
+        className="mx-auto grid max-w-app gap-6 px-1 lg:max-w-[1040px] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-start lg:gap-8"
+      >
+        <m.div variants={list} className="min-w-0 space-y-6">
           <m.div variants={item}>
-            <OfflineNotice />
+            <Greeting address={address} />
           </m.div>
-        ) : (
-          error && (
+
+          <m.div variants={item}>
+            <BalanceCard address={address} balances={balances} loading={loading} currency={currency} onCurrency={setCurrency} />
+          </m.div>
+
+          {offline ? (
             <m.div variants={item}>
-              <ErrorState message={error} onRetry={refreshAll} />
+              <OfflineNotice />
             </m.div>
-          )
-        )}
+          ) : (
+            error && (
+              <m.div variants={item}>
+                <ErrorState message={error} onRetry={refreshAll} />
+              </m.div>
+            )
+          )}
 
-        <m.div variants={item}>
-          <QuickActions
-            onSend={() => setSheet('send')}
-            onReceive={() => setSheet('receive')}
-            onConvert={() => navigate('/convert')}
-            onNewPact={newPact}
-            pactsAvailable={net.supportsPacts}
-          />
-        </m.div>
-
-        {net.supportsPacts && (
           <m.div variants={item}>
-            <TipCard onTry={newPact} />
-          </m.div>
-        )}
-
-        {net.supportsPacts && (
-          <m.div variants={item}>
-            <ActivePacts
-              pacts={openPacts}
-              loading={pacts.loading}
-              onOpen={(id) => navigate(`/agreement/${id}`)}
-              onStart={newPact}
-              onSeeAll={() => navigate('/dashboard')}
+            <QuickActions
+              onSend={() => setSheet('send')}
+              onReceive={() => setSheet('receive')}
+              onConvert={() => navigate('/convert')}
+              onNewPact={newPact}
+              pactsAvailable={net.supportsPacts}
             />
           </m.div>
-        )}
 
-        <m.div variants={item}>
-          <AssetList
-            balances={balances}
-            currency={currency}
-            network={net.key === 'public' ? 'public' : 'testnet'}
-            loading={loading}
-            onRefresh={refreshAll}
-          />
+          {net.supportsPacts && (
+            <m.div variants={item}>
+              <TipCard onTry={newPact} />
+            </m.div>
+          )}
+
+          {net.supportsPacts && (
+            <m.div variants={item}>
+              <ActivePacts
+                pacts={openPacts}
+                loading={pacts.loading}
+                currency={currency}
+                onOpen={(id) => navigate(`/agreement/${id}`)}
+                onStart={newPact}
+                onSeeAll={() => navigate('/dashboard')}
+              />
+            </m.div>
+          )}
         </m.div>
 
-        <m.div variants={item}>
-          <RecentActivity items={activity.items} loading={activity.loading} onSeeAll={() => navigate('/activity')} />
+        <m.div variants={list} className="min-w-0 space-y-6 lg:pt-[52px]">
+          <m.div variants={item}>
+            <AssetList
+              balances={balances}
+              currency={currency}
+              network={net.key === 'public' ? 'public' : 'testnet'}
+              loading={loading}
+              onRefresh={refreshAll}
+            />
+          </m.div>
+
+          <m.div variants={item}>
+            <RecentActivity items={activity.items} loading={activity.loading} currency={currency} onSeeAll={() => navigate('/activity')} />
+          </m.div>
         </m.div>
       </m.div>
 

@@ -20,9 +20,9 @@ describe('design tokens meet WCAG AA', () => {
     expect(r.ratio, `${r.ratio.toFixed(2)}:1, needs ${r.need}:1`).toBeGreaterThanOrEqual(r.need);
   });
 
-  it('uses the calm accent and keeps it a solid fill', () => {
-    expect(css).toMatch(/--accent: 79 103 230;/);
-    expect(css).toMatch(/--btn-primary: linear-gradient\(rgb\(79 103 230\), rgb\(79 103 230\)\)/);
+  it('uses the wallet accent and keeps it a solid fill', () => {
+    expect(css).toMatch(/--accent: 69 98 242;/);
+    expect(css).toMatch(/--btn-primary: linear-gradient\(rgb\(69 98 242\), rgb\(69 98 242\)\)/);
   });
 
   it('keeps the glow budget: no shadow glow above 0.25 opacity or 16px blur', () => {

@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 /* ===================================================================
-   PACTA calm design tokens: "Midnight" (dark, default) and "Paper" (light).
-   Blue is an accent, never a large surface. Colors are RGB channels so
-   Tailwind opacity modifiers work (e.g. ring-accent/40).
+   PACTA wallet design tokens (2026-11-20, task "connected wallet UI"):
+   a premium card-first palette in dark (default) and light. Blue is PACTA's
+   identity: a deep navy-blue balance card, blue fills for primary actions, a
+   cyan accent for small highlights. Colors are RGB channels so Tailwind
+   opacity modifiers work (e.g. ring-accent/40).
    The theme is set on <html data-theme> by public/theme-init.js before first
    paint. Contrast pairs are enforced by scripts/check-contrast.ts (also run by
    src/lib/contrast.test.ts). Where a spec value failed WCAG AA, the nearest
@@ -16,76 +18,82 @@
   color-scheme: dark;
 
   /* surfaces */
-  --canvas: 15 17 23;            /* #0F1117 soft charcoal */
-  --paper: 22 25 34;             /* #161922 surface */
-  --mist: 29 33 44;              /* #1D212C raised surface */
-  --hairline: rgba(255, 255, 255, 0.07);
-  --hairline-strong: rgba(255, 255, 255, 0.12);
-  --glow: rgba(120, 140, 255, 0.06); /* one faint top glow, no blobs */
+  --canvas: 13 16 24;            /* #0D1018 main background */
+  --deep: 20 25 39;              /* #141927 secondary background (inputs, wells) */
+  --paper: 23 27 39;             /* #171B27 card */
+  --mist: 32 38 58;              /* #20263A elevated card */
+  --hairline: rgb(41 47 66);     /* #292F42 */
+  --hairline-strong: rgb(56 64 88);
+  --glow: rgba(79, 107, 255, 0.07); /* one faint top glow */
 
   /* text */
-  --ink: 233 231 225;            /* #E9E7E1 warm off-white */
-  --slate: 163 168 181;          /* #A3A8B5 secondary */
-  --fog: 131 136 151;            /* #838897 tertiary (spec #6F7584 is 3.5:1, fails AA) */
+  --ink: 245 247 255;            /* #F5F7FF */
+  --slate: 155 165 187;          /* #9BA5BB secondary */
+  --fog: 136 146 169;            /* #8892A9 tertiary */
 
-  /* accent: a highlight, never a large surface */
-  --accent: 79 103 230;          /* #4F67E6 fill */
-  --accent-deep: 68 89 212;      /* #4459D4 fill hover/pressed */
-  --accent-tint: 30 36 61;       /* #1E243D = rgba(79,103,230,0.14) on surface */
-  --accent-text: 157 176 255;    /* #9DB0FF */
-  --accent-text-strong: 157 176 255;
+  /* accent. The spec blue #4F6BFF carries white text at 4.3:1 (fails AA), so
+     fills use #4562F2 (4.9:1) and #4F6BFF stays for gradients and glows. */
+  --accent: 69 98 242;           /* #4562F2 fill */
+  --accent-deep: 58 85 224;      /* #3A55E0 fill hover/pressed */
+  --accent-tint: 31 38 69;       /* #1F2645 = rgba(79,107,255,0.14) on card */
+  --accent-text: 120 149 255;    /* #7895FF secondary blue */
+  --accent-text-strong: 120 149 255;
   --on-accent: 255 255 255;      /* button text is white */
+  --cyan: 37 198 217;            /* #25C6D9 accent cyan: small highlights */
 
   /* friendly pastels: icons and small chips only */
-  --mint: 79 199 154;            /* #4FC79A received, success */
-  --mint-soft: 31 53 53;
-  --apricot: 242 166 124;        /* #F2A67C Pacts, celebration */
-  --apricot-soft: 57 48 48;
+  --mint: 40 201 139;            /* #28C98B success, received */
+  --mint-soft: 25 51 53;
+  --apricot: 242 166 124;        /* #F2A67C celebration */
+  --apricot-soft: 54 47 51;
   --lilac: 169 155 240;          /* #A99BF0 convert */
-  --lilac-soft: 46 46 67;
+  --lilac-soft: 43 45 67;
 
   /* states: amber warning, coral error */
-  --deadline: 232 176 75;        /* #E8B04B */
-  --deadline-deep: 232 176 75;
-  --deadline-tint: 56 49 41;
-  --refund: 239 122 107;         /* #EF7A6B */
-  --refund-deep: 239 122 107;
-  --refund-tint: 57 41 46;
+  --deadline: 244 185 66;        /* #F4B942 */
+  --deadline-deep: 244 185 66;
+  --deadline-tint: 54 49 43;
+  --refund: 242 107 120;         /* #F26B78 */
+  --refund-deep: 242 107 120;
+  --refund-tint: 54 38 50;
 
-  /* cards: soft shadow, no outer glow */
-  --card-border: rgba(255, 255, 255, 0.07);
-  --glass: linear-gradient(rgb(22 25 34), rgb(22 25 34));
-  --balance-card: linear-gradient(135deg, #1B2033 0%, #20284A 100%); /* text on it: ink or slate only */
-  --balance-deco: rgba(157, 176, 255, 0.1);
+  /* cards */
+  --card-border: rgb(41 47 66);
+  --glass: linear-gradient(rgb(23 27 39), rgb(23 27 39));
+  --balance-card: linear-gradient(140deg, #1C2550 0%, #161D3A 55%, #131829 100%); /* text on it: ink, slate, accent-text */
+  --balance-glow: radial-gradient(60% 70% at 100% 0%, rgba(79, 107, 255, 0.32), transparent 70%);
+  --balance-deco: rgba(120, 149, 255, 0.1);
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
   --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-balance: 0 16px 40px rgba(8, 12, 40, 0.55), 0 0 0 1px rgba(120, 149, 255, 0.12);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --canvas: 247 246 242;         /* #F7F6F2 warm off-white */
-  --paper: 255 255 255;          /* #FFFFFF surface */
-  --mist: 240 238 232;           /* #F0EEE8 raised surface */
-  --hairline: rgb(231 228 220);  /* #E7E4DC */
-  --hairline-strong: rgb(216 212 202);
-  --glow: rgba(120, 140, 255, 0);
+  --canvas: 244 246 252;         /* #F4F6FC */
+  --deep: 236 240 248;           /* #ECF0F8 */
+  --paper: 255 255 255;          /* #FFFFFF card */
+  --mist: 238 241 248;           /* #EEF1F8 raised well (spec elevated card is white) */
+  --hairline: rgb(230 234 242);  /* #E6EAF2 */
+  --hairline-strong: rgb(213 219 231);
+  --glow: rgba(79, 107, 255, 0);
 
-  --ink: 26 28 34;               /* #1A1C22 */
-  --slate: 92 97 110;            /* #5C616E secondary */
-  --fog: 103 108 121;            /* #676C79 tertiary (spec #8A8F9B is 2.8:1, fails AA) */
+  --ink: 23 28 43;               /* #171C2B */
+  --slate: 95 104 126;           /* #5F687E secondary (spec #788197 is 3.9:1 on white, fails AA) */
+  --fog: 100 109 131;            /* #646D83 tertiary */
 
-  --accent: 79 103 230;          /* #4F67E6 */
-  --accent-deep: 68 89 212;
-  --accent-tint: 232 236 255;    /* #E8ECFF */
-  --accent-text: 58 82 204;      /* #3A52CC */
-  --accent-text-strong: 58 82 204;
+  --accent: 69 98 242;           /* #4562F2 fill (spec #4F6BFF fails AA with white text) */
+  --accent-deep: 58 85 224;      /* #3A55E0 */
+  --accent-tint: 232 237 255;    /* #E8EDFF */
+  --accent-text: 58 85 224;      /* #3A55E0 */
+  --accent-text-strong: 58 85 224;
   --on-accent: 255 255 255;
+  --cyan: 10 116 130;            /* #0A7482 (spec #25C6D9 is 2:1 on white) */
 
-  /* light pastels: spec hue as the soft tile, a deeper shade of the same hue
-     for the icon or text (the spec pastels are 1.7-2.4:1 on white) */
-  --mint: 38 120 89;             /* #267859 */
-  --mint-soft: 216 243 233;
+  /* light pastels: a soft tile plus a deeper shade of the same hue for text */
+  --mint: 31 122 86;             /* #1F7A56 */
+  --mint-soft: 216 245 233;
   --apricot: 180 76 18;          /* #B44C12 */
   --apricot-soft: 252 235 226;
   --lilac: 104 80 229;           /* #6850E5 */
@@ -93,17 +101,19 @@
 
   --deadline: 143 99 18;         /* #8F6312 */
   --deadline-deep: 143 99 18;
-  --deadline-tint: 250 238 215;
-  --refund: 199 42 22;           /* #C72A16 */
-  --refund-deep: 199 42 22;
-  --refund-tint: 251 226 222;
+  --deadline-tint: 252 241 216;
+  --refund: 196 38 56;           /* #C42638 */
+  --refund-deep: 196 38 56;
+  --refund-tint: 253 228 231;
 
-  --card-border: rgb(231 228 220);
+  --card-border: rgb(230 234 242);
   --glass: linear-gradient(#FFFFFF, #FFFFFF);
-  --balance-card: linear-gradient(#EEF1FF, #EEF1FF); /* text on it: ink or slate only */
-  --balance-deco: rgba(79, 103, 230, 0.08);
-  --shadow-card: 0 6px 20px rgba(26, 28, 34, 0.06);
-  --shadow-pop: 0 10px 28px rgba(26, 28, 34, 0.1);
+  --balance-card: linear-gradient(140deg, #EEF2FF 0%, #E4EAFF 100%); /* text on it: ink, slate, accent-text */
+  --balance-glow: radial-gradient(60% 70% at 100% 0%, rgba(79, 107, 255, 0.16), transparent 70%);
+  --balance-deco: rgba(69, 98, 242, 0.08);
+  --shadow-card: 0 6px 20px rgba(23, 28, 43, 0.06);
+  --shadow-pop: 0 10px 28px rgba(23, 28, 43, 0.1);
+  --shadow-balance: 0 12px 32px rgba(69, 98, 242, 0.14), 0 0 0 1px rgba(69, 98, 242, 0.1);
 }
 
 /* Landing page exception (owner-approved 2026-11-20, CLAUDE.md "Landing page"):
@@ -172,9 +182,11 @@
   --hero-panel: 27 32 51;        /* #1B2033 */
   --hero-navy: 22 25 34;         /* #161922 footer */
   --hero-gradient: var(--balance-card);
-  --btn-primary: linear-gradient(rgb(79 103 230), rgb(79 103 230)); /* solid #4F67E6 */
-  /* glow budget: primary button and active nav only, <= 0.25 opacity, <= 16px blur */
-  --btn-glow: 0 4px 16px rgba(79, 103, 230, 0.25);
+  --btn-primary: linear-gradient(rgb(69 98 242), rgb(69 98 242)); /* solid #4562F2 */
+  /* glow budget: primary button, active nav, balance card and the Pact shield only; <= 0.25 opacity, <= 16px blur for shadows */
+  --btn-glow: 0 4px 16px rgba(79, 107, 255, 0.25);
+  --blue-bright: #4F6BFF;        /* spec blue: gradients and glows only */
+  --cyan-bright: #25C6D9;        /* spec cyan: gradients and glows only */
 
   /* radius */
   --radius-card: 24px;
@@ -427,3 +439,27 @@ body {
 .btn-shimmer::after { display: none; }
 .phone-glow { opacity: 0.25; }
 .phone-backdrop, .landing-hero-panel { background: var(--balance-card) !important; }
+
+/* ---- Wallet microinteractions (2026-11-20 wallet UI task) ----
+   Lightweight and decorative only; all stop under prefers-reduced-motion. */
+@keyframes wallet-glow-drift {
+  0%, 100% { opacity: 0.85; transform: translate3d(0, 0, 0) scale(1); }
+  50% { opacity: 1; transform: translate3d(-4%, 3%, 0) scale(1.06); }
+}
+.wallet-balance-glow { animation: wallet-glow-drift 9s ease-in-out infinite; will-change: transform, opacity; }
+
+@keyframes wallet-shield-breathe {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(37, 198, 217, 0.25)); }
+  50% { filter: drop-shadow(0 0 14px rgba(37, 198, 217, 0.45)); }
+}
+.wallet-shield { animation: wallet-shield-breathe 4s ease-in-out infinite; }
+
+.wallet-lift { transition: transform 0.2s var(--ease-out-soft), box-shadow 0.2s ease, border-color 0.2s ease; }
+@media (hover: hover) {
+  .wallet-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); border-color: var(--hairline-strong); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wallet-balance-glow, .wallet-shield { animation: none !important; }
+  .wallet-lift:hover { transform: none; }
+}

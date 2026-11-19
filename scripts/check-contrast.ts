@@ -95,6 +95,7 @@ export function checkContrast(cssText: string): PairResult[] {
     };
     const surfaces: Array<[string, RGB]> = [
       ['canvas', col('canvas')],
+      ...('deep' in v ? [['deep', col('deep')] as [string, RGB]] : []),
       ['paper', col('paper')],
       ['mist', col('mist')],
     ];
@@ -105,7 +106,7 @@ export function checkContrast(cssText: string): PairResult[] {
     // Balance card gradient stops.
     for (const stop of gradientStops(v['balance-card'] ?? '')) surfaces.push([`balance ${stop}`, hexToRgb(stop)]);
 
-    const text = ['ink', 'slate', 'fog', 'accent-text', 'mint', 'apricot', 'lilac', 'deadline', 'refund'];
+    const text = ['ink', 'slate', 'fog', 'accent-text', 'cyan', 'mint', 'apricot', 'lilac', 'deadline', 'refund'];
     for (const fg of text) for (const [bg, bgc] of surfaces) {
       // Rule: the balance card carries primary and secondary text only (and the
       // accent for links); tertiary, pastels and states never sit on it.
@@ -128,7 +129,7 @@ export function checkContrast(cssText: string): PairResult[] {
     // Buttons and focus rings.
     push('on-accent', 'accent', col('on-accent'), col('accent'), BODY);
     push('on-accent', 'accent-deep', col('on-accent'), col('accent-deep'), BODY);
-    for (const [bg, bgc] of surfaces.slice(0, 3)) push('accent (focus ring)', bg, col('accent'), bgc, LARGE);
+    for (const [bg, bgc] of surfaces.filter(([n]) => !n.includes('+') && !n.startsWith('balance'))) push('accent (focus ring)', bg, col('accent'), bgc, LARGE);
   }
 
   // Always-dark proof panel.

@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-// PACTA calm design system ("Midnight" dark default, "Paper" light). Values live as CSS variables in
+// PACTA wallet design system (dark default, light). Values live as CSS variables in
 // src/index.css (dark base, light override) so one class works in both themes.
 // Colors are RGB channels: `rgb(var(--x) / <alpha-value>)` keeps opacity
 // modifiers like `ring-accent/40` and `bg-canvas/95` working.
@@ -13,6 +13,7 @@ export default {
     extend: {
       colors: {
         canvas: c('canvas'),
+        deep: c('deep'),
         paper: c('paper'),
         mist: c('mist'),
         hairline: { DEFAULT: 'var(--hairline)', strong: 'var(--hairline-strong)' },
@@ -27,6 +28,7 @@ export default {
           strong: c('accent-text-strong'),
         },
         'on-accent': c('on-accent'),
+        cyan: c('cyan'),
         // friendly pastels: icons and small chips only
         mint: { DEFAULT: c('mint'), soft: c('mint-soft') },
         apricot: { DEFAULT: c('apricot'), soft: c('apricot-soft') },
@@ -69,11 +71,13 @@ export default {
         card: 'var(--shadow-card)',
         pop: 'var(--shadow-pop)',
         glow: 'var(--btn-glow)',
+        balance: 'var(--shadow-balance)',
       },
       backgroundImage: {
         glass: 'var(--glass)',
         hero: 'var(--hero-gradient)',
         balance: 'var(--balance-card)',
+        'balance-glow': 'var(--balance-glow)',
         'btn-primary': 'var(--btn-primary)',
       },
       borderColor: {
