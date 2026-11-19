@@ -2,8 +2,8 @@ import { Status } from '../lib/contract';
 
 const MAP: Record<number, { label: string; cls: string }> = {
   [Status.Active]: { label: 'Active', cls: 'bg-accent-tint text-accent-deep' },
-  [Status.Completed]: { label: 'Completed', cls: 'bg-accent-tint text-accent-deep' },
-  [Status.Pending]: { label: 'Pending', cls: 'bg-mist text-slate' },
+  [Status.Completed]: { label: 'Completed', cls: 'bg-mint-soft text-mint' },
+  [Status.Pending]: { label: 'Pending', cls: 'bg-deadline-tint text-deadline-deep' },
   [Status.Refunded]: { label: 'Refunded', cls: 'bg-refund-tint text-refund-deep' },
   [Status.Cancelled]: { label: 'Cancelled', cls: 'bg-mist text-fog' },
 };
@@ -11,6 +11,6 @@ const MAP: Record<number, { label: string; cls: string }> = {
 export function StatusPill({ status }: { status: Status }) {
   const s = MAP[status] ?? MAP[Status.Cancelled];
   return (
-    <span className={`text-xs font-medium px-2.5 py-1 rounded-pill ${s.cls}`}>{s.label}</span>
+    <span className={`inline-flex shrink-0 items-center rounded-pill px-2.5 py-1 text-[12px] font-bold ${s.cls}`}>{s.label}</span>
   );
 }

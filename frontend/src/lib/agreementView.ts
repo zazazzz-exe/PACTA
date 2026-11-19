@@ -36,7 +36,7 @@ export function needsAttentionReason(
   nowSec: number,
 ): string | null {
   if (a.status === Status.Active && you === a.investor && nowSec >= Number(a.deadline)) {
-    return 'Refund available — the deadline has passed';
+    return 'Refund available: the deadline has passed';
   }
   if (a.status === Status.Pending) {
     if (you === a.trader && !a.bond_posted) return 'Post your security bond';

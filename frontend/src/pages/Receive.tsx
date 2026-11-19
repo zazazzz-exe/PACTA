@@ -8,20 +8,9 @@ import { ConnectButton } from '../components/ConnectButton';
 import { TokenIcon } from '../components/TokenIcon';
 import { shortAddr } from '../lib/format';
 import { useActiveNetwork } from '../lib/activeNetwork';
+import { paymentRequest } from '../lib/paymentRequest';
 
 const keyOf = (b: AssetBalance) => `${b.asset.code}:${b.asset.issuer ?? 'native'}`;
-
-// A SEP-7 payment request ("web+stellar:pay?..."), the standard Stellar
-// wallets read from a QR code. Without an amount the QR is the plain address.
-export function paymentRequest(address: string, amount: string, asset?: AssetBalance['asset']): string {
-  if (!(Number(amount) > 0)) return address;
-  const q = new URLSearchParams({ destination: address, amount });
-  if (asset && asset.issuer) {
-    q.set('asset_code', asset.code);
-    q.set('asset_issuer', asset.issuer);
-  }
-  return `web+stellar:pay?${q.toString()}`;
-}
 
 // `embedded`: rendered inside the Home bottom sheet, which shows the title.
 export function Receive({ embedded = false }: { embedded?: boolean } = {}) {

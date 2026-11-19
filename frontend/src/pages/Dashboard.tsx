@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { m } from 'framer-motion';
 import { Plus, Loader2, Wallet } from 'lucide-react';
+import { SPRING } from '../components/motion/MotionProvider';
+import { PactShield } from '../components/home/PactShield';
 import { useWallet } from '../hooks/useWallet';
 import { useTour } from '../components/Tour';
 import { dashboardSteps } from '../lib/tours';
@@ -15,11 +18,27 @@ import { navigate } from '../lib/router';
 import { useActiveNetwork } from '../lib/activeNetwork';
 
 type Filter = 'all' | 'investor' | 'trader';
-const TABS: { id: Filter; label: string }[] = [
+const ROLES: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'investor', label: 'Paying' },
   { id: 'trader', label: 'Receiving' },
 ];
+
+// Status tabs. The escrow has no dispute state yet (docs/DISPUTES.md), so the
+// third tab (Closed) groups the Pacts that ended without completing:
+// refunded or cancelled.
+type Tab = 'active' | 'completed' | 'closed';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'active', label: 'Active' },
+  { id: 'completed', label: 'Completed' },
+  { id: 'closed', label: 'Closed' },
+];
+const inTab = (status: Status, tab: Tab) =>
+  tab === 'active'
+    ? status === Status.Active || status === Status.Pending
+    : tab === 'completed'
+      ? status === Status.Completed
+      : status === Status.Refunded || status === Status.Cancelled;
 
 export function Dashboard() {
   const net = useActiveNetwork();
@@ -30,6 +49,7 @@ export function Dashboard() {
   // order); only its internal fetch is skipped.
   const { agreements, loading, error, refresh } = useAgreements(address ?? undefined, net.supportsPacts);
   const [filter, setFilter] = useState<Filter>('all');
+  const [tab, setTab] = useState<Tab>('active');
   const { start } = useTour();
 
   // Auto-start the dashboard tour once, after the cards have rendered.
@@ -63,10 +83,11 @@ export function Dashboard() {
   }, [net.supportsPacts, refresh]);
 
   const filtered = useMemo(() => {
-    if (!address || filter === 'all') return agreements;
-    if (filter === 'investor') return agreements.filter((a) => a.investor === address);
-    return agreements.filter((a) => a.trader === address);
-  }, [agreements, address, filter]);
+    const byTab = agreements.filter((a) => inTab(a.status, tab));
+    if (!address || filter === 'all') return byTab;
+    if (filter === 'investor') return byTab.filter((a) => a.investor === address);
+    return byTab.filter((a) => a.trader === address);
+  }, [agreements, address, filter, tab]);
 
   if (!address) return <ConnectGate />;
 
@@ -111,7 +132,7 @@ export function Dashboard() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-[20px] sm:text-[22px] font-semibold tracking-tight text-ink">Your Pacts</h1>
+          <h1 className="text-[22px] font-bold tracking-tight text-ink">Your Pacts</h1>
           <p className="mt-0.5 max-w-lg text-[13px] text-slate">
             Protected payments you have sent or received. Funds are held by a contract and released as the
             work lands.
@@ -125,7 +146,7 @@ export function Dashboard() {
       {/* Money summary strip + allocation bar */}
       {agreements.length > 0 && (
         <div className="space-y-3 animate-rise">
-          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Metric label="Protected" accent="accent">
               <p className="mono text-[20px] font-medium text-accent">
                 {formatAmount(protectedTotal)}
@@ -153,30 +174,46 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Filter */}
-      <div
-        className="relative inline-grid grid-cols-3 rounded-pill bg-mist p-1 border border-hairline"
-        data-tour="filters"
-      >
-        <span
-          className="absolute top-1 bottom-1 left-1 rounded-pill bg-paper shadow-card transition-transform duration-200 ease-out"
-          style={{
-            width: `calc((100% - 8px) / ${TABS.length})`,
-            transform: `translateX(calc(${TABS.findIndex((t) => t.id === filter)} * 100%))`,
-          }}
-          aria-hidden
-        />
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setFilter(t.id)}
-            className={`relative z-10 px-3.5 h-11 rounded-pill text-[13px] font-medium transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-              filter === t.id ? 'text-ink' : 'text-slate hover:text-ink'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Status tabs + role filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div role="tablist" aria-label="Pact status" className="inline-flex rounded-pill border border-card bg-paper p-1 shadow-card" data-tour="filters">
+          {TABS.map((t) => {
+            const on = tab === t.id;
+            const count = agreements.filter((a) => inTab(a.status, t.id)).length;
+            return (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={on}
+                onClick={() => setTab(t.id)}
+                className={`relative h-11 rounded-pill px-3.5 text-[13px] font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                  on ? 'text-on-accent' : 'text-slate hover:text-ink'
+                }`}
+              >
+                {on && <m.span layoutId="pact-tab" aria-hidden className="absolute inset-0 rounded-pill bg-accent shadow-glow" transition={SPRING} />}
+                <span className="relative">
+                  {t.label}
+                  {count > 0 && <span className={`mono ml-1.5 text-[12px] ${on ? 'text-on-accent' : 'text-fog'}`}>{count}</span>}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+        <div role="radiogroup" aria-label="Your role" className="flex gap-1.5">
+          {ROLES.map((r) => (
+            <button
+              key={r.id}
+              role="radio"
+              aria-checked={filter === r.id}
+              onClick={() => setFilter(r.id)}
+              className={`min-h-tap rounded-pill border px-3 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                filter === r.id ? 'border-accent bg-accent-tint text-ink' : 'border-card text-slate hover:text-ink'
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Needs-attention callout */}
@@ -209,7 +246,7 @@ export function Dashboard() {
           <Loader2 className="animate-spin" size={20} aria-hidden />
         </div>
       ) : sorted.length === 0 ? (
-        <EmptyState />
+        <EmptyState tab={tab} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {sorted.map((a, i) => (
@@ -292,20 +329,25 @@ function Legend({ dot, label, amount }: { dot: string; label: string; amount: bi
   );
 }
 
-function EmptyState() {
+function EmptyState({ tab }: { tab: Tab }) {
+  const copy = {
+    active: { title: 'No active Pacts yet', body: 'A Pact helps you protect payments and release funds step by step.' },
+    completed: { title: 'No completed Pacts yet', body: 'Pacts appear here once every milestone is released.' },
+    closed: { title: 'Nothing refunded or cancelled', body: 'Pacts that end early, by refund or cancellation, appear here.' },
+  }[tab];
   return (
-    <div className="relative overflow-hidden rounded-card border border-accent/20 bg-accent-tint/50 p-8 text-center shadow-card">
-      <div className="mesh-dots pointer-events-none absolute inset-0" aria-hidden />
-      <div className="relative">
-        <span className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-accent text-on-accent shadow-card">
-          <Plus size={22} aria-hidden />
-        </span>
-        <h2 className="text-[16px] font-medium text-ink">No Pacts yet</h2>
-        <p className="mt-1 text-[14px] text-slate">Send your first protected payment.</p>
-        <Button className="mt-5" onClick={() => navigate('/create')}>
-          New Pact
-        </Button>
+    <div className="relative isolate overflow-hidden rounded-card border border-card bg-paper p-8 text-center shadow-card">
+      <span aria-hidden className="pointer-events-none absolute inset-0 -z-10 bg-balance-glow" />
+      <div className="mx-auto grid h-16 w-16 place-items-center rounded-[20px] bg-accent-tint">
+        <PactShield size={40} glow={false} />
       </div>
+      <h2 className="mt-4 text-[17px] font-bold text-ink">{copy.title}</h2>
+      <p className="mx-auto mt-1 max-w-xs text-[14px] text-slate">{copy.body}</p>
+      {tab === 'active' && (
+        <Button className="mt-5" onClick={() => navigate('/create')}>
+          Start a Pact
+        </Button>
+      )}
     </div>
   );
 }

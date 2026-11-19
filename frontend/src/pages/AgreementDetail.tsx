@@ -26,7 +26,8 @@ import { contractExplorerUrl, txExplorerUrl } from '../lib/config';
 import { useActiveNetwork } from '../lib/activeNetwork';
 import { activeContractId } from '../lib/escrowConfig';
 import { StatusPill } from '../components/StatusPill';
-import { MilestoneBar } from '../components/MilestoneBar';
+import { MilestoneTimeline } from '../components/MilestoneTimeline';
+import { needsAttentionReason, pendingNextStep, deadlineLabel } from '../lib/agreementView';
 import { ReputationBadge } from '../components/ReputationBadge';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
@@ -152,6 +153,20 @@ export function AgreementDetail({ id }: { id: bigint }) {
   const closed =
     a.status === Status.Completed || a.status === Status.Refunded || a.status === Status.Cancelled;
 
+  const nextAction =
+    needsAttentionReason(a, address, now) ??
+    (a.status === Status.Pending
+      ? pendingNextStep(a, address)
+      : a.status === Status.Active
+        ? isInvestor
+          ? `Release a milestone when the work lands. ${deadlineLabel(a, now)}.`
+          : `Waiting for the sender to release the next milestone. ${deadlineLabel(a, now)}.`
+        : a.status === Status.Completed
+          ? 'Completed. Every milestone was released and the bond returned.'
+          : a.status === Status.Refunded
+            ? 'Refunded. Unreleased funds and the bond went to the sender.'
+            : 'Cancelled. Deposits and bonds went back to their owners.');
+
   const hasAction =
     (isTrader && a.status === Status.Pending && !a.bond_posted) ||
     (isTrader && a.status === Status.Pending && a.bond_posted) ||
@@ -169,7 +184,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
         >
           <ChevronLeft size={20} aria-hidden />
         </button>
-        <span className="mono text-[13px] text-slate flex-1">{agrId}</span>
+        <h1 className="flex-1 text-[20px] font-bold tracking-tight text-ink">Pact #{id.toString()}</h1>
         <StatusPill status={a.status} />
       </div>
 
@@ -177,7 +192,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
         {/* Main column */}
         <div className="space-y-5">
           <Reveal>
-            <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
+            <div className="rounded-card border border-card bg-paper p-5 shadow-card">
               <AmountDisplay amount={headline.amount} label={headline.label} bond={headline.bond} />
             </div>
           </Reveal>
@@ -185,7 +200,7 @@ export function AgreementDetail({ id }: { id: bigint }) {
           <Reveal delay={60}>
             <button
               onClick={() => navigate(`/trader/${a.trader}`)}
-              className="w-full text-left bg-paper border border-hairline rounded-card shadow-card p-5 transition hover:border-hairline-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="wallet-lift w-full rounded-card border border-card bg-paper p-5 text-left shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <div className="flex items-center gap-3">
                 <Avatar addr={counterparty} />
@@ -199,12 +214,8 @@ export function AgreementDetail({ id }: { id: bigint }) {
           </Reveal>
 
           <Reveal delay={120}>
-            <div className="bg-paper border border-hairline rounded-card shadow-card p-5">
-              <MilestoneBar
-                released={a.released_milestones}
-                total={a.milestones}
-                releasedAmount={a.released_amount}
-              />
+            <div className="rounded-card border border-card bg-paper p-5 shadow-card">
+              <MilestoneTimeline a={a} />
             </div>
           </Reveal>
 
@@ -248,6 +259,11 @@ export function AgreementDetail({ id }: { id: bigint }) {
             </div>
           )}
           {actionErr && <p className="text-refund text-[13px]">{actionErr}</p>}
+
+          <div className="rounded-card border border-card bg-mist p-4">
+            <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-slate">Next step</p>
+            <p className="mt-1 text-[15px] font-semibold text-ink">{nextAction}</p>
+          </div>
 
           {hasAction && (
             <div className="space-y-3">

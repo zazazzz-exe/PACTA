@@ -1,76 +1,112 @@
+import { m } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { type Agreement, Status } from '../lib/contract';
-import { formatAmount, shortAddr } from '../lib/format';
-import { statusAmount, deadlineLabel, pendingNextStep, isTerminal } from '../lib/agreementView';
+import { fromBaseUnits, shortAddr } from '../lib/format';
+import { deadlineLabel, isTerminal, needsAttentionReason, pendingNextStep } from '../lib/agreementView';
+import { tokenCodeForSac } from '../lib/pactSummary';
+import { amountValue, formatBaseUnits, formatFiat } from '../lib/money';
+import { useDisplayCurrency } from '../lib/displayCurrency';
 import { navigate } from '../lib/router';
 import { StatusPill } from './StatusPill';
-import { MilestoneBar } from './MilestoneBar';
 import { Avatar } from './Avatar';
+import { EASE } from './motion/MotionProvider';
 
-const STRIP: Record<Status, string> = {
-  [Status.Pending]: 'bg-deadline',
-  [Status.Active]: 'bg-accent strip-pulse',
-  [Status.Completed]: 'bg-accent-deep',
-  [Status.Refunded]: 'bg-refund',
-  [Status.Cancelled]: 'bg-fog',
-};
-
+// One Pact as a card: title, counterparty and your role, total amount in the
+// display currency plus the real token amount, funds the contract holds now,
+// a thin milestone bar, the status and the next required action. Every value
+// is read from the contract.
 export function AgreementCard({ a, you }: { a: Agreement; you: string | null }) {
+  const [currency] = useDisplayCurrency();
   const counterparty = you === a.trader ? a.investor : a.trader;
-  const counterpartyRole = you === a.investor ? 'Recipient' : 'Sender';
-  const yourRole =
-    you === a.investor ? "You're paying" : you === a.trader ? "You're getting paid" : null;
-  const { amount, label } = statusAmount(a);
+  const yourRole = you === a.investor ? 'You pay' : you === a.trader ? 'You get paid' : null;
+  const code = tokenCodeForSac(a.token);
   const terminal = isTerminal(a.status);
   const nowSec = Math.floor(Date.now() / 1000);
+
+  const total = formatBaseUnits(a.capital, code);
+  const totalFiat = amountValue(code, fromBaseUnits(a.capital), currency);
+  const securedBase = a.status === Status.Active && a.capital_deposited ? a.capital - a.released_amount : 0n;
+  const secured = formatBaseUnits(securedBase, code);
+  const securedFiat = amountValue(code, fromBaseUnits(securedBase), currency);
+  const released = Number(a.released_milestones);
+  const milestones = Number(a.milestones);
+
+  const next =
+    needsAttentionReason(a, you, nowSec) ??
+    (a.status === Status.Pending
+      ? pendingNextStep(a, you)
+      : a.status === Status.Active
+        ? deadlineLabel(a, nowSec)
+        : a.status === Status.Completed
+          ? 'Completed. Bond returned to the recipient.'
+          : a.status === Status.Refunded
+            ? 'Refunded to the sender.'
+            : 'Cancelled before funding.');
 
   return (
     <button
       onClick={() => navigate(`/agreement/${a.id}`)}
-      className={`group relative w-full overflow-hidden text-left rounded-card border border-hairline bg-paper p-5 shadow-card transition duration-300 hover:-translate-y-1 hover:border-accent/35 hover:shadow-pop focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${
-        terminal ? 'opacity-60 hover:opacity-100' : ''
+      className={`wallet-lift group flex w-full flex-col gap-4 rounded-card border border-card bg-paper p-5 text-left shadow-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+        terminal ? 'opacity-80 hover:opacity-100' : ''
       }`}
     >
-      <span
-        className={`absolute left-0 top-0 h-full w-1 rounded-l-card ${STRIP[a.status]}`}
-        aria-hidden
-      />
-      <div className="pl-2">
-      <div className="flex items-center gap-3">
-        <Avatar addr={counterparty} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[11px] text-fog">{counterpartyRole}</p>
-          <p className="mono text-sm text-ink truncate">{shortAddr(counterparty, 6, 6)}</p>
-          {yourRole && <p className="text-[11px] text-accent">{yourRole}</p>}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[12px] font-bold uppercase tracking-[0.1em] text-slate">Pact #{a.id.toString()}</p>
+          <div className="mt-1.5 flex min-w-0 items-center gap-2">
+            <Avatar addr={counterparty} size="sm" />
+            <span className="mono truncate text-[13px] text-ink">{shortAddr(counterparty, 4, 4)}</span>
+          </div>
+          {yourRole && <p className="mt-1 text-[12px] font-semibold text-accent">{yourRole}</p>}
         </div>
         <StatusPill status={a.status} />
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="mono text-[22px] font-medium text-ink">{formatAmount(amount)}</span>
-        <span className="text-[13px] text-slate">{label}</span>
-      </div>
-
-      {a.status === Status.Active && (
-        <p className="mt-1.5 text-[12px] font-medium text-deadline-deep">
-          {deadlineLabel(a, nowSec)}
+      <div>
+        <p className="mono text-[24px] font-bold leading-tight text-ink" title={total.full}>
+          {totalFiat !== undefined ? formatFiat(totalFiat, currency) : `${total.display} ${code}`}
         </p>
-      )}
-
-      <div className="mt-4">
-        {a.status === Status.Active || a.status === Status.Completed ? (
-          <MilestoneBar
-            released={a.released_milestones}
-            total={a.milestones}
-            releasedAmount={a.released_amount}
-          />
-        ) : a.status === Status.Pending ? (
-          <p className="text-[13px] text-slate">{pendingNextStep(a, you)}</p>
-        ) : (
-          <p className="text-[13px] text-slate">Funds returned to you</p>
+        {totalFiat !== undefined && (
+          <p className="mono text-[12px] text-slate">
+            {total.display} {code}
+          </p>
         )}
       </div>
 
-      <p className="mono text-[11px] text-fog mt-3">Pact {a.id.toString().padStart(3, '0')}</p>
+      <div>
+        <div className="flex items-center justify-between gap-2 text-[12px]">
+          <span className="text-slate">
+            Secured{' '}
+            <span className="mono font-semibold text-ink">
+              {securedFiat !== undefined ? formatFiat(securedFiat, currency) : `${secured.display} ${code}`}
+            </span>
+          </span>
+          <span className="font-semibold text-slate">
+            {released} of {milestones} milestones
+          </span>
+        </div>
+        <div
+          className="mt-2 h-1.5 overflow-hidden rounded-pill bg-mist"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={milestones}
+          aria-valuenow={released}
+          aria-label={`${released} of ${milestones} milestones released`}
+        >
+          <m.div
+            className="h-full origin-left rounded-pill bg-gradient-to-r from-accent to-cyan"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: milestones > 0 ? released / milestones : 0 }}
+            transition={{ duration: 0.6, ease: EASE, delay: 0.1 }}
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-card pt-3">
+        <p className="min-w-0 text-[13px] text-slate">{next}</p>
+        <span className="inline-flex shrink-0 items-center gap-1 text-[13px] font-bold text-accent">
+          View <ArrowRight size={15} aria-hidden className="transition-transform group-hover:translate-x-0.5" />
+        </span>
       </div>
     </button>
   );
