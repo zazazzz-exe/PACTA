@@ -14,11 +14,11 @@ export function BalanceHeader({
   const net = useActiveNetwork();
 
   return (
-    <div className="rounded-card bg-gradient-to-br from-accent to-accent-deep px-5 py-6 text-center text-white shadow-card">
-      <div className="text-[12px] font-medium uppercase tracking-wider text-white/70">
+    <div className="rounded-hero bg-hero px-5 py-6 text-center text-on-accent shadow-glow">
+      <div className="text-[12px] font-medium uppercase tracking-wider text-on-accent/90">
         Estimated total
       </div>
-      <div className="mono mt-1 text-[34px] font-semibold leading-tight text-white">
+      <div className="mono mt-1 text-[34px] font-semibold leading-tight text-on-accent">
         {loading ? (
           <span className="inline-block h-9 w-40 animate-pulse rounded-control bg-white/20 align-middle" />
         ) : (
@@ -31,11 +31,11 @@ export function BalanceHeader({
       {/* The peso figure comes from indicative rates, not a live price feed. On
           mainnet it sits next to real funds, so it has to read as an estimate. */}
       {!loading && (
-        <div className="mt-1 text-[11px] text-white/60">Indicative rate, not a quote</div>
+        <div className="mt-1 text-[11px] text-on-accent/90">Indicative rate, not a quote</div>
       )}
-      <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-white/75">
+      <div className="mt-3 inline-flex items-center gap-1.5 text-[12px] text-on-accent/90">
         <span className="mono">{shortAddr(address)}</span>
-        <CopyButton value={address} className="text-white/80" />
+        <CopyButton value={address} className="text-on-accent/90" />
         <span className="ml-1 inline-flex items-center gap-1">
           <span className="h-1.5 w-1.5 rounded-pill bg-signal" aria-hidden />
           {net.label}

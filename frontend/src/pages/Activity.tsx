@@ -11,8 +11,8 @@ import { OfflineNotice } from '../components/OfflineNotice';
 
 // A small colored asset chip, matching the wallet's asset styling.
 function assetTone(code: string): string {
-  if (code === 'XLM') return 'bg-accent text-white';
-  if (code === 'USDC') return 'bg-accent-deep text-white';
+  if (code === 'XLM') return 'bg-accent text-on-accent';
+  if (code === 'USDC') return 'bg-accent-deep text-on-accent';
   return 'bg-mist text-slate';
 }
 
@@ -33,7 +33,7 @@ function Row({ item, now }: { item: ActivityItem; now: number }) {
         </span>
         <span
           className={`absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-pill border-2 border-paper ${
-            received ? 'bg-accent text-white' : 'bg-slate text-white'
+            received ? 'bg-accent text-on-accent' : 'bg-slate text-on-accent'
           }`}
         >
           {received ? <ArrowDownLeft size={9} aria-hidden /> : <ArrowUpRight size={9} aria-hidden />}

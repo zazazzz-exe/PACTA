@@ -77,7 +77,7 @@ export function RiskLens({
       {onApply && (
         <button
           onClick={() => onApply(read.suggested_milestones, read.suggested_first_milestone_pct)}
-          className="w-full h-11 rounded-control bg-accent text-white text-sm font-medium hover:bg-accent-deep active:scale-[0.98] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+          className="w-full h-11 rounded-control bg-accent text-on-accent text-sm font-medium hover:bg-accent-deep active:scale-[0.98] transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
         >
           Apply suggested protection ({read.suggested_milestones} milestones)
         </button>

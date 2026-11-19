@@ -86,7 +86,7 @@ function HomeScreen() {
 
       {/* Send-protected teaser */}
       <div className="flex items-center gap-2.5 rounded-card border border-accent/25 bg-accent-tint p-3">
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-white">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-on-accent">
           <ShieldCheck size={16} aria-hidden />
         </span>
         <div className="min-w-0 flex-1">

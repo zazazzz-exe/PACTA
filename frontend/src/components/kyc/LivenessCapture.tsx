@@ -96,7 +96,7 @@ export function LivenessCapture({
             type="button"
             onClick={() => onBlob(null)}
             aria-label="Retake selfie"
-            className="grid h-8 w-8 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <RefreshCw size={16} aria-hidden />
           </button>

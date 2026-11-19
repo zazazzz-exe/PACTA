@@ -189,7 +189,7 @@ function TourOverlay({
             width: rect.width + PAD * 2,
             height: rect.height + PAD * 2,
             borderRadius: 14,
-            boxShadow: '0 0 0 9999px rgba(26,32,29,0.55)',
+            boxShadow: '0 0 0 9999px rgba(5,6,11,0.6)',
             outline: '2px solid var(--color-accent)',
           }}
           aria-hidden
@@ -208,7 +208,7 @@ function TourOverlay({
           <button
             onClick={onClose}
             aria-label="Close tour"
-            className="grid h-8 w-8 -mr-1 -mt-1 place-items-center rounded-control text-fog hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="grid h-11 w-11 -mr-2 -mt-2 place-items-center rounded-control text-fog hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <X size={16} aria-hidden />
           </button>
@@ -221,11 +221,11 @@ function TourOverlay({
           </span>
           <div className="flex items-center gap-2">
             {index > 0 && (
-              <Button variant="secondary" className="h-10 px-3 text-[13px]" onClick={onPrev}>
+              <Button variant="secondary" size="sm" onClick={onPrev}>
                 Back
               </Button>
             )}
-            <Button className="h-10 px-4 text-[13px]" onClick={onNext}>
+            <Button size="sm" onClick={onNext}>
               {last ? 'Done' : 'Next'}
             </Button>
           </div>

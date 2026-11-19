@@ -22,7 +22,7 @@ function Action({
       onClick={onClick}
       className="flex flex-1 flex-col items-center gap-2 rounded-card border border-hairline bg-paper py-4 text-[13px] font-medium text-ink transition hover:border-accent/30 hover:bg-accent-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
     >
-      <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent text-white">
+      <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent text-on-accent">
         {icon}
       </span>
       {label}
@@ -65,7 +65,7 @@ export function Home() {
           <button
             onClick={refetch}
             aria-label="Refresh balances"
-            className="grid h-8 w-8 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+            className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
           >
             <RefreshCw size={15} aria-hidden className={loading ? 'animate-spin' : ''} />
           </button>
@@ -94,7 +94,7 @@ export function Home() {
             <p className="text-[14px] text-slate">No assets yet. Add some XLM to get started.</p>
             <button
               onClick={() => navigate('/receive')}
-              className="mt-3 inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-[13px] font-medium text-white transition hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="mt-3 inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-[13px] font-medium text-on-accent transition hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
             >
               <ArrowDown size={15} aria-hidden />
               Receive XLM

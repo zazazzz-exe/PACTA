@@ -334,7 +334,7 @@ function LivenessStep({
               onClick={() => setMockOutcome(o)}
               className={`h-9 rounded-control text-[13px] font-medium transition ${
                 mockOutcome === o
-                  ? 'bg-accent text-white'
+                  ? 'bg-accent text-on-accent'
                   : 'border border-hairline bg-paper text-slate hover:bg-mist'
               }`}
             >

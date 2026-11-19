@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@creit.tech/stellar-wallets-kit": "^1.7.5",
-    "@fontsource/hanken-grotesk": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/plus-jakarta-sans": "^5.2.8",
     "@stellar/stellar-sdk": "^17.4.0",

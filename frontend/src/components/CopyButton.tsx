@@ -35,7 +35,7 @@ export function CopyButton({
       onClick={copy}
       aria-label={copied ? 'Copied' : label}
       title={copied ? 'Copied' : label}
-      className={`inline-grid h-8 w-8 shrink-0 place-items-center rounded-control text-slate transition hover:bg-mist hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${className}`}
+      className={`inline-grid h-11 w-11 shrink-0 place-items-center rounded-control text-slate transition hover:bg-mist hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ${className}`}
     >
       {copied ? (
         <Check size={size} className="text-accent" aria-hidden />
