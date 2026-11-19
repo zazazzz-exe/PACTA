@@ -36,7 +36,7 @@ export function ListRow({ leading, title, subtitle, trailing, trailingSub, onCli
     <button
       type="button"
       onClick={onClick}
-      className={`${cls} rounded-control transition hover:bg-accent-tint/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent-text/70`}
+      className={`${cls} rounded-control transition hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent`}
     >
       {body}
     </button>

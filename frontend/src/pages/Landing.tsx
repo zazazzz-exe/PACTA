@@ -31,25 +31,25 @@ const CAPABILITIES = [
     icon: Wallet,
     title: 'Hold',
     body: 'A multi-asset portfolio with live peso values. Your keys and funds never leave your wallet.',
-    tint: 'bg-gradient-to-br from-accent to-accent-deep text-on-accent',
+    tint: 'bg-mist text-ink',
   },
   {
     icon: Send,
     title: 'Send',
     body: 'Pay anyone on Stellar in seconds. Send now, or send protected when it matters.',
-    tint: 'bg-gradient-to-br from-deadline to-deadline-deep text-on-accent',
+    tint: 'bg-accent-tint text-accent',
   },
   {
     icon: QrCode,
     title: 'Receive',
     body: 'Share your address or QR and get paid from any Stellar wallet.',
-    tint: 'bg-signal text-carbon',
+    tint: 'bg-mint-soft text-mint',
   },
   {
     icon: Repeat,
     title: 'Convert',
     body: 'Swap one asset for another on the Stellar DEX, at the best on-chain rate.',
-    tint: 'bg-gradient-to-br from-accent-deep to-accent text-on-accent',
+    tint: 'bg-lilac-soft text-lilac',
   },
 ] as const;
 
@@ -163,7 +163,7 @@ export function Landing() {
                 <button
                   onClick={connect}
                   data-tour="connect"
-                  className="btn-shimmer group inline-flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-btn-primary shadow-glow px-8 text-[15px] font-medium text-on-accent transition hover:brightness-110 active:scale-[0.98] sm:w-auto"
+                  className="group inline-flex h-14 w-full items-center justify-center gap-2 rounded-pill bg-accent shadow-glow px-8 text-[15px] font-medium text-on-accent transition hover:bg-accent-deep active:scale-[0.98] sm:w-auto"
                 >
                   <Wallet size={20} aria-hidden />
                   Connect wallet
@@ -271,7 +271,7 @@ export function Landing() {
               <li key={title}>
                 <Reveal delay={i * 80}>
                   <div className="group step-card flex h-full items-start gap-4 rounded-card border border-hairline bg-paper p-6 shadow-card">
-                    <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-gradient-to-br from-accent to-accent-deep text-on-accent shadow-card">
+                    <div className="icon-pop grid h-12 w-12 shrink-0 place-items-center rounded-control bg-accent-tint text-accent shadow-card">
                       <Icon size={24} aria-hidden />
                     </div>
                     <div>
@@ -338,30 +338,22 @@ export function Landing() {
           <Reveal>
             <div className="landing-hero-panel relative overflow-hidden rounded-[24px] px-6 py-14 text-center shadow-pop sm:px-12 sm:py-20">
               <div className="mesh-dots pointer-events-none absolute inset-0 opacity-15" aria-hidden />
-              <div
-                className="pointer-events-none absolute inset-0 opacity-70"
-                style={{
-                  backgroundImage:
-                    'radial-gradient(circle at 70% 25%, rgba(91,134,255,0.35), transparent 55%)',
-                }}
-                aria-hidden
-              />
               <div className="relative mx-auto max-w-lg">
-                <span className="inline-flex items-center gap-2 rounded-pill border border-signal/30 bg-signal/10 px-4 py-1.5 text-[12px] font-medium text-signal">
+                <span className="inline-flex items-center gap-2 rounded-pill border border-accent/30 bg-accent-tint px-4 py-1.5 text-[12px] font-semibold text-accent">
                   <Clock size={14} aria-hidden />
                   Available now · {net.label}
                 </span>
-                <h2 className="mt-5 text-[28px] font-semibold tracking-tight text-panel-ink sm:text-[38px]">
+                <h2 className="mt-5 text-[28px] font-bold tracking-tight text-ink sm:text-[38px]">
                   Open your wallet
                 </h2>
-                <p className="mx-auto mt-3 text-[15px] text-panel-muted">
+                <p className="mx-auto mt-3 text-[15px] text-slate">
                   No sign up, no passwords, no custody. Connect a Stellar wallet and your money is ready
                   to move.
                 </p>
                 <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <button
                     onClick={connect}
-                    className="inline-flex h-14 items-center gap-2 rounded-pill bg-btn-primary shadow-glow px-8 text-[15px] font-medium text-on-accent transition hover:brightness-110 active:scale-[0.98]"
+                    className="inline-flex h-14 items-center gap-2 rounded-pill bg-accent shadow-glow px-8 text-[15px] font-semibold text-on-accent transition hover:bg-accent-deep active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
                   >
                     <Wallet size={18} aria-hidden />
                     Connect wallet
@@ -369,7 +361,7 @@ export function Landing() {
                   </button>
                   <button
                     onClick={scrollToHow}
-                    className="inline-flex h-14 items-center gap-2 rounded-[14px] border border-white/20 bg-white/10 px-8 text-[15px] font-medium text-panel-ink transition hover:bg-white/15 active:scale-[0.98]"
+                    className="inline-flex h-14 items-center gap-2 rounded-pill border border-card bg-paper px-8 text-[15px] font-semibold text-ink transition hover:bg-mist active:scale-[0.96] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     See how it works
                   </button>

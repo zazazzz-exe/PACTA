@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 
-// PACTA "electric glow" design system. Values live as CSS variables in
+// PACTA calm design system ("Midnight" dark default, "Paper" light). Values live as CSS variables in
 // src/index.css (dark base, light override) so one class works in both themes.
 // Colors are RGB channels: `rgb(var(--x) / <alpha-value>)` keeps opacity
 // modifiers like `ring-accent/40` and `bg-canvas/95` working.
@@ -27,6 +27,10 @@ export default {
           strong: c('accent-text-strong'),
         },
         'on-accent': c('on-accent'),
+        // friendly pastels: icons and small chips only
+        mint: { DEFAULT: c('mint'), soft: c('mint-soft') },
+        apricot: { DEFAULT: c('apricot'), soft: c('apricot-soft') },
+        lilac: { DEFAULT: c('lilac'), soft: c('lilac-soft') },
         deadline: { DEFAULT: c('deadline'), deep: c('deadline-deep'), tint: c('deadline-tint') },
         refund: { DEFAULT: c('refund'), deep: c('refund-deep'), tint: c('refund-tint') },
         carbon: c('carbon'),
@@ -38,10 +42,9 @@ export default {
         'hero-panel': c('hero-panel'),
         'hero-navy': c('hero-navy'),
       },
-      // Accent is used both as a fill (#2B5CFF) and as text. #2B5CFF fails AA as
-      // text on the dark canvas, so the TEXT utilities point at the blue-text
-      // tokens instead: text-accent -> #7C9BFF (dark) / #1F4FE0 (light), and
-      // text-accent-deep -> the stronger blue used on accent-tint backgrounds.
+      // Accent is used both as a fill (#4F67E6) and as text. The fill is too dark
+      // for text on Midnight, so the TEXT utilities point at the accent-text
+      // tokens instead: text-accent -> #9DB0FF (dark) / #3A52CC (light).
       textColor: {
         accent: {
           DEFAULT: c('accent-text'),
@@ -58,6 +61,7 @@ export default {
       borderRadius: {
         card: 'var(--radius-card)',
         hero: 'var(--radius-hero)',
+        tile: 'var(--radius-control)',
         control: 'var(--radius-control)',
         pill: 'var(--radius-pill)',
       },
@@ -69,6 +73,7 @@ export default {
       backgroundImage: {
         glass: 'var(--glass)',
         hero: 'var(--hero-gradient)',
+        balance: 'var(--balance-card)',
         'btn-primary': 'var(--btn-primary)',
       },
       borderColor: {

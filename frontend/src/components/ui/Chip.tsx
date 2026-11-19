@@ -40,7 +40,7 @@ export function Chip({ tone = 'neutral', selected, icon, className = '', childre
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`inline-flex min-h-tap items-center gap-1.5 rounded-pill px-4 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70 ${look} ${className}`}
+      className={`inline-flex min-h-tap items-center gap-1.5 rounded-pill px-4 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${look} ${className}`}
       {...rest}
     >
       {icon}

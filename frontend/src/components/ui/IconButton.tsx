@@ -6,8 +6,8 @@ export type IconButtonVariant = 'ghost' | 'glass' | 'primary';
 
 const variants: Record<IconButtonVariant, string> = {
   ghost: 'text-slate hover:text-ink hover:bg-mist',
-  glass: 'bg-glass border border-card text-ink shadow-card hover:border-accent-text/50',
-  primary: 'bg-btn-primary text-on-accent shadow-glow hover:brightness-110',
+  glass: 'bg-paper border border-card text-ink hover:bg-mist',
+  primary: 'bg-accent text-on-accent hover:bg-accent-deep',
 };
 
 interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'aria-label'> {
@@ -26,7 +26,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       type={type}
       aria-label={label}
       title={label}
-      className={`grid h-11 w-11 shrink-0 place-items-center rounded-pill transition active:scale-95 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70 ${variants[variant]} ${className}`}
+      className={`grid h-11 w-11 shrink-0 place-items-center rounded-pill transition active:scale-[0.96] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${variants[variant]} ${className}`}
       {...rest}
     >
       {children}

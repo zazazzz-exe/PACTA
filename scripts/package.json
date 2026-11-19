@@ -1,0 +1,4 @@
+{
+  "comment": "Lets Node run scripts/*.ts as ES modules. Scoped to this folder so the root package (Vercel /api functions) is unaffected.",
+  "type": "module"
+}

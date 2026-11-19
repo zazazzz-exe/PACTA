@@ -20,9 +20,9 @@ export function DesignGallery() {
       <section aria-labelledby="g-hero" className="space-y-3">
         <h2 id="g-hero" className="text-[13px] font-semibold uppercase tracking-wider text-slate">Hero card</h2>
         <Card variant="hero" className="p-6">
-          <div className="text-[12px] font-semibold uppercase tracking-wider text-on-accent/90">Balance</div>
+          <div className="text-[12px] font-semibold uppercase tracking-wider text-slate">Balance</div>
           <div className="mono mt-1 text-[34px] font-semibold leading-tight">1,250.00 USDC</div>
-          <div className="mono mt-1 text-[13px] text-on-accent/90">≈ ₱72,812.50 est.</div>
+          <div className="mono mt-1 text-[13px] text-slate">≈ ₱72,812.50 est.</div>
         </Card>
       </section>
 

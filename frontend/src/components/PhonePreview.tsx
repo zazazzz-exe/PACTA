@@ -52,9 +52,9 @@ function HomeScreen() {
       <div className="landing-hero-panel relative overflow-hidden rounded-card p-4 shadow-card">
         <div className="mesh-dots pointer-events-none absolute inset-0 opacity-20" aria-hidden />
         <div className="relative">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-signal">Total value</p>
-          <p className="mono mt-1 text-[24px] font-semibold leading-none text-panel-ink">$1,204.50</p>
-          <p className="mt-2 text-[10px] text-panel-muted">XLM · USDC · 2 assets</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate">Total value</p>
+          <p className="mono mt-1 text-[24px] font-bold leading-none text-ink">$1,204.50</p>
+          <p className="mt-2 text-[10px] text-slate">XLM · USDC · 2 assets</p>
         </div>
       </div>
 

@@ -41,7 +41,27 @@ export function applyTheme(theme: Theme): void {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[theme]);
 }
 
-// Save the user's choice ('system' clears it) and apply it immediately.
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+// Apply a user-initiated theme change with a 200ms crossfade (CSS in index.css:
+// ::view-transition-*). Falls back to an instant switch where the View
+// Transitions API is missing or the user prefers reduced motion.
+export function applyThemeWithFade(theme: Theme): void {
+  const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+  if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
+    doc.startViewTransition(() => applyTheme(theme));
+  } else {
+    applyTheme(theme);
+  }
+}
+
+// Save the user's choice ('system' clears it) and apply it with a crossfade.
 export function setThemeChoice(choice: ThemeChoice): void {
   try {
     if (choice === 'system') window.localStorage.removeItem(THEME_STORAGE_KEY);
@@ -49,7 +69,7 @@ export function setThemeChoice(choice: ThemeChoice): void {
   } catch {
     /* storage blocked: the choice lasts for this page only */
   }
-  applyTheme(choice === 'system' ? systemTheme() : choice);
+  applyThemeWithFade(choice === 'system' ? systemTheme() : choice);
   window.dispatchEvent(new CustomEvent(EVENT));
 }
 
@@ -61,7 +81,7 @@ export function useTheme(): { theme: Theme; choice: ThemeChoice; setChoice: (c: 
   useEffect(() => {
     const sync = () => {
       const next = read();
-      applyTheme(next.theme);
+      if (document.documentElement.getAttribute('data-theme') !== next.theme) applyThemeWithFade(next.theme);
       setState(next);
     };
     let mq: MediaQueryList | null = null;

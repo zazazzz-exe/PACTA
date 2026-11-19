@@ -27,8 +27,8 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
             role="radio"
             aria-checked={on}
             onClick={() => setChoice(o.value)}
-            className={`inline-flex min-h-tap items-center gap-1.5 rounded-pill px-3.5 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70 ${
-              on ? 'bg-btn-primary text-on-accent shadow-glow' : 'text-slate hover:text-ink'
+            className={`inline-flex min-h-tap items-center gap-1.5 rounded-pill px-3.5 text-[13px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+              on ? 'bg-accent text-on-accent' : 'text-slate hover:text-ink'
             }`}
           >
             <Icon size={16} aria-hidden />

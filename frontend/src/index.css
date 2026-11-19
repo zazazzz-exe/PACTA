@@ -3,116 +3,140 @@
 @tailwind utilities;
 
 /* ===================================================================
-   PACTA "electric glow" design tokens (CLAUDE.md, docs/product/DESIGN.md).
-   Colors are RGB channels so Tailwind opacity modifiers work
-   (e.g. ring-accent/40). Dark is the base; light overrides below.
-   The theme is set on <html data-theme> by public/theme-init.js before
-   first paint. Contrast pairs are enforced by src/lib/contrast.test.ts.
+   PACTA calm design tokens: "Midnight" (dark, default) and "Paper" (light).
+   Blue is an accent, never a large surface. Colors are RGB channels so
+   Tailwind opacity modifiers work (e.g. ring-accent/40).
+   The theme is set on <html data-theme> by public/theme-init.js before first
+   paint. Contrast pairs are enforced by scripts/check-contrast.ts (also run by
+   src/lib/contrast.test.ts). Where a spec value failed WCAG AA, the nearest
+   passing shade of the same hue is used and noted inline.
    =================================================================== */
 :root,
 :root[data-theme='dark'] {
   color-scheme: dark;
 
   /* surfaces */
-  --canvas: 5 6 11;              /* #05060B */
-  --paper: 13 17 34;             /* #0D1122 solid card surface */
-  --mist: 18 23 46;              /* #12172E subtle fill */
-  --hairline: rgba(124, 155, 255, 0.16);
-  --hairline-strong: rgba(124, 155, 255, 0.28);
-  --glow: rgba(43, 92, 255, 0.38);
+  --canvas: 15 17 23;            /* #0F1117 soft charcoal */
+  --paper: 22 25 34;             /* #161922 surface */
+  --mist: 29 33 44;              /* #1D212C raised surface */
+  --hairline: rgba(255, 255, 255, 0.07);
+  --hairline-strong: rgba(255, 255, 255, 0.12);
+  --glow: rgba(120, 140, 255, 0.06); /* one faint top glow, no blobs */
 
   /* text */
-  --ink: 245 244 239;            /* #F5F4EF */
-  --slate: 154 160 180;          /* #9AA0B4 muted */
-  --fog: 138 145 168;            /* #8A91A8 tertiary */
+  --ink: 233 231 225;            /* #E9E7E1 warm off-white */
+  --slate: 163 168 181;          /* #A3A8B5 secondary */
+  --fog: 131 136 151;            /* #838897 tertiary (spec #6F7584 is 3.5:1, fails AA) */
 
-  /* accent: fills use --accent, text uses --accent-text */
-  --accent: 43 92 255;           /* #2B5CFF */
-  --accent-deep: 31 69 214;      /* #1F45D6 fill hover/pressed */
-  --accent-tint: 23 33 79;       /* #17214F */
-  --accent-text: 124 155 255;    /* #7C9BFF blue text */
-  --accent-text-strong: 169 190 255; /* #A9BEFF on tint */
-  --on-accent: 245 244 239;      /* off-white on accent fills */
+  /* accent: a highlight, never a large surface */
+  --accent: 79 103 230;          /* #4F67E6 fill */
+  --accent-deep: 68 89 212;      /* #4459D4 fill hover/pressed */
+  --accent-tint: 30 36 61;       /* #1E243D = rgba(79,103,230,0.14) on surface */
+  --accent-text: 157 176 255;    /* #9DB0FF */
+  --accent-text-strong: 157 176 255;
+  --on-accent: 255 255 255;      /* button text is white */
 
-  /* state: deadline (amber) */
-  --deadline: 242 180 66;        /* #F2B442 */
-  --deadline-deep: 255 207 115;  /* text on tint */
-  --deadline-tint: 42 33 18;
-  /* state: refund / destructive */
-  --refund: 255 122 107;         /* #FF7A6B */
-  --refund-deep: 255 166 155;
-  --refund-tint: 46 20 22;
+  /* friendly pastels: icons and small chips only */
+  --mint: 79 199 154;            /* #4FC79A received, success */
+  --mint-soft: 31 53 53;
+  --apricot: 242 166 124;        /* #F2A67C Pacts, celebration */
+  --apricot-soft: 57 48 48;
+  --lilac: 169 155 240;          /* #A99BF0 convert */
+  --lilac-soft: 46 46 67;
 
-  /* cards */
-  --card-border: rgba(124, 155, 255, 0.22);
-  --glass: linear-gradient(160deg, rgba(77, 124, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%);
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
-  --shadow-pop: 0 18px 48px rgba(0, 0, 0, 0.5);
+  /* states: amber warning, coral error */
+  --deadline: 232 176 75;        /* #E8B04B */
+  --deadline-deep: 232 176 75;
+  --deadline-tint: 56 49 41;
+  --refund: 239 122 107;         /* #EF7A6B */
+  --refund-deep: 239 122 107;
+  --refund-tint: 57 41 46;
+
+  /* cards: soft shadow, no outer glow */
+  --card-border: rgba(255, 255, 255, 0.07);
+  --glass: linear-gradient(rgb(22 25 34), rgb(22 25 34));
+  --balance-card: linear-gradient(135deg, #1B2033 0%, #20284A 100%); /* text on it: ink or slate only */
+  --balance-deco: rgba(157, 176, 255, 0.1);
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-pop: 0 12px 32px rgba(0, 0, 0, 0.45);
 }
 
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --canvas: 245 244 239;         /* #F5F4EF */
-  --paper: 255 255 255;          /* #FFFFFF cards */
-  --mist: 236 239 250;           /* #ECEFFA */
-  --hairline: rgba(43, 92, 255, 0.14);
-  --hairline-strong: rgba(43, 92, 255, 0.26);
-  --glow: rgba(43, 92, 255, 0.2);
+  --canvas: 247 246 242;         /* #F7F6F2 warm off-white */
+  --paper: 255 255 255;          /* #FFFFFF surface */
+  --mist: 240 238 232;           /* #F0EEE8 raised surface */
+  --hairline: rgb(231 228 220);  /* #E7E4DC */
+  --hairline-strong: rgb(216 212 202);
+  --glow: rgba(120, 140, 255, 0);
 
-  --ink: 10 10 11;               /* #0A0A0B */
-  --slate: 90 94 112;            /* #5A5E70 muted */
-  --fog: 88 92 110;              /* #585C6E tertiary; anything lighter fails AA on the glow */
+  --ink: 26 28 34;               /* #1A1C22 */
+  --slate: 92 97 110;            /* #5C616E secondary */
+  --fog: 103 108 121;            /* #676C79 tertiary (spec #8A8F9B is 2.8:1, fails AA) */
 
-  --accent: 43 92 255;
-  --accent-deep: 31 79 224;      /* #1F4FE0 */
-  --accent-tint: 228 234 255;    /* #E4EAFF */
-  --accent-text: 31 79 224;      /* #1F4FE0 blue text */
-  --accent-text-strong: 23 56 170;
-  --on-accent: 245 244 239;
+  --accent: 79 103 230;          /* #4F67E6 */
+  --accent-deep: 68 89 212;
+  --accent-tint: 232 236 255;    /* #E8ECFF */
+  --accent-text: 58 82 204;      /* #3A52CC */
+  --accent-text-strong: 58 82 204;
+  --on-accent: 255 255 255;
 
-  --deadline: 150 88 0;          /* #965800 */
-  --deadline-deep: 112 64 0;
-  --deadline-tint: 253 240 214;
-  --refund: 180 40 30;           /* #B4281E */
-  --refund-deep: 138 28 20;
-  --refund-tint: 252 232 230;
+  /* light pastels: spec hue as the soft tile, a deeper shade of the same hue
+     for the icon or text (the spec pastels are 1.7-2.4:1 on white) */
+  --mint: 38 120 89;             /* #267859 */
+  --mint-soft: 216 243 233;
+  --apricot: 180 76 18;          /* #B44C12 */
+  --apricot-soft: 252 235 226;
+  --lilac: 104 80 229;           /* #6850E5 */
+  --lilac-soft: 236 233 252;
 
-  --card-border: rgba(43, 92, 255, 0.14);
-  --glass: linear-gradient(#FFFFFF, #FFFFFF); /* light cards are plain white + border + soft shadow */
-  --shadow-card: 0 1px 2px rgba(10, 20, 60, 0.04), 0 8px 24px rgba(43, 92, 255, 0.08);
-  --shadow-pop: 0 16px 40px rgba(10, 20, 60, 0.14);
+  --deadline: 143 99 18;         /* #8F6312 */
+  --deadline-deep: 143 99 18;
+  --deadline-tint: 250 238 215;
+  --refund: 199 42 22;           /* #C72A16 */
+  --refund-deep: 199 42 22;
+  --refund-tint: 251 226 222;
+
+  --card-border: rgb(231 228 220);
+  --glass: linear-gradient(#FFFFFF, #FFFFFF);
+  --balance-card: linear-gradient(#EEF1FF, #EEF1FF); /* text on it: ink or slate only */
+  --balance-deco: rgba(79, 103, 230, 0.08);
+  --shadow-card: 0 6px 20px rgba(26, 28, 34, 0.06);
+  --shadow-pop: 0 10px 28px rgba(26, 28, 34, 0.1);
 }
 
 /* Theme-independent tokens */
 :root {
-  /* proof panel: the one always-dark surface */
-  --carbon: 8 10 22;             /* #080A16 */
-  --onyx: 14 18 38;
-  --grid: 33 44 88;
-  --panel-ink: 231 236 255;
-  --panel-muted: 150 160 196;
-  --signal: 124 155 255;         /* #7C9BFF */
-  --signal-amber: 242 180 66;
-  --signal-red: 255 122 107;
+  /* proof panel: the one always-dark instrument surface */
+  --carbon: 18 20 27;            /* #12141B */
+  --onyx: 26 29 38;
+  --grid: 40 45 60;
+  --panel-ink: 233 231 225;
+  --panel-muted: 163 168 181;
+  --signal: 157 176 255;         /* #9DB0FF */
+  --signal-amber: 232 176 75;
+  --signal-red: 239 122 107;
 
-  /* hero card: the bright #5B86FF center sits top-right, away from text,
-     so labels land on #2B4BE8 or darker (AA). */
-  --hero-panel: 20 32 138;       /* #14208A */
-  --hero-navy: 11 15 51;         /* #0B0F33 */
-  --hero-gradient: radial-gradient(120% 120% at 88% 0%, #5B86FF 0%, #2B4BE8 32%, #14208A 68%, #0B0F33 100%);
-  --btn-primary: linear-gradient(180deg, #5B86FF 0%, #2B5CFF 32%);
-  --btn-glow: 0 8px 24px rgba(43, 92, 255, 0.5);
+  --hero-panel: 27 32 51;        /* #1B2033 */
+  --hero-navy: 22 25 34;         /* #161922 footer */
+  --hero-gradient: var(--balance-card);
+  --btn-primary: linear-gradient(rgb(79 103 230), rgb(79 103 230)); /* solid #4F67E6 */
+  /* glow budget: primary button and active nav only, <= 0.25 opacity, <= 16px blur */
+  --btn-glow: 0 4px 16px rgba(79, 103, 230, 0.25);
 
   /* radius */
-  --radius-card: 22px;
-  --radius-hero: 26px;
-  --radius-control: 14px;
+  --radius-card: 24px;
+  --radius-hero: 24px;
+  --radius-control: 16px;        /* tiles */
   --radius-pill: 999px;
 
   /* type */
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, Segoe UI, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* motion */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 html {
@@ -122,11 +146,18 @@ body {
   min-height: 100vh;
   color: rgb(var(--ink));
   font-family: var(--font-sans);
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
-  /* top radial glow over the canvas */
   background:
-    radial-gradient(ellipse 110% 520px at 50% -80px, var(--glow), transparent 70%) no-repeat,
+    radial-gradient(ellipse 90% 360px at 50% -60px, var(--glow), transparent 70%) no-repeat,
     rgb(var(--canvas));
+}
+
+/* Theme switch: 200ms crossfade via the View Transitions API (see lib/theme.ts). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: var(--ease-out-soft);
 }
 
 /* tabular, aligned numbers everywhere money/data appears */
@@ -336,3 +367,12 @@ body {
   background: linear-gradient(145deg, rgb(var(--accent-deep)) 0%, rgb(var(--hero-panel)) 45%, rgb(var(--accent)) 100%);
 }
 
+/* ---- Calm motion: no decorative endless loops (loading indicators only) ---- */
+.blob, .particle, .proof-sheen { display: none !important; }
+.blob-a, .blob-b, .blob-c, .proof-grid, .pulse-dot, .phone-float,
+.chip-float-a, .chip-float-b, .strip-pulse, .btn-shimmer::after {
+  animation: none !important;
+}
+.btn-shimmer::after { display: none; }
+.phone-glow { opacity: 0.25; }
+.phone-backdrop, .landing-hero-panel { background: var(--balance-card) !important; }

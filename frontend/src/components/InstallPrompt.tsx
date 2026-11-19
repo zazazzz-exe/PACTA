@@ -31,7 +31,7 @@ export function InstallPrompt({ variant }: { variant: 'banner' | 'row' }) {
             <span className="flex-1">Install PACTA for one-tap access, even offline.</span>
             <button
               onClick={onInstall}
-              className="inline-flex min-h-tap items-center rounded-pill bg-btn-primary shadow-glow px-4 text-[13px] font-semibold text-on-accent hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
+              className="inline-flex min-h-tap items-center rounded-pill bg-accent px-4 text-[13px] font-semibold text-on-accent hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
             >
               Download app
             </button>
@@ -91,7 +91,7 @@ function IosHelp({ onClose }: { onClose: () => void }) {
         </ol>
         <button
           onClick={onClose}
-          className="mt-4 w-full min-h-tap rounded-pill bg-btn-primary shadow-glow px-4 py-2 text-[13px] font-medium text-on-accent hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
+          className="mt-4 w-full min-h-tap rounded-pill bg-accent px-4 py-2 text-[13px] font-medium text-on-accent hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-text/70"
         >
           Got it
         </button>
