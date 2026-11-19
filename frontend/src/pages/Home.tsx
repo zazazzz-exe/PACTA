@@ -1,47 +1,64 @@
-import { ArrowUp, ArrowDown, ArrowLeftRight, RefreshCw } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { m, type Variants } from 'framer-motion';
+import { CloudOff } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { useBalances } from '../hooks/useBalances';
-import { BalanceHeader } from '../components/BalanceHeader';
-import { AssetRow } from '../components/AssetRow';
-import { ConnectButton } from '../components/ConnectButton';
+import { useActivity } from '../hooks/useActivity';
+import { useAgreements } from '../hooks/useAgreements';
+import { useActiveNetwork } from '../lib/activeNetwork';
 import { navigate } from '../lib/router';
 import { useOffline } from '../lib/outbox';
+import { t } from '../lib/strings';
+import { isOpenPact, summarizePact, type PactSummary } from '../lib/pactSummary';
+import { useStoredState } from '../lib/useStoredState';
+import type { DisplayCurrency } from '../lib/money';
+import { ConnectButton } from '../components/ConnectButton';
 import { OfflineNotice } from '../components/OfflineNotice';
+import { Greeting } from '../components/home/Greeting';
+import { BalanceCard } from '../components/home/BalanceCard';
+import { QuickActions } from '../components/home/QuickActions';
+import { TipCard } from '../components/home/TipCard';
+import { ActivePacts } from '../components/home/ActivePacts';
+import { AssetList } from '../components/home/AssetList';
+import { RecentActivity } from '../components/home/RecentActivity';
+import { Sheet } from '../components/ui/Sheet';
+import { Button } from '../components/ui/Button';
+import { EASE } from '../components/motion/MotionProvider';
+import { Send } from './Send';
+import { Receive } from './Receive';
 
-function Action({
-  icon,
-  label,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-1 flex-col items-center gap-2 rounded-card border border-hairline bg-paper py-4 text-[13px] font-medium text-ink transition hover:border-accent/30 hover:bg-accent-tint focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-    >
-      <span className="grid h-10 w-10 place-items-center rounded-pill bg-accent text-on-accent">
-        {icon}
-      </span>
-      {label}
-    </button>
-  );
-}
+// Home (DESIGN §7.6). Reuses the existing data hooks unchanged; everything
+// shown is computed from live reads. Sections fade up 40ms apart on load
+// (simple fades with reduced motion, via MotionConfig).
+const list: Variants = { show: { transition: { staggerChildren: 0.04 } } };
+const item: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE } },
+};
 
 export function Home() {
   const { address } = useWallet();
-  const { balances, totalPhp, loading, error, refetch } = useBalances(address);
+  const net = useActiveNetwork();
+  const { balances, loading, error, refetch } = useBalances(address);
+  const activity = useActivity(address);
+  const pacts = useAgreements(address ?? undefined, net.supportsPacts && !!address);
   const offline = useOffline();
+  const [currency, setCurrency] = useStoredState<DisplayCurrency>('pacta.home.currency', 'USD');
+  const [sheet, setSheet] = useState<'send' | 'receive' | null>(null);
+
+  const openPacts = useMemo<PactSummary[]>(() => {
+    if (!address) return [];
+    return pacts.agreements
+      .filter(isOpenPact)
+      .map((a) => summarizePact(a, address))
+      .filter((p): p is PactSummary => p !== null);
+  }, [pacts.agreements, address]);
 
   if (!address) {
     return (
       <div className="mx-auto max-w-app px-1 py-16 text-center">
-        <h1 className="text-[22px] font-semibold tracking-tight text-ink">Your wallet</h1>
-        <p className="mt-2 text-[14px] text-slate">
-          Connect a wallet to see your balance, send, receive, and convert.
-        </p>
+        <h1 className="text-[22px] font-bold tracking-tight text-ink">{t('connect.title')}</h1>
+        <p className="mt-2 text-[15px] text-slate">{t('connect.body')}</p>
         <div className="mt-6 flex justify-center">
           <ConnectButton />
         </div>
@@ -49,64 +66,99 @@ export function Home() {
     );
   }
 
+  const refreshAll = () => {
+    refetch();
+    activity.refetch();
+    if (net.supportsPacts) void pacts.refresh();
+  };
+  const newPact = () => navigate('/create');
+
   return (
-    <div className="mx-auto max-w-app space-y-5 px-1">
-      <BalanceHeader address={address} totalPhp={totalPhp} loading={loading} />
+    <>
+      <m.div variants={list} initial="hidden" animate="show" className="mx-auto max-w-app space-y-6 px-1">
+        <m.div variants={item}>
+          <Greeting address={address} />
+        </m.div>
 
-      <div className="flex gap-3">
-        <Action icon={<ArrowUp size={18} aria-hidden />} label="Send" onClick={() => navigate('/send')} />
-        <Action icon={<ArrowDown size={18} aria-hidden />} label="Receive" onClick={() => navigate('/receive')} />
-        <Action icon={<ArrowLeftRight size={18} aria-hidden />} label="Convert" onClick={() => navigate('/convert')} />
-      </div>
-
-      <div>
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-slate">Assets</h2>
-          <button
-            onClick={refetch}
-            aria-label="Refresh balances"
-            className="grid h-11 w-11 place-items-center rounded-control text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-          >
-            <RefreshCw size={15} aria-hidden className={loading ? 'animate-spin' : ''} />
-          </button>
-        </div>
+        <m.div variants={item}>
+          <BalanceCard address={address} balances={balances} loading={loading} currency={currency} onCurrency={setCurrency} />
+        </m.div>
 
         {offline ? (
-          <OfflineNotice />
+          <m.div variants={item}>
+            <OfflineNotice />
+          </m.div>
         ) : (
           error && (
-            <div className="rounded-card border border-refund/40 bg-refund-tint px-4 py-3 text-[13px] text-refund-deep">
-              {error}
-            </div>
+            <m.div variants={item}>
+              <ErrorState message={error} onRetry={refreshAll} />
+            </m.div>
           )
         )}
 
-        {loading && balances.length === 0 && (
-          <div className="space-y-2">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-16 animate-pulse rounded-card bg-mist" />
-            ))}
-          </div>
+        <m.div variants={item}>
+          <QuickActions
+            onSend={() => setSheet('send')}
+            onReceive={() => setSheet('receive')}
+            onConvert={() => navigate('/convert')}
+            onNewPact={newPact}
+            pactsAvailable={net.supportsPacts}
+          />
+        </m.div>
+
+        {net.supportsPacts && (
+          <m.div variants={item}>
+            <TipCard onTry={newPact} />
+          </m.div>
         )}
 
-        {!loading && !error && balances.length === 0 && (
-          <div className="rounded-card border border-hairline bg-paper px-4 py-8 text-center">
-            <p className="text-[14px] text-slate">No assets yet. Add some XLM to get started.</p>
-            <button
-              onClick={() => navigate('/receive')}
-              className="mt-3 inline-flex items-center gap-2 rounded-control bg-accent px-4 py-2 text-[13px] font-medium text-on-accent transition hover:bg-accent-deep focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
-            >
-              <ArrowDown size={15} aria-hidden />
-              Receive XLM
-            </button>
-          </div>
+        {net.supportsPacts && (
+          <m.div variants={item}>
+            <ActivePacts
+              pacts={openPacts}
+              loading={pacts.loading}
+              onOpen={(id) => navigate(`/agreement/${id}`)}
+              onStart={newPact}
+              onSeeAll={() => navigate('/dashboard')}
+            />
+          </m.div>
         )}
 
-        <div className="space-y-2">
-          {balances.map((b) => (
-            <AssetRow key={`${b.asset.code}:${b.asset.issuer ?? 'native'}`} balance={b} />
-          ))}
-        </div>
+        <m.div variants={item}>
+          <AssetList
+            balances={balances}
+            currency={currency}
+            network={net.key === 'public' ? 'public' : 'testnet'}
+            loading={loading}
+            onRefresh={refreshAll}
+          />
+        </m.div>
+
+        <m.div variants={item}>
+          <RecentActivity items={activity.items} loading={activity.loading} onSeeAll={() => navigate('/activity')} />
+        </m.div>
+      </m.div>
+
+      <Sheet open={sheet === 'send'} onClose={() => setSheet(null)} title={t('sheet.send')}>
+        <Send embedded onDone={() => setSheet(null)} />
+      </Sheet>
+      <Sheet open={sheet === 'receive'} onClose={() => setSheet(null)} title={t('sheet.receive')}>
+        <Receive embedded />
+      </Sheet>
+    </>
+  );
+}
+
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex items-start gap-3 rounded-card border border-refund/30 bg-refund-tint p-5">
+      <CloudOff size={20} aria-hidden className="mt-0.5 shrink-0 text-refund" />
+      <div className="min-w-0 flex-1">
+        <p className="text-[15px] font-bold text-ink">{t('error.title')}</p>
+        <p className="mt-0.5 text-[13px] text-refund-deep">{message}</p>
+        <Button size="sm" variant="secondary" className="mt-3" onClick={onRetry}>
+          {t('error.retry')}
+        </Button>
       </div>
     </div>
   );

@@ -34,7 +34,7 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 }
 
 export function Profile() {
-  const { address, kycStatus, refreshKyc } = useWallet();
+  const { address, kycStatus, refreshKyc, disconnect } = useWallet();
   const net = useActiveNetwork();
   const [kyc, setKyc] = useState<KycStatusRead | null>(null);
   const [rep, setRep] = useState<Reputation | null>(null);
@@ -148,6 +148,10 @@ export function Profile() {
           </p>
           <IdentityBadge status={kycStatus} maskedName={kyc?.maskedName} className="mt-1" />
         </div>
+        {/* Disconnect lives here now that the header no longer shows the address chip. */}
+        <Button size="sm" variant="secondary" onClick={disconnect}>
+          Disconnect
+        </Button>
       </div>
 
       {/* App install: renders nothing when already installed or unavailable */}
@@ -255,7 +259,7 @@ export function Profile() {
           )}
           <button
             onClick={() => navigate('/dashboard')}
-            className="inline-flex items-center gap-1 text-[13px] text-accent-deep hover:opacity-80"
+            className="inline-flex min-h-tap items-center gap-1 text-[13px] font-semibold text-accent hover:opacity-80 focus:outline-none focus-visible:underline"
           >
             View my Pacts <ArrowUpRight size={14} aria-hidden />
           </button>

@@ -4,7 +4,8 @@ import { useWallet } from '../hooks/useWallet';
 import { CopyButton } from '../components/CopyButton';
 import { ConnectButton } from '../components/ConnectButton';
 
-export function Receive() {
+// `embedded`: rendered inside the Home bottom sheet, which shows the title.
+export function Receive({ embedded = false }: { embedded?: boolean } = {}) {
   const { address } = useWallet();
   const [qr, setQr] = useState<string>('');
 
@@ -32,7 +33,7 @@ export function Receive() {
   return (
     <div className="mx-auto max-w-app space-y-5 px-1">
       <div>
-        <h1 className="text-[22px] font-semibold tracking-tight text-ink">Receive</h1>
+        {!embedded && <h1 className="text-[22px] font-semibold tracking-tight text-ink">Receive</h1>}
         <p className="mt-1 text-[14px] text-slate">
           Share this address or QR to receive any Stellar asset.
         </p>

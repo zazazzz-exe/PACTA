@@ -18,7 +18,9 @@ import { useActiveNetwork } from '../lib/activeNetwork';
 
 const keyOf = (b: AssetBalance) => `${b.asset.code}:${b.asset.issuer ?? 'native'}`;
 
-export function Send() {
+// `embedded`: rendered inside the Home bottom sheet; the sheet shows the title
+// and `onDone` closes it. The /send route renders it as a full page.
+export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?: () => void } = {}) {
   const { address } = useWallet();
   const { balances, loading } = useBalances(address);
   const net = useActiveNetwork();
@@ -75,7 +77,7 @@ export function Send() {
           <Button variant="secondary" className="flex-1" onClick={() => { setSentHash(null); setAmount(''); }}>
             Send another
           </Button>
-          <Button className="flex-1" onClick={() => navigate('/home')}>Done</Button>
+          <Button className="flex-1" onClick={() => (onDone ? onDone() : navigate('/home'))}>Done</Button>
         </div>
       </div>
     );
@@ -99,7 +101,7 @@ export function Send() {
           <Button variant="secondary" className="flex-1" onClick={() => { setQueued(false); setAmount(''); }}>
             Queue another
           </Button>
-          <Button className="flex-1" onClick={() => navigate('/home')}>Done</Button>
+          <Button className="flex-1" onClick={() => (onDone ? onDone() : navigate('/home'))}>Done</Button>
         </div>
       </div>
     );
@@ -156,7 +158,7 @@ export function Send() {
 
   return (
     <div className="mx-auto max-w-app space-y-5 px-1">
-      <h1 className="text-[22px] font-semibold tracking-tight text-ink">Send</h1>
+      {!embedded && <h1 className="text-[22px] font-semibold tracking-tight text-ink">Send</h1>}
 
       <label className="block">
         <span className="mb-1.5 block text-[13px] text-slate">Recipient address</span>

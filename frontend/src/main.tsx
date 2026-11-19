@@ -1,5 +1,6 @@
 import { StrictMode, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { MotionProvider } from './components/motion/MotionProvider';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { Buffer } from 'buffer';
@@ -180,16 +181,53 @@ if (import.meta.env.DEV && window.location.hash === '#/design') {
   void import('./pages/DesignGallery').then(({ DesignGallery }) =>
     root.render(
       <StrictMode>
-        <DesignGallery />
+        <MotionProvider>
+          <DesignGallery />
+        </MotionProvider>
       </StrictMode>,
     ),
   );
+} else if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('preview')) {
+  // Dev-only read-only preview (e.g. /?preview#/home): renders the real app as if
+  // the testnet READ_SOURCE account were connected, so screens can be reviewed and
+  // screenshotted without a wallet extension. Nothing can be signed. Stripped
+  // from production builds.
+  void import('./lib/config').then(({ READ_SOURCE }) => {
+    const preview: WalletState = {
+      address: READ_SOURCE,
+      network: 'Test SDF Network ; September 2015',
+      networkOk: true,
+      connecting: false,
+      connect: async () => {},
+      disconnect: () => {},
+      connectError: null,
+      clearConnectError: () => {},
+      lockNotice: null,
+      clearLockNotice: () => {},
+      kycStatus: 'unknown',
+      kycLoading: false,
+      refreshKyc: async () => {},
+    };
+    root.render(
+      <StrictMode>
+        <WalletContext.Provider value={preview}>
+          <TourProvider>
+            <MotionProvider>
+              <App />
+            </MotionProvider>
+          </TourProvider>
+        </WalletContext.Provider>
+      </StrictMode>,
+    );
+  });
 } else {
   root.render(
     <StrictMode>
       <WalletProvider>
         <TourProvider>
-          <App />
+          <MotionProvider>
+            <App />
+          </MotionProvider>
         </TourProvider>
       </WalletProvider>
       <Analytics />

@@ -22,10 +22,9 @@ import { Receive } from './pages/Receive';
 import { Send } from './pages/Send';
 import { Convert } from './pages/Convert';
 import { Activity } from './pages/Activity';
-import { FloatingNav } from './components/ui/FloatingNav';
+import { FloatingNav, NAV_SPACE } from './components/ui/FloatingNav';
 import { ThemeQuickToggle } from './components/ui/ThemeQuickToggle';
 import { Toaster } from './components/Toaster';
-import { IdentityBadge } from './components/kyc/IdentityBadge';
 import { contractExplorerUrl } from './lib/config';
 import { useActiveNetwork } from './lib/activeNetwork';
 
@@ -33,10 +32,10 @@ function Wordmark() {
   return (
     <button
       onClick={() => navigate('/')}
-      className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-control"
+      className="flex min-h-tap items-center gap-2.5 rounded-control focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <img src="/Pacta_logo.png" alt="" aria-hidden className="h-11 w-11 object-contain" />
-      <span className="text-[21px] font-semibold tracking-tight text-ink">PACTA</span>
+      <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+      <span className="text-[19px] font-bold tracking-tight text-ink">PACTA</span>
     </button>
   );
 }
@@ -46,9 +45,9 @@ function NetworkBadge() {
   return (
     <span
       data-tour="network"
-      className="mono hidden sm:inline-flex items-center gap-1.5 text-[12px] text-slate"
+      className="inline-flex items-center gap-1.5 rounded-pill border border-card bg-paper px-2.5 py-1 text-[12px] font-semibold text-slate"
     >
-      <span className="h-1.5 w-1.5 rounded-pill bg-accent pulse-dot" aria-hidden />
+      <span className="h-1.5 w-1.5 rounded-pill bg-deadline" aria-hidden />
       {net.label}
     </span>
   );
@@ -93,7 +92,7 @@ export default function App() {
   const route = useRoute();
   const net = useActiveNetwork();
   const { start } = useTour();
-  const { address, kycStatus } = useWallet();
+  const { address } = useWallet();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -126,34 +125,29 @@ export default function App() {
       )}
       <header
         className={`sticky top-0 z-20 border-b backdrop-blur transition-shadow duration-200 ${
-          route.name === 'landing'
-            ? scrolled
-              ? 'border-accent/20 bg-accent-tint/90 shadow-card'
-              : 'border-accent/15 bg-accent-tint/70'
-            : scrolled
-              ? 'border-hairline bg-canvas/95 shadow-card'
-              : 'border-hairline bg-canvas/85'
+          scrolled ? 'border-hairline bg-canvas/90 shadow-card' : 'border-transparent bg-canvas/70'
         }`}
       >
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 h-14">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-2 px-4 sm:px-5">
+          <div className="flex min-w-0 items-center gap-2.5">
             <Wordmark />
             <NetworkBadge />
           </div>
-          <div className="flex items-center gap-2">
-            {address && <IdentityBadge status={kycStatus} className="hidden sm:inline-flex" />}
+          <div className="flex items-center gap-1">
             <ThemeQuickToggle />
             <button
               onClick={startTour}
               aria-label="Take a tour"
               title="Take a tour"
-              className="grid h-11 w-11 place-items-center rounded-pill text-slate hover:bg-mist focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40"
+              className="grid h-11 w-11 place-items-center rounded-pill text-slate hover:bg-mist hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <HelpCircle size={20} aria-hidden />
             </button>
-            <span data-tour="connect">
-              <ConnectButton />
-            </span>
+            {!address && (
+              <span data-tour="connect">
+                <ConnectButton />
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -165,8 +159,8 @@ export default function App() {
 
       <main
         className={`relative z-10 flex-1 ${
-          route.name === 'landing' ? '' : 'px-5 py-6 sm:py-8'
-        } ${showTabs ? 'pb-32' : ''}`}
+          route.name === 'landing' ? '' : 'px-5 pt-6 sm:pt-8'
+        } ${showTabs ? NAV_SPACE : route.name === 'landing' ? '' : 'pb-6 sm:pb-8'}`}
       >
         <PageTransition routeKey={key}>
           {route.name === 'landing' && <Landing />}

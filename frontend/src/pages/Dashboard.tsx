@@ -192,7 +192,7 @@ export function Dashboard() {
                 </span>
                 <button
                   onClick={() => navigate(`/agreement/${a.id}`)}
-                  className="shrink-0 text-[13px] font-medium text-accent-deep hover:underline focus:outline-none focus-visible:underline"
+                  className="inline-flex min-h-tap shrink-0 items-center px-1 text-[13px] font-semibold text-accent hover:underline focus:outline-none focus-visible:underline"
                 >
                   Review
                 </button>
