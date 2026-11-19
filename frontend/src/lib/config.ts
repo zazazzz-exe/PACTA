@@ -3,7 +3,7 @@ import { TESTNET } from './networks';
 
 // Deployed PACTA escrow on Stellar testnet (captured in Phase 2).
 // The contract is token-agnostic; the demo settles in the native XLM SAC.
-export const CONTRACT_ID = 'CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM';
+export const CONTRACT_ID = 'CDES4GTFPX3QLQYGNK3MEE2HKXSNS23KR5UDDURSBE4TJKAZYJP4BPI5';
 export const TOKEN_ADDRESS = 'CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC';
 
 // Read-only simulations still need an existing, funded source account (the RPC

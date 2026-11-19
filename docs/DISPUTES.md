@@ -1,5 +1,7 @@
 # Disputes: options and trade-offs
 
+> **Owner decision (2026-11-19): Option A, mutual release first**, designed so a non-PACTA arbiter (C2 or C3) can be added later without migrating Pacts. Not implemented yet; it becomes its own task. The open questions in §6 (reputation counting, proposal expiry, KYC gating) are answered in that task's design.
+>
 > **Status:** decision document, tracker task #4. **Nothing here is implemented.** The owner picks an option (or a combination) first; that pick becomes its own task, which reopens the escrow explicitly, updates `PRD.md` §8 first, adds tests, deploys to testnet only, and needs an independent re-audit before mainnet.
 
 ## 1. The problem

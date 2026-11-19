@@ -32,7 +32,7 @@ want the sharpest scrutiny.
 | Toolchain | `rustc 1.95.0`, `cargo 1.95.0`, `stellar` CLI `26.0.0`, target `wasm32v1-none` |
 | WASM sha256 | `acd75d10567e7e4fcb3ed58b603d976c772a058b1ab1422ad142ac2b3c0696e4` |
 | WASM size | 14,639 bytes |
-| Testnet contract | `CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM` |
+| Testnet contract | `CAY6BQEORTLX5F2PDPQAUTQGJ46JUN3JP7U22Q2U3DLVFNOVNXIDCTBM` (superseded 2026-11-19 by the reopened build below) |
 | Testnet admin / deployer | `GCO474RPUM4AOF5T4JA55YIFJKP5B3743F6AXD5M65WBB4SNLFTL43PS` |
 
 > **2026-11-19 reopen (min duration + same party), not yet audited.** The table above
@@ -44,8 +44,10 @@ want the sharpest scrutiny.
 > | **Mainnet (default, the one to audit)** | `stellar contract build` | 86,400 s | `c88a21535350bb0fb9542d4fe7dbb21d65053214eb6ac3e146049f82332e66a7` | 14,748 bytes |
 > | Testnet only | `stellar contract build --features testnet` | 60 s | `3c24a3763bc454581ff1c422b9ec7e981e05b1c5e685f2177cdf960d55ff105e` | 14,746 bytes |
 >
-> The testnet contract id above is replaced when the reopened build is redeployed to
-> testnet (pending owner approval). Hashes were produced with the toolchain in this table;
+> **Deployed to testnet 2026-11-19** from commit `44469df` (testnet-feature build; on-chain
+> wasm sha256 verified equal to the testnet row): contract `CDES4GTFPX3QLQYGNK3MEE2HKXSNS23KR5UDDURSBE4TJKAZYJP4BPI5`,
+> admin / deployer unchanged. Smoke tests on-chain: `duration = 30` → `Error(Contract, #12)`;
+> `investor == trader` → `Error(Contract, #13)`; a valid 60 s Pact → id 1. Hashes were produced with the toolchain in this table;
 > re-verify after any toolchain change. **Only the default build may ever go to mainnet.**
 
 Release profile (root `Cargo.toml`) sets `overflow-checks = true`, `panic = "abort"`,
