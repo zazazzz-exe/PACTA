@@ -35,8 +35,10 @@ export default defineConfig({
     cspRpcGuard(),
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'auto',
+      // 'prompt' so the app picks the moment to switch versions (lib/pwaUpdate.ts):
+      // never mid-action, right away on a fresh load.
+      registerType: 'prompt',
+      injectRegister: false,
       // Auto-generate + inject icons and the apple-touch-icon link from
       // pwa-assets.config.ts.
       pwaAssets: { config: true },
