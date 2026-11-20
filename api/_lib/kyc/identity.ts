@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logError } from '../http';
+import { isProduction } from './index';
 
 // Linked-identity resolution (Phase 4b). Wallets sharing kyc_profile.identity_id
 // are one identity. A wallet is "verified" if ANY wallet in its group holds a
@@ -24,15 +25,25 @@ interface ProfileRow {
   doc_country: string | null;
   doc_expiry: string | null;
   status_updated_at: string | null;
+  provider?: string | null;
 }
 
 const COLS =
-  'wallet_address, identity_id, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at';
+  'wallet_address, identity_id, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at, provider';
 
 // Same columns minus identity_id, for a graceful fallback read when migration
 // 0002 has not been applied yet (the identity_id column is absent).
 const LEGACY_COLS =
-  'wallet_address, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at';
+  'wallet_address, status, masked_name, doc_type, doc_country, doc_expiry, status_updated_at, provider';
+
+// In production a sandbox ('mock') result is never a verification, even if a
+// preview or dev build wrote it to the same database: it reads as unverified.
+export function effectiveRow<T extends { status: GroupStatus; provider?: string | null }>(row: T): T {
+  if (row.status === 'verified' && row.provider === 'mock' && isProduction()) {
+    return { ...row, status: 'unverified', masked_name: null, doc_expiry: null };
+  }
+  return row;
+}
 
 export interface ResolvedIdentity {
   identityId: string | null;
@@ -59,7 +70,7 @@ export async function resolveIdentity(
   supa: SupabaseClient,
   wallet: string,
 ): Promise<ResolvedIdentity> {
-  const { data: self, error: selfErr } = await supa
+  const { data: selfRaw, error: selfErr } = await supa
     .from('kyc_profile')
     .select(COLS)
     .eq('wallet_address', wallet)
@@ -70,14 +81,15 @@ export async function resolveIdentity(
   // Core verification must never silently read as unverified because the optional
   // grouping query failed.
   if (selfErr) return resolveLegacy(supa, wallet, selfErr);
-  if (!self) return singleton(wallet);
+  if (!selfRaw) return singleton(wallet);
+  const self = effectiveRow(selfRaw);
 
   const { data: group } = await supa
     .from('kyc_profile')
     .select(COLS)
     .eq('identity_id', self.identity_id);
 
-  const rows: ProfileRow[] = (group as ProfileRow[] | null) ?? [self];
+  const rows: ProfileRow[] = ((group as ProfileRow[] | null) ?? [self]).map(effectiveRow);
   const verifier = rows.find((r) => r.status === 'verified') ?? null;
   const source = verifier ?? self;
 
@@ -119,12 +131,13 @@ async function resolveLegacy(
   cause: unknown,
 ): Promise<ResolvedIdentity> {
   logError('resolveIdentity:legacy_fallback', cause);
-  const { data } = await supa
+  const { data: raw } = await supa
     .from('kyc_profile')
     .select(LEGACY_COLS)
     .eq('wallet_address', wallet)
     .maybeSingle<Omit<ProfileRow, 'identity_id'>>();
-  if (!data) return singleton(wallet);
+  if (!raw) return singleton(wallet);
+  const data = effectiveRow(raw);
   return {
     identityId: null,
     status: data.status,

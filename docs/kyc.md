@@ -83,13 +83,21 @@ WAF / IP rate limits).
 
 ## Fail closed in production
 
-In production (`VERCEL_ENV=production` or `NODE_ENV=production`) the server
+In production (`VERCEL_ENV=production` on Vercel; `NODE_ENV=production` only
+when `VERCEL_ENV` is absent, i.e. self-hosted) the server
 refuses KYC when `KYC_PROVIDER` is unset or `mock`: `kyc-status`,
 `kyc-start-verification`, `kyc-submit-media`, `kyc-refresh`, `kyc-webhook` and
 `kyc-link-wallet` answer `503 { "error": "kyc_not_configured" }` and log the
 reason. Wallet sign-in (`kyc-request-nonce`, `kyc-verify-wallet`) and the
 data-removing endpoints (`kyc-erase`, `kyc-unlink-wallet`) stay available. In
-development, `mock` remains the default. See `api/_lib/kyc/index.ts`.
+development and on Vercel **preview** deployments, `mock` remains the default,
+so the verification flow works end to end there. The sandbox approves every
+submission, discards the media, and invents no name or document expiry. A
+sandbox result never counts in production: `resolveIdentity` reads a
+`provider = mock` verification as unverified there, so a preview sharing the
+database cannot verify a wallet for the live app. The UI shows no sandbox
+controls, and failed KYC calls show a plain retry message, never a status code.
+See `api/_lib/kyc/index.ts` and `api/_lib/kyc/identity.ts`.
 
 ## Roadmap: linked identity across wallets (Phase 4, not yet built)
 
@@ -183,10 +191,11 @@ Notes:
 1. Create a Supabase project; run `supabase/migrations/0001_kyc_identity.sql`.
 2. Fill `.env` (copy from `.env.example`), keep `KYC_PROVIDER=mock`.
 3. `vercel dev` at the repo root (plain `vite dev` does not serve `/api/*`).
-4. Connect Freighter → sign the challenge → `/verify` → pick "Approve" → status
-   flips to `verified` and the commitment-action gates (Send protected, bond,
-   deposit, release) open. "Review" exercises the pending/webhook path; "Reject"
-   the rejected path.
+4. Connect Freighter → sign the challenge → `/verify` → submit → status flips to
+   `verified` and the commitment-action gates (Send protected, bond, deposit,
+   release) open. The pending and rejected paths are covered by tests (the
+   server still accepts an `x-mock-outcome` hint on the sandbox; the UI never
+   sends it).
 
 ## Tests
 

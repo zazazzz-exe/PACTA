@@ -5,10 +5,14 @@ import { json, logError } from '../http';
 
 type Env = Record<string, string | undefined>;
 
-// "Production" is any Vercel production deployment, or any build that sets
-// NODE_ENV=production. Everything else (local dev, tests) is development.
+// "Production" is the Vercel production deployment, or a self-hosted build with
+// NODE_ENV=production. Vercel preview deployments also run with
+// NODE_ENV=production, so on Vercel only VERCEL_ENV decides: previews and local
+// dev may use the sandbox provider. A sandbox result never counts in production
+// (see identity.ts), so a preview cannot verify a wallet for the live app.
 export function isProduction(env: Env = process.env): boolean {
-  return env.VERCEL_ENV === 'production' || env.NODE_ENV === 'production';
+  if (env.VERCEL_ENV) return env.VERCEL_ENV === 'production';
+  return env.NODE_ENV === 'production';
 }
 
 // Fail closed: in production KYC must run against a real provider. Returns the

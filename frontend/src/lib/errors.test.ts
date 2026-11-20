@@ -91,3 +91,15 @@ describe('friendlyError - escrow min duration and same party', () => {
     expect(friendlyError(new Error('Error(Contract, #13)'))).toBe('You cannot send a Pact to yourself.');
   });
 });
+
+describe('friendlyError for verification API failures', () => {
+  it('never shows the raw path or status code', () => {
+    for (const s of ['/api/kyc-start-verification 503', 'kyc-submit-media 500', 'kyc-status 502']) {
+      const msg = friendlyError(new Error(s));
+      expect(msg).toBe('Verification is busy right now. Please try again in a moment.');
+    }
+    expect(friendlyError(new Error('/api/kyc-verify-wallet 429'))).toMatch(/Too many attempts/);
+    expect(friendlyError(new Error('/api/kyc-verify-wallet 401'))).toMatch(/session expired/);
+    expect(friendlyError(new Error('/api/kyc-link-wallet 409'))).not.toMatch(/409|api/);
+  });
+});

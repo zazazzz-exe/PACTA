@@ -89,16 +89,10 @@ export async function refreshFromProvider(): Promise<{ kycStatus: KycStatus }> {
   return postJson('/api/kyc-refresh', {});
 }
 
-// Stream the captured media to the provider (never stored). `mockOutcome` only
-// matters on the sandbox provider and lets a tester force pass/fail/pending.
-export async function submitMedia(
-  providerRef: string,
-  media: FormData,
-  mockOutcome?: 'pass' | 'fail' | 'pending',
-): Promise<{ status: KycStatus }> {
+// Stream the captured media to the provider (never stored).
+export async function submitMedia(providerRef: string, media: FormData): Promise<{ status: KycStatus }> {
   const res = await fetch(`/api/kyc-submit-media?ref=${encodeURIComponent(providerRef)}`, {
     method: 'POST',
-    headers: mockOutcome ? { 'x-mock-outcome': mockOutcome } : undefined,
     body: media,
   });
   if (!res.ok) throw new Error(`kyc-submit-media ${res.status}`);

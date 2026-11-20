@@ -44,17 +44,16 @@ function outcomeFrom(mock?: 'pass' | 'fail' | 'pending'): KycOutcome {
   return 'verified';
 }
 
-// Deterministic synthetic identity so the hashing/masking paths run with no real
-// PII. Derived from the providerRef so each verification hashes to a distinct
-// value (the gov_id_hash unique index stays happy).
+// Synthetic result with no real PII. The ID number is derived from the
+// providerRef so each verification hashes to a distinct value (the gov_id_hash
+// unique index stays happy). No name or document expiry is invented: the
+// sandbox reads nothing from the document, so none is shown.
 function syntheticResult(providerRef: string, outcome: KycOutcome): ProviderResult {
   const tag = providerRef.replace(/[^a-z0-9]/gi, '').slice(-8).toUpperCase() || 'MOCK0000';
   return {
     providerRef,
     outcome,
-    docExpiry: '2030-01-01',
     govIdNumber: `MOCK-${tag}`,
-    fullName: 'Juan Dela Cruz',
     livenessPassed: outcome === 'verified',
     reasonCode: outcome === 'rejected' ? 'mock_rejected' : undefined,
   };

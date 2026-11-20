@@ -28,7 +28,6 @@ import { DocumentCapture } from '../components/kyc/DocumentCapture';
 import { LivenessCapture } from '../components/kyc/LivenessCapture';
 
 type Step = 'consent' | 'document' | 'liveness' | 'submitting' | 'result';
-type MockOutcome = 'pass' | 'fail' | 'pending';
 
 const DOC_TYPES = [
   { id: 'national_id', label: 'National ID' },
@@ -43,7 +42,6 @@ export function Verify() {
   const [country, setCountry] = useState('PH');
   const [file, setFile] = useState<File | null>(null);
   const [selfie, setSelfie] = useState<Blob | null>(null);
-  const [mockOutcome, setMockOutcome] = useState<MockOutcome>('pass');
   const [resultStatus, setResultStatus] = useState<KycStatus | null>(null);
   const [providerMode, setProviderMode] = useState<ProviderMode | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -106,7 +104,7 @@ export function Verify() {
       const fd = new FormData();
       if (file) fd.append('document', file, file.name);
       if (selfie) fd.append('selfie', selfie, 'selfie.jpg');
-      const { status } = await submitMedia(providerRef, fd, mockOutcome);
+      const { status } = await submitMedia(providerRef, fd);
       setResultStatus(status);
       await refreshKyc();
       setStep('result');
@@ -164,8 +162,6 @@ export function Verify() {
           <LivenessStep
             selfie={selfie}
             setSelfie={setSelfie}
-            mockOutcome={mockOutcome}
-            setMockOutcome={setMockOutcome}
             err={err}
             onBack={() => setStep('document')}
             onSubmit={submit}
@@ -302,16 +298,12 @@ function DocumentStep({
 function LivenessStep({
   selfie,
   setSelfie,
-  mockOutcome,
-  setMockOutcome,
   err,
   onBack,
   onSubmit,
 }: {
   selfie: Blob | null;
   setSelfie: (b: Blob | null) => void;
-  mockOutcome: MockOutcome;
-  setMockOutcome: (v: MockOutcome) => void;
   err: string | null;
   onBack: () => void;
   onSubmit: () => void;
@@ -322,27 +314,6 @@ function LivenessStep({
       <p className="text-[13px] text-slate">Take a quick selfie so we can match it to your ID.</p>
 
       <LivenessCapture blob={selfie} onBlob={setSelfie} />
-
-      {/* Testnet-only: the sandbox provider lets you preview each outcome. */}
-      <div className="rounded-control border border-dashed border-hairline bg-mist p-3">
-        <p className="mb-2 text-[12px] font-medium text-fog">Simulated result (testnet)</p>
-        <div className="grid grid-cols-3 gap-2">
-          {(['pass', 'pending', 'fail'] as MockOutcome[]).map((o) => (
-            <button
-              key={o}
-              type="button"
-              onClick={() => setMockOutcome(o)}
-              className={`h-9 rounded-control text-[13px] font-medium transition ${
-                mockOutcome === o
-                  ? 'bg-accent text-on-accent'
-                  : 'border border-hairline bg-paper text-slate hover:bg-mist'
-              }`}
-            >
-              {o === 'pass' ? 'Approve' : o === 'pending' ? 'Review' : 'Reject'}
-            </button>
-          ))}
-        </div>
-      </div>
 
       {err && <p className="text-[13px] text-refund">{err}</p>}
 

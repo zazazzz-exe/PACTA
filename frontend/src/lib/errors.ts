@@ -90,6 +90,17 @@ export function friendlyError(e: unknown): string {
             }
           })();
 
+  // Our own API calls fail as "<path> <status>" (kycClient). Never show the raw
+  // path or code.
+  const api = raw.match(/^\/?(?:api\/)?kyc-[a-z-]+ (\d{3})$/);
+  if (api) {
+    const status = Number(api[1]);
+    if (status === 429) return 'Too many attempts. Please wait a few minutes and try again.';
+    if (status === 401) return 'Your session expired. Reconnect your wallet and try again.';
+    if (status >= 500) return 'Verification is busy right now. Please try again in a moment.';
+    return 'Something went wrong with verification. Please try again.';
+  }
+
   // Host errors look like: Error(Contract, #10)
   const m = raw.match(/Error\((?:Contract|Auth|Value|[^,]+),\s*#?(\d+)\)/i);
   if (m) {

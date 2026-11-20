@@ -43,10 +43,11 @@ describe('mockProvider', () => {
     );
   });
 
-  it('getResult yields synthetic hashable details', async () => {
+  it('getResult yields a hashable ID but invents no name or expiry', async () => {
     const r = await mockProvider.getResult('mock_abcdef12');
     expect(r.govIdNumber).toBeTruthy();
-    expect(r.fullName).toBeTruthy();
+    expect(r.fullName).toBeUndefined();
+    expect(r.docExpiry).toBeUndefined();
     expect(r.outcome).toBe('verified');
   });
 

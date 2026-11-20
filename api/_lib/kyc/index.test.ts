@@ -16,6 +16,16 @@ describe('isProduction', () => {
     expect(isProduction({ NODE_ENV: 'development', VERCEL_ENV: 'development' })).toBe(false);
     expect(isProduction({ NODE_ENV: 'test' })).toBe(false);
   });
+  it('is false on Vercel preview deployments, which also set NODE_ENV=production', () => {
+    expect(isProduction({ VERCEL_ENV: 'preview', NODE_ENV: 'production' })).toBe(false);
+    expect(kycConfigError({ VERCEL_ENV: 'preview', NODE_ENV: 'production', KYC_PROVIDER: 'mock' })).toBeNull();
+    expect(kycConfigError({ VERCEL_ENV: 'preview', NODE_ENV: 'production' })).toBeNull();
+  });
+  it('still fails closed on Vercel production', () => {
+    expect(kycConfigError({ VERCEL_ENV: 'production', NODE_ENV: 'production', KYC_PROVIDER: 'mock' })).toBe(
+      'kyc_provider_mock_in_production',
+    );
+  });
 });
 
 describe('KYC fails closed in production', () => {
