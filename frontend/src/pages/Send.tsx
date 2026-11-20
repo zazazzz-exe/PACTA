@@ -17,6 +17,8 @@ import { friendlyError } from '../lib/errors';
 import { useOffline, isOffline, outboxEnqueue } from '../lib/outbox';
 import { useActiveNetwork } from '../lib/activeNetwork';
 import { useDisplayCurrency } from '../lib/displayCurrency';
+import { useFeesCovered } from '../hooks/useFeesCovered';
+import { t } from '../lib/strings';
 import { amountValue, formatAssetAmount, formatFiat } from '../lib/money';
 import { DUR, EASE } from '../components/motion/MotionProvider';
 
@@ -35,6 +37,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
   const { balances, loading } = useBalances(address);
   const net = useActiveNetwork();
   const [currency] = useDisplayCurrency();
+  const feesCovered = useFeesCovered();
   const coarse = useCoarsePointer();
 
   const [to, setTo] = useState('');
@@ -169,9 +172,13 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
   // Review card before anything is signed.
   if (reviewing && selected) {
     const native = code === 'XLM' && !selected.asset.issuer;
+    // With the fee relayer on, PACTA pays the fee: only the amount leaves the wallet.
+    const fee = feesCovered ? 0 : MAX_FEE_XLM;
     const total = native
-      ? `${formatAssetAmount(String(amountNum + MAX_FEE_XLM), 'XLM').display} XLM`
-      : `${formatAssetAmount(amount, code).display} ${code} + ${MAX_FEE_XLM} XLM`;
+      ? `${formatAssetAmount(String(amountNum + fee), 'XLM').display} XLM`
+      : fee
+        ? `${formatAssetAmount(amount, code).display} ${code} + ${MAX_FEE_XLM} XLM`
+        : `${formatAssetAmount(amount, code).display} ${code}`;
     return (
       <m.div
         className="mx-auto max-w-app space-y-4 px-1"
@@ -207,7 +214,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
           <dl className="divide-y divide-[var(--hairline)] text-[14px]">
             <Line label="Recipient" value={<span className="mono">{shortAddr(to.trim(), 6, 6)}</span>} />
             <Line label="Amount" value={<span className="mono">{formatAssetAmount(amount, code).display} {code}</span>} />
-            <Line label="Network fee" value={<span className="mono">up to {MAX_FEE_XLM} XLM</span>} />
+            <Line label="Network fee" value={feesCovered ? <span className="font-semibold text-mint">{t('fee.coveredLabel')}</span> : <span className="mono">up to {MAX_FEE_XLM} XLM</span>} />
             <Line label="Total deduction" value={<span className="mono font-bold">{total}</span>} />
             <Line label="Network" value={<span className="capitalize">Stellar {net.label}</span>} />
           </dl>

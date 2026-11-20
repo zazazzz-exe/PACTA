@@ -20,6 +20,8 @@ import { ConnectButton } from '../components/ConnectButton';
 import { friendlyError } from '../lib/errors';
 import { navigate } from '../lib/router';
 import { useDisplayCurrency } from '../lib/displayCurrency';
+import { useFeesCovered } from '../hooks/useFeesCovered';
+import { t } from '../lib/strings';
 import { amountValue, formatAssetAmount, formatFiat } from '../lib/money';
 import { TokenIcon } from '../components/TokenIcon';
 import { DUR, EASE } from '../components/motion/MotionProvider';
@@ -31,6 +33,7 @@ export function Convert() {
   const { balances, loading, refetch } = useBalances(address);
   const net = useActiveNetwork();
   const [currency] = useDisplayCurrency();
+  const feesCovered = useFeesCovered();
 
   const [fromKey, setFromKey] = useState('');
   const [toKey, setToKey] = useState('');
@@ -302,7 +305,7 @@ export function Convert() {
           <Detail label="Estimated output" value={`${formatAssetAmount(quote.amountOut, to?.code ?? '').display} ${to?.code}`} />
           <Detail label="Minimum received" value={`${formatAssetAmount(quote.minReceived, to?.code ?? '').display} ${to?.code}`} />
           <Detail label="Slippage tolerance" value={`${DEFAULT_SLIPPAGE_BPS / 100}%`} />
-          <Detail label="Network fee" value="up to 0.00001 XLM" />
+          <Detail label="Network fee" value={feesCovered ? t('fee.coveredLabel') : 'up to 0.00001 XLM'} />
           {needTrust && (
             <p className="px-4 py-3 text-[12px] text-slate">
               A trustline for {to?.code} will be added in the same transaction (a small XLM reserve applies).
@@ -324,7 +327,7 @@ export function Convert() {
           <>
             You are converting <span className="mono text-ink">{amount} {from?.asset.code}</span> to about{' '}
             <span className="mono text-ink">{quote?.amountOut} {to?.code}</span> (at least{' '}
-            <span className="mono text-ink">{quote?.minReceived} {to?.code}</span>). Network fee up to 0.00001 XLM.
+            <span className="mono text-ink">{quote?.minReceived} {to?.code}</span>). {feesCovered ? t('fee.coveredNote') : 'Network fee up to 0.00001 XLM.'}
             {needTrust && ' A trustline for the destination asset will be added.'}
           </>
         }

@@ -19,6 +19,8 @@ import { QuickActions } from '../components/home/QuickActions';
 import { TipCard } from '../components/home/TipCard';
 import { ActivePacts } from '../components/home/ActivePacts';
 import { AssetList } from '../components/home/AssetList';
+import { SetupWalletCard, needsSetup } from '../components/home/SetupWalletCard';
+import { useFeesCovered } from '../hooks/useFeesCovered';
 import { RecentActivity } from '../components/home/RecentActivity';
 import { Sheet } from '../components/ui/Sheet';
 import { Button } from '../components/ui/Button';
@@ -38,6 +40,8 @@ const item: Variants = {
 export function Home() {
   const { address } = useWallet();
   const net = useActiveNetwork();
+  const feesCovered = useFeesCovered();
+  const usdcIssuer = net.knownAssets.find((a) => a.code === 'USDC')?.issuer;
   const { balances, loading, error, refetch } = useBalances(address);
   const activity = useActivity(address);
   const pacts = useAgreements(address ?? undefined, net.supportsPacts && !!address);
@@ -89,6 +93,12 @@ export function Home() {
             <BalanceCard address={address} balances={balances} loading={loading} currency={currency} onCurrency={setCurrency} />
           </m.div>
 
+          {feesCovered && !loading && !error && address && needsSetup(balances, usdcIssuer) && (
+            <m.div variants={item}>
+              <SetupWalletCard address={address} onDone={refreshAll} />
+            </m.div>
+          )}
+
           {offline ? (
             <m.div variants={item}>
               <OfflineNotice />
@@ -138,6 +148,7 @@ export function Home() {
               currency={currency}
               network={net.key === 'public' ? 'public' : 'testnet'}
               loading={loading}
+              feesCovered={feesCovered}
               onRefresh={refreshAll}
             />
           </m.div>

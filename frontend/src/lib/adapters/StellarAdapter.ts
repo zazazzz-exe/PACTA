@@ -23,6 +23,7 @@ import {
 import { assetFromId } from './stellarAssets';
 import { parseActivity, type RawPaymentRecord, type ActivityItem } from '../activity';
 import { signTransaction } from '../wallet';
+import { relaySubmit, relayUsable, RelayError } from '../relay';
 import { txExplorerUrl } from '../config';
 import { buildQuote, hasTrustline, DEFAULT_SLIPPAGE_BPS, type PathRecord } from '../convert';
 
@@ -219,9 +220,19 @@ export class StellarAdapter implements ChainAdapter {
   }
 
   async signAndSubmit(xdr: string): Promise<TxResult> {
-    // Single signing chokepoint for every write path. The wallet returns a
-    // signed XDR; submit it via Horizon and surface the hash + explorer link.
+    // Single signing chokepoint for every write path. The wallet signs; the
+    // PACTA fee relayer pays the network fee (testnet). If the relayer cannot
+    // cover it, the same signed transaction goes straight to Horizon, which
+    // works when the user holds XLM for the fee.
     const { signedTxXdr } = await signTransaction(xdr);
+    if (await relayUsable()) {
+      try {
+        const r = await relaySubmit(signedTxXdr);
+        return { hash: r.hash, explorerUrl: txExplorerUrl(r.hash), status: 'success' };
+      } catch (e) {
+        if (!(e instanceof RelayError) || !e.canFallBack) throw e;
+      }
+    }
     const signed = TransactionBuilder.fromXdr(signedTxXdr, getActiveNetwork().passphrase);
     const resp = await this.server.submitTransaction(signed);
     return { hash: resp.hash, explorerUrl: txExplorerUrl(resp.hash), status: 'success' };

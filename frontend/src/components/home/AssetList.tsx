@@ -24,12 +24,14 @@ export function AssetList({
   currency,
   network,
   loading,
+  feesCovered = false,
   onRefresh,
 }: {
   balances: AssetBalance[];
   currency: DisplayCurrency;
   network: 'testnet' | 'public';
   loading: boolean;
+  feesCovered?: boolean;
   onRefresh: () => void;
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -60,7 +62,7 @@ export function AssetList({
         <div className="overflow-hidden rounded-card border border-card bg-paper shadow-card">
           <ul className="divide-y divide-[var(--hairline)]">
             {head.map((b) => (
-              <AssetRowItem key={assetKey(b.asset)} b={b} currency={currency} network={network} />
+              <AssetRowItem key={assetKey(b.asset)} b={b} currency={currency} network={network} feesCovered={feesCovered} />
             ))}
           </ul>
           {rest.length > 0 && (
@@ -75,7 +77,7 @@ export function AssetList({
                     className={`divide-y divide-[var(--hairline)] overflow-hidden ${head.length ? 'border-t border-card' : ''}`}
                   >
                     {rest.map((b) => (
-                      <AssetRowItem key={assetKey(b.asset)} b={b} currency={currency} network={network} />
+                      <AssetRowItem key={assetKey(b.asset)} b={b} currency={currency} network={network} feesCovered={feesCovered} />
                     ))}
                   </m.ul>
                 )}
@@ -97,8 +99,10 @@ export function AssetList({
   );
 }
 
-function AssetRowItem({ b, currency, network }: { b: AssetBalance; currency: DisplayCurrency; network: 'testnet' | 'public' }) {
+function AssetRowItem({ b, currency, network, feesCovered }: { b: AssetBalance; currency: DisplayCurrency; network: 'testnet' | 'public'; feesCovered: boolean }) {
   const label = labelAsset(b.asset, network);
+  // With the fee relayer on, XLM is optional: users may hold and send it, but never need it for fees.
+  const optional = feesCovered && b.asset.code === 'XLM' && !b.asset.issuer;
   const amount = formatAssetAmount(b.amount, b.asset.code);
   const value = balanceValue(b, currency);
   return (
@@ -109,12 +113,14 @@ function AssetRowItem({ b, currency, network }: { b: AssetBalance; currency: Dis
           <span className="text-[15px] font-bold text-ink">{b.asset.code}</span>
           <span className="truncate text-[13px] text-slate">· {label.source}</span>
         </div>
-        {(!label.verified || label.testnetOnly) && (
+        {(!label.verified || label.testnetOnly || optional) && (
           <div className="mt-1 flex flex-wrap gap-1">
+            {optional && <Chip title={t('assets.optionalHint')}>{t('assets.optional')}</Chip>}
             {label.testnetOnly && <Chip tone="deadline">{t('assets.testnetOnly')}</Chip>}
             {!label.verified && <Chip>{t('assets.unverified')}</Chip>}
           </div>
         )}
+        {optional && <p className="mt-1 text-[12px] text-slate">{t('assets.optionalHint')}</p>}
       </div>
       <div className="shrink-0 text-right">
         <div className="mono text-[15px] font-semibold text-ink" title={amount.full}>

@@ -101,6 +101,24 @@ export function friendlyError(e: unknown): string {
     return 'Something went wrong with verification. Please try again.';
   }
 
+  // Fee relayer outcomes (lib/relay.ts RelayError: "code" or "code:reason").
+  const relay = raw.match(/^(failed|not_sponsored|wallet_cap|daily_cap|rate_limited|relay_unavailable|network|session)(?::.*)?$/);
+  if (relay) {
+    switch (relay[1]) {
+      case 'failed':
+        return 'The transaction did not go through. Check your balance and try again.';
+      case 'wallet_cap':
+      case 'daily_cap':
+        return "PACTA's free network fees are used up for today. Try again tomorrow, or add a little XLM to pay the fee yourself.";
+      case 'rate_limited':
+        return 'Too many transactions in a short time. Please wait a few minutes and try again.';
+      case 'session':
+        return 'Your session expired. Reconnect your wallet and try again.';
+      default:
+        return 'PACTA could not send this right now. Please try again.';
+    }
+  }
+
   // Host errors look like: Error(Contract, #10)
   const m = raw.match(/Error\((?:Contract|Auth|Value|[^,]+),\s*#?(\d+)\)/i);
   if (m) {

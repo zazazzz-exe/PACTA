@@ -35,3 +35,6 @@ Thumbs.db
 
 # Office lock files
 ~$*
+
+# ---- local build output (zk circuit build) ----
+/build/

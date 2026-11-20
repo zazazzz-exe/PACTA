@@ -1,4 +1,7 @@
-import { Client, type Agreement, type Reputation } from 'pacta';
+import { Client, xdr, type Agreement, type Reputation, contract as sdkContract } from 'pacta';
+import { relayRestore, relaySubmit, relayUsable, RelayError } from './relay';
+
+type AssembledTransaction<T> = sdkContract.AssembledTransaction<T>;
 import { signTransaction } from './wallet';
 import { getActiveNetwork } from './activeNetwork';
 import { escrowConfigFor } from './escrowConfig';
@@ -58,9 +61,31 @@ export async function getAllAgreements(publicKey?: string): Promise<Agreement[]>
 }
 
 // ---------- writes (wallet-signed) ----------
-async function send<T>(tx: { signAndSend: () => Promise<any> }): Promise<WriteResult<T>> {
+const unwrap = (r: any) => (r?.unwrap ? r.unwrap() : r);
+
+// The wallet signs; the PACTA fee relayer pays the fee and, if the escrow's
+// storage has been archived, its restore (storage rent). When the relayer
+// cannot cover it, the signed call is sent directly (the user's own XLM).
+async function send<T>(tx: AssembledTransaction<any>): Promise<WriteResult<T>> {
+  if (await relayUsable()) {
+    const sim = tx.simulation as { restorePreamble?: { transactionData: { build(): { toXdr(f: 'base64'): string } } } } | undefined;
+    if (sim?.restorePreamble) {
+      await relayRestore(sim.restorePreamble.transactionData.build().toXdr('base64'));
+      await tx.simulate();
+    }
+    await tx.sign({ signTransaction });
+    try {
+      const r = await relaySubmit(tx.signed!.toXDR());
+      const result = r.returnValue ? unwrap(tx.options.parseResultXdr(xdr.ScVal.fromXdr(r.returnValue, 'base64'))) : undefined;
+      return { result: result as T, hash: r.hash };
+    } catch (e) {
+      if (!(e instanceof RelayError) || !e.canFallBack) throw e;
+      const sent = await tx.send();
+      return { result: unwrap(sent.result) as T, hash: sent.sendTransactionResponse?.hash ?? sent.getTransactionResponse?.txHash };
+    }
+  }
   const sent = await tx.signAndSend();
-  const result = sent.result?.unwrap ? sent.result.unwrap() : sent.result;
+  const result = unwrap(sent.result);
   const hash =
     sent.sendTransactionResponse?.hash ?? sent.getTransactionResponse?.txHash ?? undefined;
   return { result: result as T, hash };

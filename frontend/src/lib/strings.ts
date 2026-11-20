@@ -63,6 +63,19 @@ const en = {
   'assets.testnetOnly': 'Testnet only',
   'assets.empty': 'No assets yet. Receive some to get started.',
   'assets.noRate': 'No rate',
+  'assets.optional': 'Optional',
+  'assets.optionalHint': 'Not needed for fees',
+
+  'setup.title': 'Set up your wallet for free',
+  'setup.body': 'PACTA covers the setup and every network fee, so you never need XLM. One signature adds USDC to your wallet.',
+  'setup.cta': 'Set up for free',
+  'setup.working': 'Setting up',
+  'setup.error': 'Setup did not finish. Please try again.',
+  'setup.errorSession': 'Your session expired. Reconnect your wallet and try again.',
+  'setup.errorBusy': 'Free setup is busy right now. Please try again later.',
+
+  'fee.coveredLabel': 'Paid by PACTA',
+  'fee.coveredNote': 'PACTA pays the network fee, so no XLM is needed.',
 
   'activity.title': 'Recent activity',
   'activity.seeAll': 'See all',
