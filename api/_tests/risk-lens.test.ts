@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fakeSupabase, type FakeDb } from './_lib/testing/fakeSupabase';
-import { issueSessionToken } from './_lib/session';
-import { validateRiskLensBody, MAX_BODY_BYTES } from './_lib/riskLensInput';
+import { fakeSupabase, type FakeDb } from '../_lib/testing/fakeSupabase';
+import { issueSessionToken } from '../_lib/session';
+import { validateRiskLensBody, MAX_BODY_BYTES } from '../_lib/riskLensInput';
 
 let fake: FakeDb;
-vi.mock('./_lib/db', () => ({ db: () => fake }));
+vi.mock('../_lib/db', () => ({ db: () => fake }));
 
-const { handler, RISK_LENS_LIMIT_PER_WALLET, RISK_LENS_LIMIT_PER_IP } = await import('./risk-lens');
+const { handler, RISK_LENS_LIMIT_PER_WALLET, RISK_LENS_LIMIT_PER_IP } = await import('../risk-lens');
 
 const WALLET = 'G' + 'A'.repeat(55);
 const TRADER = 'G' + 'B'.repeat(55);

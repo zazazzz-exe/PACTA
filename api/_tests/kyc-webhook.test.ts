@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fakeSupabase, type FakeDb } from './_lib/testing/fakeSupabase';
-import { signWebhookBody } from './_lib/kyc/mock';
+import { fakeSupabase, type FakeDb } from '../_lib/testing/fakeSupabase';
+import { signWebhookBody } from '../_lib/kyc/mock';
 
 let fake: FakeDb;
-vi.mock('./_lib/db', () => ({ db: () => fake }));
+vi.mock('../_lib/db', () => ({ db: () => fake }));
 const applyOutcome = vi.fn();
-vi.mock('./_lib/kyc/apply', () => ({ applyOutcome: (...a: unknown[]) => applyOutcome(...a) }));
+vi.mock('../_lib/kyc/apply', () => ({ applyOutcome: (...a: unknown[]) => applyOutcome(...a) }));
 
-const { handler } = await import('./kyc-webhook');
+const { handler } = await import('../kyc-webhook');
 
 const WALLET = 'G' + 'A'.repeat(55);
 

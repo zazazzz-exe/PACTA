@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 // Guards the security headers in vercel.json (served on every route) and the
 // removal of the old diagnostic endpoints.
 
-const root = (p: string) => fileURLToPath(new URL(`../${p}`, import.meta.url));
+const root = (p: string) => fileURLToPath(new URL(`../../${p}`, import.meta.url));
 const cfg = JSON.parse(readFileSync(root('vercel.json'), 'utf8')) as {
   headers: Array<{ source: string; headers: Array<{ key: string; value: string }> }>;
 };
@@ -72,5 +72,19 @@ describe('vercel.json security headers', () => {
 describe('diagnostic endpoints are removed', () => {
   it.each(['api/healthz.ts', 'api/kyc-ping.ts'])('%s does not exist', (p) => {
     expect(existsSync(root(p))).toBe(false);
+  });
+});
+
+// Vercel turns every file directly under api/ (outside _-prefixed folders) into
+// a Serverless Function, and the Hobby plan allows at most 12 per deployment.
+// Tests and helpers must live in api/_tests or api/_lib.
+describe('serverless function budget', () => {
+  it('ships at most 12 functions and no test files as functions', async () => {
+    const { readdirSync } = await import('fs');
+    const files = readdirSync(root('api'), { withFileTypes: true })
+      .filter((d) => d.isFile() && !d.name.startsWith('_') && /\.(ts|js|mjs|cjs)$/.test(d.name))
+      .map((d) => d.name);
+    expect(files.filter((f) => /\.test\./.test(f))).toEqual([]);
+    expect(files.length).toBeLessThanOrEqual(12);
   });
 });

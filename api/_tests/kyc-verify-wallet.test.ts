@@ -1,21 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fakeSupabase, type FakeDb } from './_lib/testing/fakeSupabase';
+import { fakeSupabase, type FakeDb } from '../_lib/testing/fakeSupabase';
 
 let fake: FakeDb;
-vi.mock('./_lib/db', () => ({ db: () => fake }));
+vi.mock('../_lib/db', () => ({ db: () => fake }));
 // Signature checking has its own tests; here a signature of "good" is valid.
-vi.mock('./_lib/kyc/verifySignature', () => ({
+vi.mock('../_lib/kyc/verifySignature', () => ({
   verifyWalletSignature: (_a: string, _m: string, sig: string) =>
     sig === 'good' ? { ok: true, encoding: 'test' } : { ok: false },
 }));
-vi.mock('./_lib/kyc/identity', () => ({ resolveIdentity: async () => ({ status: 'unverified' }) }));
+vi.mock('../_lib/kyc/identity', () => ({ resolveIdentity: async () => ({ status: 'unverified' }) }));
 
 const {
   handler,
   VERIFY_FAIL_LIMIT_PER_ADDRESS_IP,
   VERIFY_FAIL_LIMIT_PER_IP,
   VERIFY_FAIL_LIMIT_PER_ADDRESS_TOTAL,
-} = await import('./kyc-verify-wallet');
+} = await import('../kyc-verify-wallet');
 
 const VICTIM = 'G' + 'A'.repeat(55);
 const addr = (i: number) => 'G' + String(i).padStart(55, 'B').replace(/[^A-Z2-7]/g, 'C');
