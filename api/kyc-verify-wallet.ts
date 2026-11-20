@@ -1,5 +1,6 @@
 import { db } from './_lib/db';
-import { json, isValidAddress, logError } from './_lib/http';
+import { json, isValidAddress, logError, clientIp } from './_lib/http';
+import { hmacHex } from './_lib/kyc/hash';
 import { issueSessionToken, sessionCookie } from './_lib/session';
 import { verifyWalletSignature } from './_lib/kyc/verifySignature';
 import { overLimit } from './_lib/ratelimit';
@@ -9,7 +10,19 @@ import { resolveIdentity } from './_lib/kyc/identity';
 // session cookie. The nonce is consumed ATOMICALLY (single-use) before the
 // signature is checked, so a nonce can never be replayed even under a race.
 
-async function handler(req: Request): Promise<Response> {
+// Failed-signature brakes (per 10 minutes). Failures are counted per (address,
+// IP) pair, so someone posting bad signatures for a victim's address only
+// exhausts their own bucket and cannot lock the victim out. The per-IP limit
+// caps one caller across all addresses, and a higher per-address ceiling across
+// all IPs is the backstop against many IPs. With no known IP, the plain
+// per-address limit applies. Only a keyed hash of the IP is stored.
+export const VERIFY_WINDOW_MS = 10 * 60_000;
+export const VERIFY_FAIL_LIMIT_PER_ADDRESS_IP = 10;
+export const VERIFY_FAIL_LIMIT_PER_IP = 30;
+export const VERIFY_FAIL_LIMIT_PER_ADDRESS_TOTAL = 50;
+const FAILED = 'wallet_verify_failed';
+
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   let body: { address?: unknown; nonce?: unknown; signedMessage?: unknown };
@@ -28,18 +41,32 @@ async function handler(req: Request): Promise<Response> {
     const supa = db();
     const nowIso = new Date().toISOString();
 
-    // Throttle brute-force signature attempts: block after 10 failures in 10 min.
-    if (
-      await overLimit(
-        supa,
-        'kyc_event',
-        { wallet_address: address, event_type: 'wallet_verify_failed' },
-        10 * 60_000,
-        10,
-      )
-    ) {
-      return json({ error: 'rate_limited' }, 429);
-    }
+    const ip = clientIp(req);
+    const ipHash = ip ? hmacHex(ip) : null;
+    const limited = ipHash
+      ? (await overLimit(supa, 'kyc_event', { event_type: FAILED, 'detail->>ip_hash': ipHash }, VERIFY_WINDOW_MS, VERIFY_FAIL_LIMIT_PER_IP)) ||
+        (await overLimit(
+          supa,
+          'kyc_event',
+          { wallet_address: address, event_type: FAILED, 'detail->>ip_hash': ipHash },
+          VERIFY_WINDOW_MS,
+          VERIFY_FAIL_LIMIT_PER_ADDRESS_IP,
+        )) ||
+        (await overLimit(
+          supa,
+          'kyc_event',
+          { wallet_address: address, event_type: FAILED },
+          VERIFY_WINDOW_MS,
+          VERIFY_FAIL_LIMIT_PER_ADDRESS_TOTAL,
+        ))
+      : await overLimit(
+          supa,
+          'kyc_event',
+          { wallet_address: address, event_type: FAILED },
+          VERIFY_WINDOW_MS,
+          VERIFY_FAIL_LIMIT_PER_ADDRESS_IP,
+        );
+    if (limited) return json({ error: 'rate_limited' }, 429);
 
     // Atomic single-use consume: only succeeds if the nonce is unused, unexpired,
     // and bound to this address. Returns the exact challenge that was signed.
@@ -59,7 +86,7 @@ async function handler(req: Request): Promise<Response> {
     if (!verify.ok) {
       await supa
         .from('kyc_event')
-        .insert({ wallet_address: address, event_type: 'wallet_verify_failed' });
+        .insert({ wallet_address: address, event_type: FAILED, detail: ipHash ? { ip_hash: ipHash } : null });
       return json({ error: 'bad_signature' }, 401);
     }
 
