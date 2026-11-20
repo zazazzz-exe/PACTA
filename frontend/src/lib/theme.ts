@@ -8,7 +8,7 @@ export type Theme = 'dark' | 'light';
 export type ThemeChoice = Theme | 'system';
 
 export const THEME_STORAGE_KEY = 'pacta-theme';
-const THEME_COLOR: Record<Theme, string> = { dark: '#05060B', light: '#F5F4EF' };
+const THEME_COLOR: Record<Theme, string> = { dark: '#0D1018', light: '#F4F6FC' };
 const EVENT = 'pacta-theme-change';
 
 function readSaved(): Theme | null {

@@ -3,6 +3,7 @@ import { AnimatePresence, m } from 'framer-motion';
 import { HelpCircle, Menu, Wallet, X } from 'lucide-react';
 import { scrollToId } from './parts';
 import { DUR, EASE } from '../../components/motion/MotionProvider';
+import { PactaLogo } from '../../components/PactaLogo';
 
 export const SECTIONS = [
   { id: 'top', label: 'Home' },
@@ -57,7 +58,7 @@ export function LandingNav({ onConnect, onHelp, connecting }: { onConnect: () =>
           onClick={() => go('top')}
           className="flex min-h-tap items-center gap-2.5 rounded-control focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lp-cyan)]"
         >
-          <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+          <PactaLogo />
           <span className="text-[19px] font-bold tracking-tight text-ink">PACTA</span>
         </button>
 

@@ -1,6 +1,7 @@
 import { useActiveNetwork } from '../../lib/activeNetwork';
 import { SECTIONS } from './LandingNav';
 import { scrollToId } from './parts';
+import { PactaLogo } from '../../components/PactaLogo';
 
 // §L: footer. Pages that do not exist yet (docs, support, privacy, terms) are
 // shown as "coming soon" text rather than dead links.
@@ -14,7 +15,7 @@ export function LandingFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
-            <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+            <PactaLogo />
             <span className="text-[19px] font-bold tracking-tight text-ink">PACTA</span>
           </div>
           <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-slate">

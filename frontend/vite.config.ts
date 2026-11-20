@@ -45,8 +45,8 @@ export default defineConfig({
         short_name: 'PACTA',
         description:
           'A non-custodial money app on Stellar. Hold, send, receive, convert, and send protected.',
-        theme_color: '#05060B',
-        background_color: '#05060B',
+        theme_color: '#0D1018',
+        background_color: '#0D1018',
         display: 'standalone',
         start_url: '/',
         scope: '/',

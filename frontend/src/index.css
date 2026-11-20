@@ -463,3 +463,8 @@ body {
   .wallet-balance-glow, .wallet-shield { animation: none !important; }
   .wallet-lift:hover { transform: none; }
 }
+
+/* PACTA logo glow layers (components/PactaLogo). Static, so nothing to stop
+   under reduced motion. Softer on light surfaces. */
+:root[data-theme='light'] .pacta-logo-glow { opacity: 0.55; }
+:root[data-theme='light'] .pacta-logo-rim { opacity: 0.6; }

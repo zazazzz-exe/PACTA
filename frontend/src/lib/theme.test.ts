@@ -40,7 +40,7 @@ describe('theme choice', () => {
     setThemeChoice('dark');
     expect(store.get(THEME_STORAGE_KEY)).toBe('dark');
     expect(attrs.get('data-theme')).toBe('dark');
-    expect(meta.content).toBe('#05060B');
+    expect(meta.content).toBe('#0D1018');
     expect(currentChoice()).toBe('dark');
   });
 
@@ -67,8 +67,8 @@ describe('public/theme-init.js (runs before React)', () => {
     expect(src).toContain(`'${THEME_STORAGE_KEY}'`);
     expect(src).toContain("prefers-color-scheme: light");
     expect(src).toMatch(/var theme = 'dark'/); // dark when nothing is saved and the OS has no light preference
-    expect(src).toContain("'#F5F4EF'");
-    expect(src).toContain("'#05060B'");
+    expect(src).toContain("'#F4F6FC'");
+    expect(src).toContain("'#0D1018'");
   });
 
   it('is loaded from <head> before the app bundle, not inline (CSP)', () => {

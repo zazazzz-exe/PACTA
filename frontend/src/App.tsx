@@ -27,6 +27,7 @@ import { ThemeQuickToggle } from './components/ui/ThemeQuickToggle';
 import { Toaster } from './components/Toaster';
 import { contractExplorerUrl } from './lib/config';
 import { useActiveNetwork } from './lib/activeNetwork';
+import { PactaLogo } from './components/PactaLogo';
 
 function Wordmark() {
   return (
@@ -34,7 +35,7 @@ function Wordmark() {
       onClick={() => navigate('/')}
       className="flex min-h-tap items-center gap-2.5 rounded-control focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+      <PactaLogo />
       <span className="text-[19px] font-bold tracking-tight text-ink">PACTA</span>
     </button>
   );
@@ -176,7 +177,7 @@ export default function App() {
             {/* Brand */}
             <div>
               <div className="flex items-center gap-2">
-                <img src="/Pacta_logo.png" alt="" aria-hidden className="h-9 w-9 object-contain" />
+                <PactaLogo />
                 <span className="text-[17px] font-semibold tracking-tight text-panel-ink">PACTA</span>
               </div>
               <p className="mt-2.5 max-w-[260px] text-[12.5px] leading-relaxed text-panel-muted">
