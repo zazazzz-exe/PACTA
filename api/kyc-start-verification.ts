@@ -1,10 +1,10 @@
-import { db } from './_lib/db';
-import { json, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { getProvider, kycUnavailable } from './_lib/kyc';
-import { CONSENT_VERSION, CONSENT_TEXT } from './_lib/kyc/consent';
-import { hmacHex } from './_lib/kyc/hash';
-import type { DocType } from './_lib/kyc/types';
+import { db } from './_lib/db.js';
+import { json, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
+import { CONSENT_VERSION, CONSENT_TEXT } from './_lib/kyc/consent.js';
+import { hmacHex } from './_lib/kyc/hash.js';
+import type { DocType } from './_lib/kyc/types.js';
 
 // Record versioned consent (over the server's canonical text) and initialize a
 // provider session. Consent is required before anything else. Capture providers

@@ -1,7 +1,7 @@
-import { db } from './_lib/db';
-import { json, logError } from './_lib/http';
-import { getProvider, kycUnavailable } from './_lib/kyc';
-import { applyOutcome } from './_lib/kyc/apply';
+import { db } from './_lib/db.js';
+import { json, logError } from './_lib/http.js';
+import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
+import { applyOutcome } from './_lib/kyc/apply.js';
 
 // Async result callback from the provider (HMAC-authenticated). Looks up the
 // wallet by provider_ref and applies the outcome. No media is ever received or

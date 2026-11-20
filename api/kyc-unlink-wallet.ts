@@ -1,8 +1,8 @@
 import { randomUUID } from 'crypto';
-import { db } from './_lib/db';
-import { json, isValidAddress, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
+import { db } from './_lib/db.js';
+import { json, isValidAddress, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity.js';
 
 // Remove a wallet from the connected identity. Two cases:
 //   * Removing a NON-verifier linked wallet just detaches it (it reverts to its

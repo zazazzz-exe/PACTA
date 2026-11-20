@@ -7,12 +7,12 @@
 // rate-limited per session wallet and per (hashed) client IP, and validates the
 // shape and size of the stats body before the model is ever called. Runs on
 // Node (not Edge) because the session check uses jsonwebtoken.
-import { db } from './_lib/db';
-import { clientIp, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { overLimit } from './_lib/ratelimit';
-import { hmacHex } from './_lib/kyc/hash';
-import { validateRiskLensBody, MAX_BODY_BYTES } from './_lib/riskLensInput';
+import { db } from './_lib/db.js';
+import { clientIp, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { overLimit } from './_lib/ratelimit.js';
+import { hmacHex } from './_lib/kyc/hash.js';
+import { validateRiskLensBody, MAX_BODY_BYTES } from './_lib/riskLensInput.js';
 
 // Per 10 minutes. The client caches reads and debounces input, so honest use
 // stays far below these.

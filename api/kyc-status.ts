@@ -1,8 +1,8 @@
-import { db } from './_lib/db';
-import { json, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { getProvider, kycUnavailable } from './_lib/kyc';
-import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
+import { db } from './_lib/db.js';
+import { json, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
+import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity.js';
 
 // Return the connected wallet's KYC status. Session-authed: the address comes
 // from the signed cookie, never from the request body, so a caller can only ever

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { logError } from '../http';
-import { isProduction } from './index';
+import { logError } from '../http.js';
+import { isProduction } from './index.js';
 
 // Linked-identity resolution (Phase 4b). Wallets sharing kyc_profile.identity_id
 // are one identity. A wallet is "verified" if ANY wallet in its group holds a

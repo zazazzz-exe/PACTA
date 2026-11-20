@@ -1,10 +1,10 @@
-import { db } from './_lib/db';
-import { json, isValidAddress, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { kycUnavailable } from './_lib/kyc';
-import { verifyWalletSignature } from './_lib/kyc/verifySignature';
-import { overLimit } from './_lib/ratelimit';
-import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity';
+import { db } from './_lib/db.js';
+import { json, isValidAddress, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { kycUnavailable } from './_lib/kyc/index.js';
+import { verifyWalletSignature } from './_lib/kyc/verifySignature.js';
+import { overLimit } from './_lib/ratelimit.js';
+import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity.js';
 
 // Link a second wallet (B) to the connected, verified identity (A). Requires TWO
 // proofs: an already-verified authenticated session (A's cookie) AND a fresh

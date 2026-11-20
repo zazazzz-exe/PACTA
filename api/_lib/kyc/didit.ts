@@ -9,7 +9,7 @@ import type {
   SubmitMediaResult,
   ProviderResult,
   WebhookRequest,
-} from './types';
+} from './types.js';
 
 // Didit (didit.me) provider — HOSTED flow. We create a verification session,
 // redirect the user to Didit's `url`, and receive the result via webhook and/or

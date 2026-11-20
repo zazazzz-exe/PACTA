@@ -1,8 +1,8 @@
-import { db } from './_lib/db';
-import { json, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { getProvider, kycUnavailable } from './_lib/kyc';
-import { applyOutcome } from './_lib/kyc/apply';
+import { db } from './_lib/db.js';
+import { json, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
+import { applyOutcome } from './_lib/kyc/apply.js';
 
 // Stream the ID + liveness media straight to the provider and persist ONLY the
 // result. The media is never written to disk, DB, or storage, and never logged.

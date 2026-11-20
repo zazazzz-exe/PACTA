@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { overLimit } from '../ratelimit';
-import type { RelayConfig } from './config';
+import { overLimit } from '../ratelimit.js';
+import type { RelayConfig } from './config.js';
 
 // Spend tracking, limits and the relay log (table relay_tx, migration 0005).
 // A row is written as 'pending' with the most the relayer could pay BEFORE the

@@ -8,8 +8,8 @@ import {
   TransactionBuilder,
   type xdr,
 } from '@stellar/stellar-sdk';
-import type { RelayConfig } from './config';
-import { bytesEqual, signedBy } from './xdrUtil';
+import type { RelayConfig } from './config.js';
+import { bytesEqual, signedBy } from './xdrUtil.js';
 
 // Transactions the sponsor account is the source of: sponsored activations
 // (reserves) and footprint restores (contract storage rent). Pure builders and

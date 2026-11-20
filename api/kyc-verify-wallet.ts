@@ -1,10 +1,10 @@
-import { db } from './_lib/db';
-import { json, isValidAddress, logError, clientIp } from './_lib/http';
-import { hmacHex } from './_lib/kyc/hash';
-import { issueSessionToken, sessionCookie } from './_lib/session';
-import { verifyWalletSignature } from './_lib/kyc/verifySignature';
-import { overLimit } from './_lib/ratelimit';
-import { resolveIdentity } from './_lib/kyc/identity';
+import { db } from './_lib/db.js';
+import { json, isValidAddress, logError, clientIp } from './_lib/http.js';
+import { hmacHex } from './_lib/kyc/hash.js';
+import { issueSessionToken, sessionCookie } from './_lib/session.js';
+import { verifyWalletSignature } from './_lib/kyc/verifySignature.js';
+import { overLimit } from './_lib/ratelimit.js';
+import { resolveIdentity } from './_lib/kyc/identity.js';
 
 // Consume the ownership nonce, verify the signature, and — on success — issue a
 // session cookie. The nonce is consumed ATOMICALLY (single-use) before the

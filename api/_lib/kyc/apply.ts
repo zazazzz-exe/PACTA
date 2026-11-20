@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { KycProvider, KycOutcome, ProviderResult } from './types';
-import { hmacHex, maskName } from './hash';
+import type { KycProvider, KycOutcome, ProviderResult } from './types.js';
+import { hmacHex, maskName } from './hash.js';
 
 // Apply a provider outcome to the wallet's profile. On 'verified' it pulls the
 // normalized result, derives keyed hashes + a masked name, persists ONLY those

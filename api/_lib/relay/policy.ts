@@ -7,8 +7,8 @@ import {
   type xdr,
   type OperationRecord,
 } from '@stellar/stellar-sdk';
-import { ESCROW_FUNCTIONS, type RelayConfig } from './config';
-import { signedBy, resourceFee } from './xdrUtil';
+import { ESCROW_FUNCTIONS, type RelayConfig } from './config.js';
+import { signedBy, resourceFee } from './xdrUtil.js';
 
 export { resourceFee };
 

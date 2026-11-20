@@ -1,7 +1,7 @@
-import type { KycProvider } from './types';
-import { mockProvider } from './mock';
-import { diditProvider } from './didit';
-import { json, logError } from '../http';
+import type { KycProvider } from './types.js';
+import { mockProvider } from './mock.js';
+import { diditProvider } from './didit.js';
+import { json, logError } from '../http.js';
 
 type Env = Record<string, string | undefined>;
 

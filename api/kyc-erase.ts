@@ -1,7 +1,7 @@
-import { db } from './_lib/db';
-import { json, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { resolveIdentity } from './_lib/kyc/identity';
+import { db } from './_lib/db.js';
+import { json, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { resolveIdentity } from './_lib/kyc/identity.js';
 
 // Right to erasure (PH Data Privacy Act). Identity-wide: nulls every PII-derived
 // column on the identity's verifier row, deletes its consent rows, and leaves a

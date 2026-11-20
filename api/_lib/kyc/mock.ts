@@ -8,7 +8,7 @@ import type {
   SubmitMediaResult,
   ProviderResult,
   WebhookRequest,
-} from './types';
+} from './types.js';
 
 // Sandbox provider. It drains and DISCARDS all media (never persisted), and
 // decides the outcome from an `x-mock-outcome` hint the submit endpoint forwards.

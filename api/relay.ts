@@ -6,16 +6,16 @@ import {
   xdr,
   type Transaction,
 } from '@stellar/stellar-sdk';
-import { db } from './_lib/db';
-import { clientIp, json, logError } from './_lib/http';
-import { readSession } from './_lib/session';
-import { hmacHex } from './_lib/kyc/hash';
-import { relayConfig, type RelayConfig } from './_lib/relay/config';
-import { checkUserTx, resourceFee } from './_lib/relay/policy';
-import { buildActivation, checkActivation, checkRestoreFootprint, buildRestore, type ActivationNeeds } from './_lib/relay/sponsor';
-import { checkLimits, logPending, logSettled, logLine, type RelayKind } from './_lib/relay/ledger';
-import { submitAndWait, type SubmitOutcome } from './_lib/relay/submit';
-import { hex } from './_lib/relay/xdrUtil';
+import { db } from './_lib/db.js';
+import { clientIp, json, logError } from './_lib/http.js';
+import { readSession } from './_lib/session.js';
+import { hmacHex } from './_lib/kyc/hash.js';
+import { relayConfig, type RelayConfig } from './_lib/relay/config.js';
+import { checkUserTx, resourceFee } from './_lib/relay/policy.js';
+import { buildActivation, checkActivation, checkRestoreFootprint, buildRestore, type ActivationNeeds } from './_lib/relay/sponsor.js';
+import { checkLimits, logPending, logSettled, logLine, type RelayKind } from './_lib/relay/ledger.js';
+import { submitAndWait, type SubmitOutcome } from './_lib/relay/submit.js';
+import { hex } from './_lib/relay/xdrUtil.js';
 
 // PACTA fee relayer (docs/fee-relayer.md). Users never need XLM: the wallet
 // signs its own transaction, the relayer checks it against an allowlist, wraps
@@ -69,7 +69,7 @@ async function sponsorAndSubmit(
 ): Promise<Response> {
   const supa = db();
   const limits = await checkLimits(supa, cfg, { wallet: p.wallet, ipHash: p.ipHash, feeMax: p.feeMax, reserves: p.reserves, kind: p.kind });
-  if (!limits.ok) {
+  if (limits.ok === false) {
     logLine('refused', { reason: limits.reason, wallet: p.wallet, kind: p.kind });
     return json({ error: limits.reason }, 429);
   }
@@ -145,7 +145,7 @@ export async function handler(req: Request): Promise<Response> {
       const body = await readBody(req);
       if (!body || typeof body.xdr !== 'string' || Object.keys(body).length !== 1) return json({ error: 'bad_request' }, 400);
       const policy = checkUserTx(body.xdr, cfg);
-      if (!policy.ok) {
+      if (policy.ok === false) {
         logLine('not_sponsored', { reason: policy.reason });
         return json({ error: 'not_sponsored', reason: policy.reason }, 400);
       }
@@ -214,7 +214,7 @@ export async function handler(req: Request): Promise<Response> {
     const body = await readBody(req);
     if (!body || typeof body.xdr !== 'string') return json({ error: 'bad_request' }, 400);
     const checked = checkActivation(body.xdr, wallet, cfg);
-    if (!checked.ok) return json({ error: 'not_sponsored', reason: checked.reason }, 400);
+    if (checked.ok === false) return json({ error: 'not_sponsored', reason: checked.reason }, 400);
     const ops = checked.tx.operations.map((o) => o.type);
     const needs = { account: ops.includes('createAccount'), trustline: ops.includes('changeTrust') };
     return await sponsorAndSubmit(cfg, {
