@@ -35,10 +35,8 @@ export default defineConfig({
     cspRpcGuard(),
     react(),
     VitePWA({
-      // 'prompt' so the app picks the moment to switch versions (lib/pwaUpdate.ts):
-      // never mid-action, right away on a fresh load.
-      registerType: 'prompt',
-      injectRegister: false,
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
       // Auto-generate + inject icons and the apple-touch-icon link from
       // pwa-assets.config.ts.
       pwaAssets: { config: true },
@@ -55,7 +53,31 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,woff,woff2,png,svg,ico}'],
-        navigateFallback: '/index.html',
+        // The page itself is never served from the precache: every visit while
+        // online loads the latest index.html (and so the latest deploy's
+        // hashed assets) from the network, falling back to the last copy only
+        // when offline. Without this, visitors kept seeing the previous deploy.
+        globIgnores: ['index.html'],
+        navigateFallback: null,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'pacta-pages',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 5 },
+            },
+          },
+          {
+            // Hashed build files never change, so keep whatever a visit loaded.
+            // This keeps the page working offline right after a deploy, before
+            // the new precache has finished installing.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/assets/'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'pacta-assets', expiration: { maxEntries: 150 } },
+          },
+        ],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         // The app ships as a single JS bundle larger than Workbox's 2 MiB

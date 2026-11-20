@@ -19,7 +19,6 @@ import { navigate } from './lib/router';
 import { proveOwnership, fetchKycStatus, type KycStatus } from './lib/kycClient';
 import { friendlyError } from './lib/errors';
 import { setActiveNetworkFromPassphrase, isSupportedNetwork } from './lib/activeNetwork';
-import { startPwaUpdates } from './lib/pwaUpdate';
 
 // Some @stellar/stellar-sdk code paths expect a global Buffer in the browser.
 (globalThis as unknown as { Buffer: typeof Buffer }).Buffer =
@@ -222,7 +221,6 @@ if (import.meta.env.DEV && window.location.hash === '#/design') {
     );
   });
 } else {
-  startPwaUpdates();
   root.render(
     <StrictMode>
       <WalletProvider>
