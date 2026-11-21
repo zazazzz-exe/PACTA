@@ -51,6 +51,19 @@
           "value": "public, max-age=0, must-revalidate"
         }
       ]
+    },
+    {
+      "source": "/.well-known/stellar.toml",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Content-Type",
+          "value": "text/plain; charset=utf-8"
+        }
+      ]
     }
   ],
   "functions": {
@@ -62,6 +75,10 @@
     {
       "source": "/api/kyc-:op",
       "destination": "/api/kyc?op=:op"
+    },
+    {
+      "source": "/federation",
+      "destination": "/api/phone?action=federation"
     }
   ]
 }

@@ -1,0 +1,9 @@
+# PACTA SEP-1 stellar.toml. FEDERATION_SERVER is the SEP-2 directory for
+# paying by phone number: name lookups like "+639171234567*getpacta.app".
+# Only numbers whose owners opted in are listed (docs/pay-by-phone.md).
+VERSION = "2.7.0"
+FEDERATION_SERVER = "https://www.getpacta.app/federation"
+
+[DOCUMENTATION]
+ORG_NAME = "PACTA"
+ORG_URL = "https://www.getpacta.app"

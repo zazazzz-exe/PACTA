@@ -16,6 +16,9 @@ describe.skipIf(!url || !anon)('RLS deny-by-default (integration)', () => {
     'kyc_webhook_seen',
     'risk_lens_call',
     'relay_tx',
+    'phone_link',
+    'phone_otp',
+    'phone_event',
   ]) {
     it(`anon cannot read ${table}`, async () => {
       const supa = createClient(url!, anon!, { auth: { persistSession: false } });

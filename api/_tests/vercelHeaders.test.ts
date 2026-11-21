@@ -106,3 +106,19 @@ describe('KYC endpoints share one function', () => {
     expect((await handler(new Request('https://x.test/api/kyc'))).status).toBe(404);
   }, 60_000); // loads all ten KYC handlers (stellar-sdk, supabase)
 });
+
+describe('pay by phone (SEP-2)', () => {
+  const cfgAll = JSON.parse(readFileSync(root('vercel.json'), 'utf8')) as {
+    rewrites?: { source: string; destination: string }[];
+    headers: { source: string; headers: { key: string; value: string }[] }[];
+  };
+  it('serves /federation from the phone function', () => {
+    expect(cfgAll.rewrites).toContainEqual({ source: '/federation', destination: '/api/phone?action=federation' });
+  });
+  it('publishes stellar.toml with the federation server, readable cross-origin', () => {
+    const toml = readFileSync(root('frontend/public/.well-known/stellar.toml'), 'utf8');
+    expect(toml).toMatch(/^FEDERATION_SERVER = "https:\/\/www\.getpacta\.app\/federation"$/m);
+    const h = cfgAll.headers.find((x) => x.source === '/.well-known/stellar.toml')!;
+    expect(h.headers).toContainEqual({ key: 'Access-Control-Allow-Origin', value: '*' });
+  });
+});
