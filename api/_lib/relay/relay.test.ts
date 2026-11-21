@@ -191,3 +191,17 @@ describe('config', () => {
     expect(cfg).toMatchObject({ maxTxFee: 10_000_000, walletDailyCap: 50_000_000, globalDailyCap: 1_000_000_000, walletPerHour: 30, activationsPerDay: 50 });
   });
 });
+
+describe('reading the sponsor secret', () => {
+  it('forgives stray spaces and quotes from a copy-paste', () => {
+    expect(relayConfig({ RELAYER_SECRET_KEY: `  "${SPONSOR.secret()}"\n` }).enabled).toBe(true);
+    expect(relayConfig({ RELAYER_SECRET_KEY: `'${SPONSOR.secret()}'` }).sponsor?.publicKey()).toBe(SPONSOR.publicKey());
+  });
+  it('says why it is off without revealing anything', () => {
+    expect(relayConfig({}).offReason).toBe('no_secret');
+    expect(relayConfig({ RELAYER_SECRET_KEY: SPONSOR.publicKey() }).offReason).toBe('not_a_secret_key');
+    expect(relayConfig({ RELAYER_SECRET_KEY: 'SBADKEY' }).offReason).toBe('invalid_secret');
+    expect(relayConfig({ RELAYER_SECRET_KEY: SPONSOR.secret(), RELAYER_DISABLED: 'true' }).offReason).toBe('disabled');
+    expect(relayConfig({ RELAYER_SECRET_KEY: SPONSOR.secret() }).offReason).toBeNull();
+  });
+});

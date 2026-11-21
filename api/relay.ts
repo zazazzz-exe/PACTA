@@ -128,6 +128,7 @@ export async function handler(req: Request): Promise<Response> {
     if (action === 'status' && req.method === 'GET') {
       return json({
         enabled: cfg.enabled,
+        ...(cfg.offReason ? { reason: cfg.offReason } : {}),
         network: 'testnet',
         sponsor: cfg.enabled ? cfg.sponsor!.publicKey() : null,
         maxTxFeeXlm: XLM(cfg.maxTxFee),

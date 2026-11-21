@@ -34,6 +34,8 @@ export const ESCROW_FUNCTIONS = [
 
 export interface RelayConfig {
   enabled: boolean;
+  // Why the relayer is off, safe to show (never the key): null when enabled.
+  offReason: 'no_secret' | 'invalid_secret' | 'not_a_secret_key' | 'disabled' | null;
   sponsor: Keypair | null;
   rpcUrl: string;
   passphrase: string;
@@ -52,15 +54,25 @@ export interface RelayConfig {
 }
 
 export function relayConfig(env: Record<string, string | undefined> = process.env): RelayConfig {
+  const secret = (env.RELAYER_SECRET_KEY ?? '').trim().replace(/^['"]+|['"]+$/g, '').trim();
   let sponsor: Keypair | null = null;
   try {
-    sponsor = env.RELAYER_SECRET_KEY ? Keypair.fromSecret(env.RELAYER_SECRET_KEY) : null;
+    sponsor = secret ? Keypair.fromSecret(secret) : null;
   } catch {
     sponsor = null; // malformed secret: fail closed
   }
   const usdc = new Asset('USDC', env.RELAYER_USDC_ISSUER || TESTNET_USDC_ISSUER);
   return {
     enabled: sponsor !== null && env.RELAYER_DISABLED !== 'true',
+    offReason: env.RELAYER_DISABLED === 'true'
+      ? 'disabled'
+      : sponsor
+        ? null
+        : !secret
+          ? 'no_secret'
+          : secret.startsWith('G')
+            ? 'not_a_secret_key' // the public key was pasted instead of the S... secret
+            : 'invalid_secret',
     sponsor,
     rpcUrl: env.RELAYER_RPC_URL || TESTNET_RPC,
     passphrase: RELAY_PASSPHRASE,
