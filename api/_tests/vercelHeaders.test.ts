@@ -117,7 +117,7 @@ describe('pay by phone (SEP-2)', () => {
   });
   it('publishes stellar.toml with the federation server, readable cross-origin', () => {
     const toml = readFileSync(root('frontend/public/.well-known/stellar.toml'), 'utf8');
-    expect(toml).toMatch(/^FEDERATION_SERVER = "https:\/\/www\.getpacta\.app\/federation"?$/m);
+    expect(toml).toMatch(/^FEDERATION_SERVER = "https:\/\/www\.getpacta\.app\/federation"\r?$/m);
     const h = cfgAll.headers.find((x) => x.source === '/.well-known/stellar.toml')!;
     expect(h.headers).toContainEqual({ key: 'Access-Control-Allow-Origin', value: '*' });
   });
