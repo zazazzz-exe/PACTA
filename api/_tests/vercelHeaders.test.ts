@@ -88,3 +88,21 @@ describe('serverless function budget', () => {
     expect(files.length).toBeLessThanOrEqual(12);
   });
 });
+
+describe('KYC endpoints share one function', () => {
+  it('rewrites /api/kyc-<op> to the single kyc function', () => {
+    const rw = (JSON.parse(readFileSync(root('vercel.json'), 'utf8')) as { rewrites?: { source: string; destination: string }[] }).rewrites ?? [];
+    expect(rw).toContainEqual({ source: '/api/kyc-:op', destination: '/api/kyc?op=:op' });
+  });
+  it('routes every op by query or original path, and nothing else', async () => {
+    const { KYC_ROUTES, kycOp, handler } = await import('../kyc');
+    expect(Object.keys(KYC_ROUTES).sort()).toEqual(
+      ['erase', 'link-wallet', 'refresh', 'request-nonce', 'start-verification', 'status', 'submit-media', 'unlink-wallet', 'verify-wallet', 'webhook'],
+    );
+    expect(kycOp(new URL('https://x.test/api/kyc?op=status'))).toBe('status');
+    expect(kycOp(new URL('https://x.test/api/kyc-submit-media?ref=abc'))).toBe('submit-media');
+    expect((await handler(new Request('https://x.test/api/kyc?op=__proto__'))).status).toBe(404);
+    expect((await handler(new Request('https://x.test/api/kyc?op=nope'))).status).toBe(404);
+    expect((await handler(new Request('https://x.test/api/kyc'))).status).toBe(404);
+  }, 60_000); // loads all ten KYC handlers (stellar-sdk, supabase)
+});

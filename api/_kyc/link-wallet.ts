@@ -1,17 +1,17 @@
-import { db } from './_lib/db.js';
-import { json, isValidAddress, logError } from './_lib/http.js';
-import { readSession } from './_lib/session.js';
-import { kycUnavailable } from './_lib/kyc/index.js';
-import { verifyWalletSignature } from './_lib/kyc/verifySignature.js';
-import { overLimit } from './_lib/ratelimit.js';
-import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity.js';
+import { db } from '../_lib/db.js';
+import { json, isValidAddress, logError } from '../_lib/http.js';
+import { readSession } from '../_lib/session.js';
+import { kycUnavailable } from '../_lib/kyc/index.js';
+import { verifyWalletSignature } from '../_lib/kyc/verifySignature.js';
+import { overLimit } from '../_lib/ratelimit.js';
+import { resolveIdentity, linkedWalletsFrom } from '../_lib/kyc/identity.js';
 
 // Link a second wallet (B) to the connected, verified identity (A). Requires TWO
 // proofs: an already-verified authenticated session (A's cookie) AND a fresh
 // ownership signature from B. A stranger's wallet can never inherit someone's
 // KYC. No re-verification: B joins A's identity group and is verified by group.
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
   const unavailable = kycUnavailable();
   if (unavailable) return unavailable;

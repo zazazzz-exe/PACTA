@@ -38,3 +38,5 @@ Thumbs.db
 
 # ---- local build output (zk circuit build) ----
 /build/
+.vercel
+.env*

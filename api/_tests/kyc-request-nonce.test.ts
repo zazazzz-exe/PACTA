@@ -6,7 +6,7 @@ let fake: FakeDb;
 vi.mock('../_lib/db', () => ({ db: () => fake }));
 
 const { handler, NONCE_LIMIT_PER_ADDRESS_IP, NONCE_LIMIT_PER_IP, NONCE_LIMIT_PER_ADDRESS_TOTAL } =
-  await import('../kyc-request-nonce');
+  await import('../_kyc/request-nonce');
 
 const VICTIM = 'G' + 'A'.repeat(55);
 const addr = (i: number) => 'G' + String(i).padStart(55, 'B').replace(/[^A-Z2-7]/g, 'C');

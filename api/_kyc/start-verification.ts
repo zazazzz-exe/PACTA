@@ -1,10 +1,10 @@
-import { db } from './_lib/db.js';
-import { json, logError } from './_lib/http.js';
-import { readSession } from './_lib/session.js';
-import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
-import { CONSENT_VERSION, CONSENT_TEXT } from './_lib/kyc/consent.js';
-import { hmacHex } from './_lib/kyc/hash.js';
-import type { DocType } from './_lib/kyc/types.js';
+import { db } from '../_lib/db.js';
+import { json, logError } from '../_lib/http.js';
+import { readSession } from '../_lib/session.js';
+import { getProvider, kycUnavailable } from '../_lib/kyc/index.js';
+import { CONSENT_VERSION, CONSENT_TEXT } from '../_lib/kyc/consent.js';
+import { hmacHex } from '../_lib/kyc/hash.js';
+import type { DocType } from '../_lib/kyc/types.js';
 
 // Record versioned consent (over the server's canonical text) and initialize a
 // provider session. Consent is required before anything else. Capture providers
@@ -13,7 +13,7 @@ import type { DocType } from './_lib/kyc/types.js';
 
 const DOC_TYPES: DocType[] = ['passport', 'national_id', 'drivers_license'];
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
   const unavailable = kycUnavailable();
   if (unavailable) return unavailable;

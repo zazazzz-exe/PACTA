@@ -1,7 +1,7 @@
-import { db } from './_lib/db.js';
-import { json, logError } from './_lib/http.js';
-import { readSession } from './_lib/session.js';
-import { resolveIdentity } from './_lib/kyc/identity.js';
+import { db } from '../_lib/db.js';
+import { json, logError } from '../_lib/http.js';
+import { readSession } from '../_lib/session.js';
+import { resolveIdentity } from '../_lib/kyc/identity.js';
 
 // Right to erasure (PH Data Privacy Act). Identity-wide: nulls every PII-derived
 // column on the identity's verifier row, deletes its consent rows, and leaves a
@@ -9,7 +9,7 @@ import { resolveIdentity } from './_lib/kyc/identity.js';
 // ever existed here, so there is nothing else to purge. Clearing gov_id_hash also
 // frees the identity to verify again later.
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
 
   const address = readSession(req);

@@ -15,7 +15,7 @@ const {
   VERIFY_FAIL_LIMIT_PER_ADDRESS_IP,
   VERIFY_FAIL_LIMIT_PER_IP,
   VERIFY_FAIL_LIMIT_PER_ADDRESS_TOTAL,
-} = await import('../kyc-verify-wallet');
+} = await import('../_kyc/verify-wallet');
 
 const VICTIM = 'G' + 'A'.repeat(55);
 const addr = (i: number) => 'G' + String(i).padStart(55, 'B').replace(/[^A-Z2-7]/g, 'C');

@@ -7,7 +7,7 @@ vi.mock('../_lib/db', () => ({ db: () => fake }));
 const applyOutcome = vi.fn();
 vi.mock('../_lib/kyc/apply', () => ({ applyOutcome: (...a: unknown[]) => applyOutcome(...a) }));
 
-const { handler } = await import('../kyc-webhook');
+const { handler } = await import('../_kyc/webhook');
 
 const WALLET = 'G' + 'A'.repeat(55);
 

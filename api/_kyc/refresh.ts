@@ -1,14 +1,14 @@
-import { db } from './_lib/db.js';
-import { json, logError } from './_lib/http.js';
-import { readSession } from './_lib/session.js';
-import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
-import { applyOutcome } from './_lib/kyc/apply.js';
+import { db } from '../_lib/db.js';
+import { json, logError } from '../_lib/http.js';
+import { readSession } from '../_lib/session.js';
+import { getProvider, kycUnavailable } from '../_lib/kyc/index.js';
+import { applyOutcome } from '../_lib/kyc/apply.js';
 
 // Pull the latest decision for the wallet's in-flight session and apply it.
 // Used when the user returns from a hosted provider (Didit), so status resolves
 // even if the webhook is delayed or not configured. Session-authed.
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return json({ error: 'method' }, 405);
   const unavailable = kycUnavailable();
   if (unavailable) return unavailable;

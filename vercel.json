@@ -57,5 +57,11 @@
     "api/*.ts": {
       "includeFiles": "node_modules/@stellar/stellar-sdk/lib/**/package.json"
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/kyc-:op",
+      "destination": "/api/kyc?op=:op"
+    }
+  ]
 }

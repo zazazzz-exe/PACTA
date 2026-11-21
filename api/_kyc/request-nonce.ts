@@ -1,8 +1,8 @@
 import { randomBytes } from 'crypto';
-import { db } from './_lib/db.js';
-import { json, isValidAddress, logError, clientIp } from './_lib/http.js';
-import { hmacHex } from './_lib/kyc/hash.js';
-import { overLimit } from './_lib/ratelimit.js';
+import { db } from '../_lib/db.js';
+import { json, isValidAddress, logError, clientIp } from '../_lib/http.js';
+import { hmacHex } from '../_lib/kyc/hash.js';
+import { overLimit } from '../_lib/ratelimit.js';
 
 // Issue a single-use, short-lived wallet-ownership challenge. The client signs
 // the returned `challenge` string with the wallet and posts it back to

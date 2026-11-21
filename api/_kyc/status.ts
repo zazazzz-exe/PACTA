@@ -1,15 +1,15 @@
-import { db } from './_lib/db.js';
-import { json, logError } from './_lib/http.js';
-import { readSession } from './_lib/session.js';
-import { getProvider, kycUnavailable } from './_lib/kyc/index.js';
-import { resolveIdentity, linkedWalletsFrom } from './_lib/kyc/identity.js';
+import { db } from '../_lib/db.js';
+import { json, logError } from '../_lib/http.js';
+import { readSession } from '../_lib/session.js';
+import { getProvider, kycUnavailable } from '../_lib/kyc/index.js';
+import { resolveIdentity, linkedWalletsFrom } from '../_lib/kyc/identity.js';
 
 // Return the connected wallet's KYC status. Session-authed: the address comes
 // from the signed cookie, never from the request body, so a caller can only ever
 // read their own status. Status is resolved across the wallet's linked-identity
 // group (verified if any linked wallet is verified). Poll this while 'pending'.
 
-async function handler(req: Request): Promise<Response> {
+export async function handler(req: Request): Promise<Response> {
   if (req.method !== 'GET') return json({ error: 'method' }, 405);
   const unavailable = kycUnavailable();
   if (unavailable) return unavailable;
