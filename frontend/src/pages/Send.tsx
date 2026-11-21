@@ -18,6 +18,8 @@ import { useOffline, isOffline, outboxEnqueue } from '../lib/outbox';
 import { useActiveNetwork } from '../lib/activeNetwork';
 import { useDisplayCurrency } from '../lib/displayCurrency';
 import { useFeesCovered } from '../hooks/useFeesCovered';
+import { usePhoneRecipient } from '../hooks/usePhoneRecipient';
+import { ContactCard } from '../components/ContactCard';
 import { t } from '../lib/strings';
 import { amountValue, formatAssetAmount, formatFiat } from '../lib/money';
 import { DUR, EASE } from '../components/motion/MotionProvider';
@@ -41,6 +43,9 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
   const coarse = useCoarsePointer();
 
   const [to, setTo] = useState('');
+  // The recipient field takes a Stellar address or a phone number (pay by phone).
+  const phone = usePhoneRecipient(to);
+  const recipient = phone.state === 'found' ? phone.contact.address : phone.state === 'none' ? to.trim() : '';
   const [assetKey, setAssetKey] = useState('');
   const [amount, setAmount] = useState('');
   const [reviewing, setReviewing] = useState(false);
@@ -80,7 +85,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
         title="Payment sent"
         body={
           <>
-            {formatAssetAmount(amount, code).display} {code} to <span className="mono">{shortAddr(to)}</span>
+            {formatAssetAmount(amount, code).display} {code} to <span className="mono">{shortAddr(recipient)}</span>
           </>
         }
         link={{ href: txExplorerUrl(sentHash), label: 'View on Stellar Expert' }}
@@ -103,7 +108,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
         title="Queued"
         body={
           <>
-            {amount} {code} to <span className="mono">{shortAddr(to)}</span> will send automatically when you are back online.
+            {amount} {code} to <span className="mono">{shortAddr(recipient)}</span> will send automatically when you are back online.
           </>
         }
         again="Queue another"
@@ -117,9 +122,13 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
   }
 
   const maxNum = selected ? Number(selected.amount) : 0;
-  const formError = !isValidStellarAddress(to.trim())
-    ? 'Enter a valid recipient address.'
-    : to.trim() === address
+  const formError = phone.state === 'looking'
+    ? 'Finding this number.'
+    : phone.state === 'missing' || phone.state === 'error'
+      ? 'Enter a wallet address or a phone number linked to PACTA.'
+      : !isValidStellarAddress(recipient)
+    ? 'Enter a valid recipient address or phone number.'
+    : recipient === address
       ? 'You cannot send to yourself.'
       : !(amountNum > 0)
         ? 'Enter an amount greater than zero.'
@@ -132,7 +141,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
     if (!selected) return;
     // Offline: queue the payment instead of submitting; it auto-sends on reconnect.
     if (isOffline()) {
-      outboxEnqueue({ to: to.trim(), assetCode: selected.asset.code, issuer: selected.asset.issuer, amount });
+      outboxEnqueue({ to: recipient, assetCode: selected.asset.code, issuer: selected.asset.issuer, amount });
       setReviewing(false);
       setQueued(true);
       return;
@@ -140,7 +149,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
     setSending(true);
     setError(null);
     try {
-      const res = await adapter.send({ from: address!, to: to.trim(), asset: selected.asset, amount });
+      const res = await adapter.send({ from: address!, to: recipient, asset: selected.asset, amount });
       setReviewing(false);
       setSentHash(res.hash);
     } catch (e) {
@@ -152,7 +161,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
 
   function doSendProtected() {
     setPendingSend({
-      trader: to.trim(),
+      trader: recipient,
       capital: amount,
       assetCode: selected!.asset.code,
       assetIssuer: selected!.asset.issuer,
@@ -212,7 +221,15 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
             )}
           </div>
           <dl className="divide-y divide-[var(--hairline)] text-[14px]">
-            <Line label="Recipient" value={<span className="mono">{shortAddr(to.trim(), 6, 6)}</span>} />
+            <Line
+              label="Recipient"
+              value={
+                <span>
+                  {phone.state === 'found' && <span className="mr-1.5 font-semibold">{phone.contact.maskedName ?? to.trim()}</span>}
+                  <span className="mono">{shortAddr(recipient, 6, 6)}</span>
+                </span>
+              }
+            />
             <Line label="Amount" value={<span className="mono">{formatAssetAmount(amount, code).display} {code}</span>} />
             <Line label="Network fee" value={feesCovered ? <span className="font-semibold text-mint">{t('fee.coveredLabel')}</span> : <span className="mono">up to {MAX_FEE_XLM} XLM</span>} />
             <Line label="Total deduction" value={<span className="mono font-bold">{total}</span>} />
@@ -250,7 +267,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
             id="send-to"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            placeholder="Stellar address (G...)"
+            placeholder="Wallet address or phone number"
             spellCheck={false}
             autoComplete="off"
             className="mono h-12 min-w-0 flex-1 bg-transparent text-[14px] text-ink placeholder:text-fog focus:outline-none"
@@ -263,6 +280,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
             <ClipboardPaste size={16} aria-hidden /> Paste
           </button>
         </div>
+        <ContactCard lookup={phone} />
       </section>
 
       {/* Amount */}
@@ -338,7 +356,7 @@ export function Send({ embedded = false, onDone }: { embedded?: boolean; onDone?
       </section>
 
       <AnimatePresence initial={false}>
-        {formError && (to.trim() !== '' || amount !== '') && (
+        {formError && phone.state !== 'looking' && (to.trim() !== '' || amount !== '') && (
           <m.p
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}

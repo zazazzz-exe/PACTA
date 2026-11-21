@@ -9,6 +9,7 @@ import {
   type LinkedWallet,
 } from '../lib/kycClient';
 import { getReputation, type Reputation } from '../lib/contract';
+import { PhoneCard } from '../components/PhoneCard';
 import { currentWalletName } from '../lib/wallet';
 import { useActiveNetwork } from '../lib/activeNetwork';
 import { Avatar } from '../components/Avatar';
@@ -241,6 +242,9 @@ export function Profile() {
           {actionError && <p className="mt-2 text-[13px] text-refund">{actionError}</p>}
         </div>
       )}
+
+      {/* Pay by phone: link a number so people can pay you by it */}
+      <PhoneCard />
 
       {/* Reputation (a Pact-layer concept: hidden where Pacts aren't supported) */}
       {net.supportsPacts && (
